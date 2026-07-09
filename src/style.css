@@ -397,11 +397,10 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
   width: 100%; height: 100%;
   object-fit: cover;
   object-position: left top;
-  filter: grayscale(0.55) contrast(1.02) brightness(0.9);
-  transform: scale(1.02);
-  transition: filter 0.7s ease, transform 1.1s var(--ease-out);
+  transform: scale(1.01);
+  transition: transform 1.1s var(--ease-out);
 }
-.w-card:hover .w-media img { filter: grayscale(0.1) contrast(1) brightness(1); transform: scale(1.07); }
+.w-card:hover .w-media img { transform: scale(1.06); }
 .w-meta { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 1.3rem; }
 .w-meta h3 {
   font-family: var(--font-display);
