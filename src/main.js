@@ -284,7 +284,7 @@ if (pageVideo && !prefersReduced) {
 
   if (heroEl) {
     const ctaRight = { xPercent: 16, yPercent: -4, scale: 0.7 };
-    const resting = { xPercent: 16, yPercent: -4, scale: 0.6 };
+    const resting = { xPercent: 16, yPercent: -4, scale: 0.8 };
     // the real scrollable distance across cta can be shorter than its own
     // offsetHeight (a short footer means the page can't scroll all the
     // way to cta's true bottom) — measured once for proportional weights
