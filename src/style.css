@@ -417,7 +417,7 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
   .footer-cols { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 760px) {
-  .nav { padding: 1.1rem 1.4rem; }
+  .nav { padding: 1.8rem 1.4rem 1.1rem; }
   .nav-links { display: none; }
   .hero-foot { left: 1.4rem; right: 1.4rem; }
   .services, .work, .footer { padding-left: 1.4rem; padding-right: 1.4rem; }
