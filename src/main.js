@@ -283,7 +283,7 @@ if (pageVideo && !prefersReduced) {
   ].filter((s) => s.el);
 
   if (heroEl) {
-    const resting = { xPercent: 16, yPercent: 0, scale: 0.8 };
+    const resting = { xPercent: 16, yPercent: 0, scale: 1.05 };
 
     // a single timeline drives the video for the whole post-hero scroll —
     // story, then services, settling into its final composition right as
