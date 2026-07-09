@@ -1,8 +1,25 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { loadCmsContent, applyCmsContent } from "./cms.js";
 
 gsap.registerPlugin(ScrollTrigger);
+
+// fetch CMS content and render it into the DOM *before* anything below
+// measures section heights or splits text into animated spans — every
+// scene-camera weight, word-scrub split, and heading reveal depends on
+// the real, final text being in place first. Falls back to the static
+// markup already in index.html if Supabase is slow or unreachable, so
+// the page never blocks on the network.
+try {
+  const cms = await Promise.race([
+    loadCmsContent(),
+    new Promise((_, reject) => setTimeout(() => reject(new Error("cms timeout")), 2500)),
+  ]);
+  applyCmsContent(cms);
+} catch (err) {
+  console.warn("CMS content unavailable, using fallback markup:", err);
+}
 
 // browsers can auto-restore the previous scroll position on refresh,
 // which throws off the hero's scroll-driven zoom (it would compute its

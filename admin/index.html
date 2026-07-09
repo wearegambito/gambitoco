@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Gambito — Admin</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div class="login-screen" id="login-screen">
+    <form class="login-card" id="login-form">
+      <img src="/logo-full.svg" alt="Gambito" class="login-logo" />
+      <h1>Studio access</h1>
+      <p class="login-hint">Enter your email and we'll send you a sign-in link.</p>
+      <input type="email" id="login-email" placeholder="you@gambito.co" required autocomplete="email" />
+      <button type="submit" class="btn" id="login-submit"><span>Send sign-in link</span></button>
+      <p class="login-status" id="login-status"></p>
+    </form>
+  </div>
+
+  <!-- ADMIN APP -->
+  <div class="admin" id="admin-app" hidden>
+    <header class="admin-nav">
+      <div class="admin-nav-brand">
+        <img src="/logo-full.svg" alt="Gambito" />
+        <span>Studio</span>
+      </div>
+      <nav class="admin-tabs">
+        <button class="admin-tab is-active" data-tab="content">Content</button>
+        <button class="admin-tab" data-tab="services">Services</button>
+        <button class="admin-tab" data-tab="work">Case studies</button>
+      </nav>
+      <div class="admin-nav-right">
+        <a href="/" target="_blank" class="admin-view-live" data-hover>View live site ↗</a>
+        <button class="admin-signout" id="signout-btn">Sign out</button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+
+      <!-- CONTENT TAB -->
+      <section class="admin-panel is-active" data-panel="content">
+        <div class="panel-head">
+          <h2>Site content</h2>
+          <button class="btn" id="save-content"><span>Save changes</span></button>
+        </div>
+        <p class="panel-status" id="content-status"></p>
+        <div class="content-groups" id="content-groups"></div>
+      </section>
+
+      <!-- SERVICES TAB -->
+      <section class="admin-panel" data-panel="services">
+        <div class="panel-head">
+          <h2>Services — "How we move"</h2>
+          <button class="btn" id="add-service"><span>+ Add card</span></button>
+        </div>
+        <p class="panel-status" id="services-status"></p>
+        <div class="card-list" id="services-list"></div>
+      </section>
+
+      <!-- WORK TAB -->
+      <section class="admin-panel" data-panel="work">
+        <div class="panel-head">
+          <h2>Case studies — "Openings we've played"</h2>
+          <button class="btn" id="add-case-study"><span>+ Add case study</span></button>
+        </div>
+        <p class="panel-status" id="work-status"></p>
+        <div class="card-list" id="work-list"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>

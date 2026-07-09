@@ -31,7 +31,7 @@
       <a href="#work" data-hover>Work</a>
       <a href="#contact" data-hover>Contact</a>
     </nav>
-    <a class="nav-cta" href="#contact" data-hover>Start the conversation</a>
+    <a class="nav-cta" href="#contact" data-hover data-cms="nav_cta">Start the conversation</a>
   </header>
 
   <main id="top">
@@ -39,15 +39,15 @@
     <!-- ATTENTION -->
     <section class="hero">
       <div class="hero-inner">
-        <p class="hero-eyebrow"><span class="hero-eyebrow-line"></span>Venture studio — Auckland, New Zealand</p>
+        <p class="hero-eyebrow"><span class="hero-eyebrow-line"></span><span data-cms="hero_eyebrow">Venture studio — Auckland, New Zealand</span></p>
         <h1 class="hero-title">
-          <span class="line"><span class="line-inner">Your boldest move starts</span></span>
-          <span class="line"><span class="line-inner">with a <em>conversation.</em></span></span>
+          <span class="line"><span class="line-inner" data-cms="hero_title_1">Your boldest move starts</span></span>
+          <span class="line"><span class="line-inner" data-cms="hero_title_2">with a <em>conversation.</em></span></span>
         </h1>
-        <p class="hero-sub">Deep technology, sharp design, and people you'll actually enjoy talking to. Gambito is the studio for founders who are done hesitating.</p>
+        <p class="hero-sub" data-cms="hero_sub">Deep technology, sharp design, and people you'll actually enjoy talking to. Gambito is the studio for founders who are done hesitating.</p>
         <div class="hero-ctas">
-          <a class="btn btn-solid" href="#contact" data-hover><span>Make your move</span></a>
-          <a class="btn btn-ghost" href="#services" data-hover><span>See how we work</span></a>
+          <a class="btn btn-solid" href="#contact" data-hover><span data-cms="hero_cta_primary">Make your move</span></a>
+          <a class="btn btn-ghost" href="#services" data-hover><span data-cms="hero_cta_secondary">See how we work</span></a>
         </div>
       </div>
       <div class="hero-foot">
@@ -58,7 +58,7 @@
     <!-- DESIRE: the founder's story, scrubbed word by word -->
     <section class="story" id="studio">
       <div class="story-pin">
-        <p class="story-text" id="story-text">
+        <p class="story-text" id="story-text" data-cms="story_text">
           You've carried the idea for months. Talked yourself out of it twice — not because it's wrong, but because it's <em>big.</em> The space between hesitation and action is exactly where we do our best work.
         </p>
       </div>
@@ -69,8 +69,8 @@
       <div class="services-grid">
         <div class="services-head">
           <div class="services-head-sticky">
-            <h2 class="h2-display reveal-lines">How we move</h2>
-            <p class="services-lede">One studio across the whole board — from the first question to the thousandth user.</p>
+            <h2 class="h2-display reveal-lines" data-cms="services_title">How we move</h2>
+            <p class="services-lede" data-cms="services_lede">One studio across the whole board — from the first question to the thousandth user.</p>
           </div>
         </div>
         <div class="services-stack">
@@ -101,8 +101,8 @@
     <!-- DESIRE: selected work -->
     <section class="work" id="work">
       <div class="work-head">
-        <h2 class="h2-display reveal-lines">Openings we've played</h2>
-        <p class="work-lede">A few ventures that went from a nervous first meeting to a product in the world.</p>
+        <h2 class="h2-display reveal-lines" data-cms="work_title">Openings we've played</h2>
+        <p class="work-lede" data-cms="work_lede">A few ventures that went from a nervous first meeting to a product in the world.</p>
       </div>
       <div class="work-grid">
         <a class="w-card w-span7" href="#contact" data-hover>
@@ -128,11 +128,11 @@
     <section class="cta" id="contact">
       <div class="cta-inner">
         <h2 class="cta-title">
-          <span class="line"><span class="line-inner">Make the</span></span>
-          <span class="line"><span class="line-inner"><em>first move.</em></span></span>
+          <span class="line"><span class="line-inner" data-cms="cta_title_1">Make the</span></span>
+          <span class="line"><span class="line-inner" data-cms="cta_title_2"><em>first move.</em></span></span>
         </h2>
-        <p class="cta-sub">A Gameplan Session is one hour, zero jargon, and no obligation. Worst case, you leave with a clearer picture of your own idea.</p>
-        <a class="btn btn-solid btn-big" href="mailto:hello@gambito.co" data-hover data-magnetic><span>Book a Gameplan Session</span></a>
+        <p class="cta-sub" data-cms="cta_sub">A Gameplan Session is one hour, zero jargon, and no obligation. Worst case, you leave with a clearer picture of your own idea.</p>
+        <a class="btn btn-solid btn-big" href="mailto:hello@gambito.co" data-hover data-magnetic data-cms="cta_button_link" data-cms-attr="href"><span data-cms="cta_button">Book a Gameplan Session</span></a>
       </div>
     </section>
 
@@ -140,22 +140,22 @@
       <div class="footer-cols">
         <div class="footer-col">
           <span class="f-label">Studio</span>
-          <p>Level 1/239 Ponsonby Road<br />Ponsonby, Auckland 1011<br />Aotearoa New Zealand</p>
+          <p data-cms="footer_address">Level 1/239 Ponsonby Road<br />Ponsonby, Auckland 1011<br />Aotearoa New Zealand</p>
         </div>
         <div class="footer-col">
           <span class="f-label">Talk to us</span>
-          <p><a href="mailto:hello@gambito.co" data-hover>hello@gambito.co</a><br /><a href="tel:+6497777808" data-hover>+64 9 7777 808</a></p>
+          <p><a href="mailto:hello@gambito.co" data-hover data-cms="footer_email" data-cms-href="mailto:">hello@gambito.co</a><br /><a href="tel:+6497777808" data-hover data-cms="footer_phone" data-cms-href="tel:">+64 9 7777 808</a></p>
         </div>
         <div class="footer-col">
           <span class="f-label">Elsewhere</span>
-          <p><a href="#" data-hover>LinkedIn</a><br /><a href="#" data-hover>Instagram</a></p>
+          <p><a href="#" data-hover data-cms="footer_linkedin_url" data-cms-attr="href">LinkedIn</a><br /><a href="#" data-hover data-cms="footer_instagram_url" data-cms-attr="href">Instagram</a></p>
         </div>
         <div class="footer-col footer-note">
           <span class="f-label">Gambito</span>
-          <p>noun — a chess opening in which a player risks a small piece to gain a decisive advantage.</p>
+          <p data-cms="footer_definition">noun — a chess opening in which a player risks a small piece to gain a decisive advantage.</p>
         </div>
       </div>
-      <div class="footer-base"><span>© 2026 Gambito Ltd.</span><span>Made in Auckland, played worldwide.</span></div>
+      <div class="footer-base"><span data-cms="footer_copyright">© 2026 Gambito Ltd.</span><span data-cms="footer_tagline">Made in Auckland, played worldwide.</span></div>
     </footer>
 
   </main>
