@@ -36,6 +36,7 @@
         <button class="admin-tab" data-tab="work">Case studies</button>
         <button class="admin-tab" data-tab="insights">Insights</button>
         <button class="admin-tab" data-tab="faq">FAQ</button>
+        <button class="admin-tab" data-tab="bookings">Bookings</button>
       </nav>
       <div class="admin-nav-right">
         <button class="admin-publish" id="publish-btn" title="Rebuild the live site to apply changes to the service, insights and FAQ pages">Publish ↻</button>
@@ -96,6 +97,54 @@
         <p class="panel-note">Powers the <code>/faq</code> page. After editing, hit <b>Publish</b> to rebuild the live site.</p>
         <p class="panel-status" id="faq-status"></p>
         <div class="card-list" id="faq-list"></div>
+      </section>
+
+      <!-- BOOKINGS TAB -->
+      <section class="admin-panel" data-panel="bookings">
+        <div class="panel-head"><h2>Availability &amp; bookings</h2></div>
+        <p class="panel-note">Powers the live <code>/book</code> page — availability updates instantly (no Publish needed). <span id="book-tz-label"></span></p>
+        <p class="panel-status" id="bookings-status"></p>
+
+        <div class="book-admin">
+          <div class="book-admin-card">
+            <h3 class="book-admin-h">Add availability</h3>
+            <div class="gen-grid">
+              <div class="field"><label>From date</label><input type="date" id="gen-from" /></div>
+              <div class="field"><label>To date</label><input type="date" id="gen-to" /></div>
+              <div class="field field-full"><label>Days of week</label>
+                <div class="weekday-row" id="gen-days">
+                  <label><input type="checkbox" value="1" checked /> Mon</label>
+                  <label><input type="checkbox" value="2" checked /> Tue</label>
+                  <label><input type="checkbox" value="3" checked /> Wed</label>
+                  <label><input type="checkbox" value="4" checked /> Thu</label>
+                  <label><input type="checkbox" value="5" checked /> Fri</label>
+                  <label><input type="checkbox" value="6" /> Sat</label>
+                  <label><input type="checkbox" value="0" /> Sun</label>
+                </div>
+              </div>
+              <div class="field"><label>Start time</label><input type="time" id="gen-start" value="09:00" /></div>
+              <div class="field"><label>End time</label><input type="time" id="gen-end" value="17:00" /></div>
+              <div class="field"><label>Slot length (min)</label><input type="number" id="gen-dur" value="30" min="10" step="5" /></div>
+            </div>
+            <button class="btn" id="gen-slots"><span>Generate slots</span></button>
+            <div class="oneoff">
+              <span class="oneoff-label">Or add a single slot</span>
+              <div class="oneoff-row">
+                <input type="date" id="oneoff-date" />
+                <input type="time" id="oneoff-time" />
+                <button class="btn btn-ghost btn-small" id="add-oneoff"><span>Add</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="book-admin-card">
+            <h3 class="book-admin-h">Upcoming slots</h3>
+            <div id="slots-list" class="slots-admin"></div>
+          </div>
+        </div>
+
+        <h3 class="book-admin-h book-admin-h--wide">Upcoming bookings</h3>
+        <div id="bookings-list" class="bookings-admin"></div>
       </section>
 
     </main>

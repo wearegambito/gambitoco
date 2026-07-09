@@ -35,6 +35,13 @@ const CONTENT_FIELDS = [
   { group: "SEO & social", key: "site_url", label: "Canonical site URL", type: "input", hint: "e.g. https://gambito.co — used for canonical tags & sitemap." },
   { group: "SEO & social", key: "og_image", label: "Default share image", type: "input", hint: "Path or URL used for social previews when a page has none. Ideally 1200×630." },
   { group: "SEO & social", key: "twitter_handle", label: "Twitter/X handle", type: "input" },
+  { group: "Booking page", key: "booking_enabled", label: "Booking enabled", type: "input", hint: "Set to true or false to turn the /book page on or off." },
+  { group: "Booking page", key: "booking_title", label: "Heading", type: "input" },
+  { group: "Booking page", key: "booking_intro", label: "Intro text", type: "textarea" },
+  { group: "Booking page", key: "booking_confirm", label: "Confirmation message", type: "textarea" },
+  { group: "Booking page", key: "booking_duration", label: "Session length (minutes)", type: "input" },
+  { group: "Booking page", key: "booking_timezone", label: "Your timezone", type: "input", hint: "IANA name, e.g. Pacific/Auckland — used in emails & labels." },
+  { group: "Booking page", key: "booking_from_email", label: "Sender email for booking emails", type: "input", hint: "Must be a verified sender in MailerSend, e.g. no-reply@gambito.co." },
   { group: "Deployment", key: "netlify_build_hook", label: "Netlify build hook URL", type: "input", hint: "Paste your Netlify build hook here to enable the Publish button (Netlify → Site config → Build & deploy → Build hooks)." },
 ];
 
@@ -130,6 +137,7 @@ function showApp() {
   loadContentTab();
   Object.keys(RESOURCES).forEach(loadResource);
   wireAddButtons();
+  initBookings();
 }
 
 el("#login-form").addEventListener("submit", async (e) => {
@@ -339,5 +347,121 @@ el("#publish-btn").addEventListener("click", async () => {
     alert("Could not trigger the build: " + err.message);
   }
 });
+
+/* ---------- bookings & availability ---------- */
+let bookingsWired = false;
+const bStatus = "#bookings-status";
+const fmtDayLocal = (d) => d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+const fmtTimeLocal = (d) => d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+function initBookings() {
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  el("#book-tz-label").textContent = `Times are in your timezone (${tz}).`;
+  const today = new Date();
+  const plus = new Date(); plus.setDate(plus.getDate() + 14);
+  el("#gen-from").value = today.toISOString().slice(0, 10);
+  el("#gen-to").value = plus.toISOString().slice(0, 10);
+  el("#oneoff-date").value = today.toISOString().slice(0, 10);
+  el("#gen-dur").value = "30";
+
+  if (!bookingsWired) {
+    bookingsWired = true;
+    el("#gen-slots").addEventListener("click", generateSlots);
+    el("#add-oneoff").addEventListener("click", addOneoff);
+  }
+  loadSlotsAdmin();
+  loadBookingsAdmin();
+}
+
+function localSlot(dateStr, timeStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = timeStr.split(":").map(Number);
+  return new Date(y, m - 1, d, hh, mm, 0, 0); // interpreted in admin's local timezone
+}
+
+async function generateSlots() {
+  const from = el("#gen-from").value, to = el("#gen-to").value;
+  const start = el("#gen-start").value, end = el("#gen-end").value;
+  const dur = Math.max(10, parseInt(el("#gen-dur").value, 10) || 30);
+  const days = [...document.querySelectorAll("#gen-days input:checked")].map((c) => Number(c.value));
+  if (!from || !to || !start || !end || !days.length) { setStatus(bStatus, "Fill in the date range, days and times.", "error"); return; }
+
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const startMin = sh * 60 + sm, endMin = eh * 60 + em;
+  if (endMin <= startMin) { setStatus(bStatus, "End time must be after start time.", "error"); return; }
+
+  const now = Date.now();
+  const rows = [];
+  const cur = localSlot(from, "00:00");
+  const last = localSlot(to, "00:00");
+  while (cur <= last) {
+    if (days.includes(cur.getDay())) {
+      for (let mins = startMin; mins + dur <= endMin; mins += dur) {
+        const s = new Date(cur); s.setHours(Math.floor(mins / 60), mins % 60, 0, 0);
+        if (s.getTime() > now) rows.push({ start_time: s.toISOString(), duration_minutes: dur });
+      }
+    }
+    cur.setDate(cur.getDate() + 1);
+  }
+  if (!rows.length) { setStatus(bStatus, "No future slots fell in that range.", "error"); return; }
+
+  el("#gen-slots").disabled = true;
+  setStatus(bStatus, `Adding ${rows.length} slots…`);
+  const { error } = await supabase.from("booking_slots").upsert(rows, { onConflict: "start_time", ignoreDuplicates: true });
+  el("#gen-slots").disabled = false;
+  if (error) { setStatus(bStatus, error.message, "error"); return; }
+  setStatus(bStatus, `Added availability (${rows.length} slots requested; duplicates skipped).`, "success");
+  loadSlotsAdmin();
+}
+
+async function addOneoff() {
+  const date = el("#oneoff-date").value, time = el("#oneoff-time").value;
+  if (!date || !time) { setStatus(bStatus, "Pick a date and time for the slot.", "error"); return; }
+  const s = localSlot(date, time);
+  if (s.getTime() <= Date.now()) { setStatus(bStatus, "That time is in the past.", "error"); return; }
+  const dur = Math.max(10, parseInt(el("#gen-dur").value, 10) || 30);
+  const { error } = await supabase.from("booking_slots").upsert([{ start_time: s.toISOString(), duration_minutes: dur }], { onConflict: "start_time", ignoreDuplicates: true });
+  if (error) { setStatus(bStatus, error.message, "error"); return; }
+  setStatus(bStatus, "Slot added.", "success");
+  loadSlotsAdmin();
+}
+
+async function loadSlotsAdmin() {
+  const { data, error } = await supabase.from("booking_slots").select("*").gt("start_time", new Date().toISOString()).order("start_time");
+  if (error) { setStatus(bStatus, error.message, "error"); return; }
+  const box = el("#slots-list");
+  if (!data.length) { box.innerHTML = `<p class="slots-empty">No upcoming slots yet. Generate some availability on the left.</p>`; return; }
+  const groups = new Map();
+  for (const s of data) { const k = new Date(s.start_time).toDateString(); (groups.get(k) || groups.set(k, []).get(k)).push(s); }
+  box.innerHTML = [...groups.values()].map((day) => {
+    const title = fmtDayLocal(new Date(day[0].start_time));
+    const chips = day.map((s) => {
+      const t = fmtTimeLocal(new Date(s.start_time));
+      if (s.status === "booked") return `<span class="slot-chip booked">${t} <span class="tag">booked</span></span>`;
+      return `<span class="slot-chip">${t} <button class="x" data-del="${s.id}" title="Remove">×</button></span>`;
+    }).join("");
+    return `<div><div class="slots-admin-day-title">${title}</div><div class="slots-admin-row">${chips}</div></div>`;
+  }).join("");
+  box.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+    const { error } = await supabase.from("booking_slots").delete().eq("id", b.dataset.del).eq("status", "available");
+    if (error) setStatus(bStatus, error.message, "error"); else loadSlotsAdmin();
+  }));
+}
+
+async function loadBookingsAdmin() {
+  const { data, error } = await supabase.from("bookings").select("*").gte("start_time", new Date(Date.now() - 3600e3).toISOString()).order("start_time");
+  if (error) { setStatus(bStatus, error.message, "error"); return; }
+  const box = el("#bookings-list");
+  if (!data.length) { box.innerHTML = `<p class="bookings-empty">No upcoming bookings yet.</p>`; return; }
+  box.innerHTML = data.map((b) => {
+    const d = new Date(b.start_time);
+    return `<div class="booking-row">
+      <div class="when">${fmtDayLocal(d)}<br />${fmtTimeLocal(d)}</div>
+      <div class="who"><span class="name">${esc(b.name)}</span>${b.company ? " · " + esc(b.company) : ""}<br /><a href="mailto:${esc(b.email)}">${esc(b.email)}</a></div>
+      ${b.notes ? `<div class="notes">${esc(b.notes)}</div>` : ""}
+    </div>`;
+  }).join("");
+}
 
 checkSession();

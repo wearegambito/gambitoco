@@ -189,9 +189,51 @@ a { color: inherit; }
 .image-field-controls { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
 .image-field input[type="file"] { font-size: 0.8rem; color: var(--ink-dim); }
 
+/* ---------- bookings admin ---------- */
+.book-admin { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; margin-bottom: 2.5rem; }
+.book-admin-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 1.6rem 1.8rem; }
+.book-admin-h { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; margin-bottom: 1.2rem; }
+.book-admin-h--wide { margin-top: 1rem; }
+.gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
+.gen-grid .field-full { grid-column: 1 / -1; }
+.weekday-row { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.weekday-row label { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; color: var(--ink-dim); }
+.oneoff { margin-top: 1.6rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+.oneoff-label { display: block; font-size: 0.85rem; color: var(--ink-dim); margin-bottom: 0.7rem; }
+.oneoff-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.oneoff-row input { flex: 1; min-width: 120px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 0.6rem 0.8rem; color: var(--ink); color-scheme: dark; }
+
+.slots-admin { display: flex; flex-direction: column; gap: 1.2rem; max-height: 460px; overflow-y: auto; }
+.slots-admin-day-title { font-size: 0.85rem; font-weight: 700; color: var(--ink-dim); letter-spacing: 0.02em; margin-bottom: 0.6rem; }
+.slots-admin-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.slot-chip {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 100px;
+  padding: 0.4rem 0.5rem 0.4rem 0.85rem; font-size: 0.88rem;
+}
+.slot-chip.booked { color: var(--ink-faint); border-style: dashed; }
+.slot-chip .x { background: none; border: none; color: var(--ink-faint); cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 0.2rem; }
+.slot-chip .x:hover { color: var(--ember); }
+.slot-chip .tag { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ember); }
+
+.bookings-admin { display: flex; flex-direction: column; gap: 0.8rem; }
+.booking-row {
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1.1rem 1.4rem; display: grid; grid-template-columns: 180px 1fr; gap: 1rem;
+}
+.booking-row .when { font-weight: 700; }
+.booking-row .who a { color: var(--ink-dim); }
+.booking-row .who .name { color: var(--ink); font-weight: 600; }
+.booking-row .notes { grid-column: 2; color: var(--ink-dim); font-size: 0.92rem; margin-top: 0.3rem; }
+.bookings-empty, .slots-empty { color: var(--ink-faint); font-size: 0.92rem; }
+
+@media (max-width: 800px) { .book-admin { grid-template-columns: 1fr; } }
 @media (max-width: 700px) {
   .admin-nav { flex-wrap: wrap; gap: 0.8rem; padding: 1rem; }
   .admin-main { padding: 2rem 1.2rem 5rem; }
   .edit-card-grid { grid-template-columns: 1fr; }
   .panel-head { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
+  .gen-grid { grid-template-columns: 1fr; }
+  .booking-row { grid-template-columns: 1fr; }
+  .booking-row .notes { grid-column: 1; }
 }

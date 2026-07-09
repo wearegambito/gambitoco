@@ -295,6 +295,7 @@ async function run() {
 
   const urls = [
     { loc: "/", changefreq: "weekly", priority: "1.0" },
+    { loc: "/book/", changefreq: "weekly", priority: "0.9" },
     { loc: "/insights/", changefreq: "weekly", priority: "0.8" },
     { loc: "/faq/", changefreq: "monthly", priority: "0.6" },
   ];
