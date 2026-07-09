@@ -356,6 +356,7 @@ em { font-family: var(--serif); font-style: italic; font-weight: 500; }
 .book-done-msg { color: var(--ink-dim); margin-bottom: 2rem; }
 .book-done-actions { display: flex; align-items: center; gap: 1.6rem; flex-wrap: wrap; }
 .book-done-actions .btn-solid { border: none; }
+.book-done-actions .book-back { margin-bottom: 0; }
 
 @media (max-width: 720px) {
   .c-footer-cols { grid-template-columns: 1fr 1fr; gap: 2rem; }
