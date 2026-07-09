@@ -283,8 +283,8 @@ if (pageVideo && !prefersReduced) {
   ].filter((s) => s.el);
 
   if (heroEl) {
-    const ctaRight = { xPercent: 16, yPercent: -4, scale: 0.95 };
-    const resting = { xPercent: 16, yPercent: -4, scale: 0.665 };
+    const ctaRight = { xPercent: 16, yPercent: -4, scale: 0.7 };
+    const resting = { xPercent: 16, yPercent: -4, scale: 0.6 };
     // the real scrollable distance across cta can be shorter than its own
     // offsetHeight (a short footer means the page can't scroll all the
     // way to cta's true bottom) — measured once for proportional weights
@@ -319,9 +319,9 @@ if (pageVideo && !prefersReduced) {
       // of the section, then eases out to a wider frame and stays locked
       // into the footer.
       videoCamera
-        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.3 })
-        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.35 })
-        .to(pageVideo, { ...resting, ease: "none", duration: ctaSpanPx * 0.35 });
+        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.18 })
+        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.42 })
+        .to(pageVideo, { ...resting, ease: "none", duration: ctaSpanPx * 0.4 });
     }
   }
 
