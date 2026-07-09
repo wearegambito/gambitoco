@@ -366,14 +366,13 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
 .work-lede { margin-top: 1.6rem; color: var(--ink-dim); max-width: 460px; font-size: 1.1rem; }
 .work-grid {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-auto-flow: dense;
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
   max-width: 1500px;
   margin: 0 auto;
 }
-.w-span7 { grid-column: span 7; }
-.w-span5 { grid-column: span 5; }
+/* uniform cards — span classes from the CMS no longer change width */
+.w-span7, .w-span5 { grid-column: auto; }
 .w-card { display: block; will-change: transform, opacity; }
 .w-media {
   position: relative;
@@ -497,7 +496,7 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
   .services { padding-top: 7rem; padding-bottom: 7rem; }
   .work { padding-bottom: 7rem; }
   .cta { padding: 9rem 1.4rem; }
-  .w-span7, .w-span5 { grid-column: span 12; }
+  .work-grid { grid-template-columns: 1fr; }
   .s-card { padding: 2.2rem 1.8rem 2.6rem; }
   .footer-cols { grid-template-columns: 1fr; gap: 2.4rem; }
   .footer-base { flex-direction: column; gap: 0.5rem; }
