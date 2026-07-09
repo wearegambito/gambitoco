@@ -137,17 +137,19 @@ function renderPicker() {
 
   app.innerHTML = `${pageHead()}
     <p class="book-tznote">All times below are shown in <b>your local timezone</b> — we've detected you're in <b>${esc(detectedPlace)}</b> (${esc(tzAbbr)}, ${esc(localTz)}). They'll update automatically to wherever you are. Each session is ${esc(config.booking_duration || "30")} minutes.</p>
-    <div class="cal">
-      <div class="cal-nav">
-        <button class="week-btn" id="prev-month" ${canPrev ? "" : "disabled"} aria-label="Previous month">←</button>
-        <span class="cal-month">${esc(monthLabel)}</span>
-        <button class="week-btn" id="next-month" ${canNext ? "" : "disabled"} aria-label="Next month">→</button>
+    <div class="book-picker">
+      <div class="cal">
+        <div class="cal-nav">
+          <button class="week-btn" id="prev-month" ${canPrev ? "" : "disabled"} aria-label="Previous month">←</button>
+          <span class="cal-month">${esc(monthLabel)}</span>
+          <button class="week-btn" id="next-month" ${canNext ? "" : "disabled"} aria-label="Next month">→</button>
+        </div>
+        <div class="cal-grid cal-head">${heads}</div>
+        <div class="cal-grid cal-body">${cells}</div>
+        <p class="cal-legend"><span class="cal-dot" aria-hidden="true"></span> days with open times</p>
       </div>
-      <div class="cal-grid cal-head">${heads}</div>
-      <div class="cal-grid cal-body">${cells}</div>
-      <p class="cal-legend"><span class="cal-dot" aria-hidden="true"></span> days with open times</p>
+      <div class="cal-times" id="cal-times">${timesHtml}</div>
     </div>
-    <div class="cal-times" id="cal-times">${timesHtml}</div>
     ${footer()}`;
 
   const prev = app.querySelector("#prev-month");

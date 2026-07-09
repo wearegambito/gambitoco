@@ -262,10 +262,20 @@ em { font-family: var(--serif); font-style: italic; font-weight: 500; }
 .book-empty-week b { color: var(--ink); }
 
 /* month calendar picker */
+.book-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) 1fr;
+  gap: 2.5rem;
+  align-items: start;
+  margin-bottom: 2.2rem;
+}
 .cal {
-  max-width: 560px;
   background: var(--bg-2); border: 1px solid var(--line); border-radius: 20px;
-  padding: 1.4rem 1.4rem 1.5rem; margin-bottom: 2.2rem;
+  padding: 1.4rem 1.4rem 1.5rem;
+}
+@media (max-width: 720px) {
+  .book-picker { grid-template-columns: 1fr; gap: 1.6rem; }
+  .cal { max-width: 460px; }
 }
 .cal-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
 .cal-nav .week-btn { padding: 0.4rem 0.95rem; font-size: 1.05rem; line-height: 1; }
@@ -292,7 +302,7 @@ em { font-family: var(--serif); font-style: italic; font-weight: 500; }
 .cal-day.is-selected .cal-dot { background: var(--ember); }
 .cal-legend { display: flex; align-items: center; gap: 0.5rem; margin-top: 1.3rem; font-size: 0.78rem; color: var(--ink-faint); }
 .cal-legend .cal-dot { display: inline-block; }
-.cal-times { margin-top: 0.5rem; min-height: 3rem; }
+.cal-times { min-height: 3rem; }
 .cal-hint { color: var(--ink-dim); padding: 1rem 0; }
 
 .book-days { display: flex; flex-direction: column; gap: 2rem; }
