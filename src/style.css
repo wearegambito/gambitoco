@@ -416,14 +416,6 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
   position: relative;
   border-top: 1px solid var(--line);
 }
-.cta::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 40%;
-  background: linear-gradient(to bottom, transparent, var(--bg) 85%);
-  pointer-events: none;
-}
 .cta-inner {
   max-width: 1500px;
   margin: 0 auto;
