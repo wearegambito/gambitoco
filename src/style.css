@@ -385,7 +385,7 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
   overflow: hidden;
   border-radius: 16px;
   aspect-ratio: 1200 / 630;
-  background: var(--bg-2);
+  background: transparent;
 }
 .w-ext {
   position: absolute; top: 0.9rem; right: 0.9rem;
