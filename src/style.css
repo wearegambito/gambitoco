@@ -361,18 +361,20 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
 .s-card:hover .s-go { color: var(--ember); transform: translateX(6px); }
 
 /* ---------- work ---------- */
-.work { padding: 6rem 3rem 12rem; }
-.work-head { max-width: 1500px; margin: 0 auto 5rem; }
+.work { padding: 6rem 3rem 10rem; overflow: hidden; }
+.work-head { max-width: 1500px; margin: 0 auto 4rem; }
 .work-lede { margin-top: 1.6rem; color: var(--ink-dim); max-width: 460px; font-size: 1.1rem; }
+/* one horizontal row; JS pins the section and slides it as you scroll */
 .work-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
   gap: 2rem;
-  max-width: 1500px;
-  margin: 0 auto;
+  width: max-content;
+  will-change: transform;
 }
-/* uniform cards — span classes from the CMS no longer change width */
-.w-span7, .w-span5 { grid-column: auto; }
+/* uniform cards — CMS span classes no longer change width */
+.w-card { flex: 0 0 auto; width: min(42vw, 560px); }
+.w-span7, .w-span5 { flex: 0 0 auto; }
 .w-card { display: block; will-change: transform, opacity; }
 .w-media {
   position: relative;
@@ -494,9 +496,17 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
   .services, .work, .footer { padding-left: 1.4rem; padding-right: 1.4rem; }
   .story-pin { padding-left: 1.4rem; padding-right: 1.4rem; }
   .services { padding-top: 7rem; padding-bottom: 7rem; }
-  .work { padding-bottom: 7rem; }
+  .work { padding-bottom: 7rem; overflow: visible; }
   .cta { padding: 9rem 1.4rem; }
-  .work-grid { grid-template-columns: 1fr; }
+  /* no scroll-pin on mobile — a native swipeable rail instead */
+  .work-grid {
+    width: auto;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 1rem;
+  }
+  .w-card { width: 80vw; scroll-snap-align: start; }
   .s-card { padding: 2.2rem 1.8rem 2.6rem; }
   .footer-cols { grid-template-columns: 1fr; gap: 2.4rem; }
   .footer-base { flex-direction: column; gap: 0.5rem; }

@@ -40,6 +40,10 @@ if (!prefersReduced) {
   lenis.on("scroll", ScrollTrigger.update);
   gsap.ticker.add((time) => lenis.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
+  // ScrollTrigger grows the page with pin-spacers on each refresh; Lenis
+  // caches its scroll limit, so without this it can clamp scrolling short
+  // of a pinned section (e.g. the horizontal work rail) and strand it.
+  ScrollTrigger.addEventListener("refresh", () => lenis.resize());
 }
 
 /* ---------- custom cursor ---------- */
@@ -217,25 +221,31 @@ cards.forEach((card, i) => {
   });
 });
 
-/* ---------- work cards: scale in, fade out on exit ---------- */
-gsap.utils.toArray(".w-card").forEach((card) => {
-  gsap.fromTo(card,
-    { scale: 0.92, opacity: 0.3 },
-    {
-      scale: 1, opacity: 1, ease: "none",
-      scrollTrigger: { trigger: card, start: "top 95%", end: "top 55%", scrub: true },
-    }
-  );
-  // inner image parallax
-  const img = card.querySelector("img");
-  gsap.fromTo(img,
-    { yPercent: -6 },
-    {
-      yPercent: 6, ease: "none",
-      scrollTrigger: { trigger: card, start: "top bottom", end: "bottom top", scrub: true },
-    }
-  );
-});
+/* ---------- work: one horizontal row that slides as you scroll ---------- */
+const workSection = document.querySelector(".work");
+const workGrid = document.querySelector(".work-grid");
+if (workSection && workGrid && !prefersReduced && window.matchMedia("(min-width: 760px)").matches) {
+  // distance to travel: row overflow past the section's content box
+  const travel = () => {
+    const padX = parseFloat(getComputedStyle(workSection).paddingLeft) || 0;
+    return Math.max(0, workGrid.scrollWidth - workSection.clientWidth + padX * 2);
+  };
+  if (travel() > 0) {
+    gsap.to(workGrid, {
+      x: () => -travel(),
+      ease: "none",
+      scrollTrigger: {
+        trigger: workSection,
+        start: "top top",
+        end: () => "+=" + travel(),
+        pin: true,
+        scrub: 0.6,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+      },
+    });
+  }
+}
 
 /* ---------- misc fade-ups ---------- */
 gsap.utils.toArray(".work-lede, .services-lede, .work-head .work-lede").forEach((el) => {
