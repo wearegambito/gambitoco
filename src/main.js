@@ -320,8 +320,8 @@ if (pageVideo && !prefersReduced) {
       // into the footer.
       videoCamera
         .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.18 })
-        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.42 })
-        .to(pageVideo, { ...resting, ease: "none", duration: ctaSpanPx * 0.4 });
+        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.8 })
+        .to(pageVideo, { ...resting, ease: "none", duration: ctaSpanPx * 0.8 });
     }
   }
 
