@@ -283,27 +283,21 @@ if (pageVideo && !prefersReduced) {
   ].filter((s) => s.el);
 
   if (heroEl) {
-    const ctaRight = { xPercent: 16, yPercent: -4, scale: 0.7 };
     const resting = { xPercent: 16, yPercent: 0, scale: 0.8 };
-    // the real scrollable distance across cta can be shorter than its own
-    // offsetHeight (a short footer means the page can't scroll all the
-    // way to cta's true bottom) — measured once for proportional weights
-    const ctaSpanPx = ctaEl
-      ? Math.max(200, Math.min(ctaEl.offsetTop + ctaEl.offsetHeight, document.documentElement.scrollHeight - window.innerHeight) - ctaEl.offsetTop)
-      : 0;
 
     // a single timeline drives the video for the whole post-hero scroll —
-    // story, services, then the cta composition, then the footer rest.
-    // One timeline only: several independent scrub tweens on the same
-    // properties will each hold their own value outside their own range
-    // and silently overwrite each other (this bit us once already).
+    // story, then services, settling into its final composition right as
+    // the contact section begins. One timeline only: several independent
+    // scrub tweens on the same properties will each hold their own value
+    // outside their own range and silently overwrite each other (this bit
+    // us once already).
     const videoCamera = gsap.timeline({
       scrollTrigger: {
         trigger: document.documentElement,
         start: () => heroEl.offsetHeight,
-        end: () => (ctaEl
-          ? Math.min(ctaEl.offsetTop + ctaEl.offsetHeight, document.documentElement.scrollHeight - window.innerHeight)
-          : document.documentElement.scrollHeight),
+        // finish settling before the contact section starts — no more
+        // movement while scrolling through it or into the footer
+        end: () => (ctaEl ? ctaEl.offsetTop : document.documentElement.scrollHeight),
         scrub: 0.6,
       },
     });
@@ -314,14 +308,9 @@ if (pageVideo && !prefersReduced) {
       });
     });
     if (ctaEl) {
-      // cta is a fixed composition: video settles to the right, text sits
-      // left (see .cta-inner). Snaps in quickly, holds through the middle
-      // of the section, then eases out to a wider frame and stays locked
-      // into the footer.
-      videoCamera
-        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.18 })
-        .to(pageVideo, { ...ctaRight, ease: "none", duration: ctaSpanPx * 0.8 })
-        .to(pageVideo, { ...resting, ease: "none", duration: ctaSpanPx * 0.8 });
+      // quick settle into the final composition, timed to resolve right
+      // at the contact section's boundary, then it's locked for good
+      videoCamera.to(pageVideo, { ...resting, ease: "none", duration: 300 });
     }
   }
 
