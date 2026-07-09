@@ -68,6 +68,22 @@ ScrollTrigger.create({
   },
 });
 
+/* ---------- mobile menu ---------- */
+const navToggle = document.getElementById("nav-toggle");
+const mobileMenu = document.getElementById("mobile-menu");
+if (navToggle && mobileMenu) {
+  const setMenu = (open) => {
+    navToggle.classList.toggle("is-open", open);
+    mobileMenu.classList.toggle("is-open", open);
+    navToggle.setAttribute("aria-expanded", String(open));
+    mobileMenu.setAttribute("aria-hidden", String(!open));
+    if (lenis) open ? lenis.stop() : lenis.start();
+  };
+  navToggle.addEventListener("click", () => setMenu(!mobileMenu.classList.contains("is-open")));
+  mobileMenu.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => setMenu(false)));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+}
+
 /* ---------- hero intro timeline ---------- */
 const intro = gsap.timeline({ defaults: { ease: "power4.out" } });
 intro

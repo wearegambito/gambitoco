@@ -62,10 +62,24 @@
     <nav class="nav-links" aria-label="Primary">
       <a href="#services" data-hover>Services</a>
       <a href="#work" data-hover>Work</a>
+      <a href="/insights/" data-hover>Insights</a>
+      <a href="/faq/" data-hover>FAQ</a>
       <a href="#contact" data-hover>Contact</a>
     </nav>
-    <a class="nav-cta" href="#contact" data-hover data-cms="nav_cta">Start the conversation</a>
+    <a class="nav-cta" href="/book/" data-hover data-cms="nav_cta">Start the conversation</a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
   </header>
+
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <nav class="mobile-menu-links" aria-label="Mobile">
+      <a href="#services">Services</a>
+      <a href="#work">Work</a>
+      <a href="/insights/">Insights</a>
+      <a href="/faq/">FAQ</a>
+      <a href="#contact">Contact</a>
+      <a href="/book/" class="mobile-menu-cta">Book a Gameplan Session</a>
+    </nav>
+  </div>
 
   <main id="top">
 
@@ -171,6 +185,10 @@
 
     <footer class="footer">
       <div class="footer-cols">
+        <div class="footer-col">
+          <span class="f-label">Explore</span>
+          <p><a href="#services" data-hover>Services</a><br /><a href="/insights/" data-hover>Insights</a><br /><a href="/faq/" data-hover>FAQ</a><br /><a href="/book/" data-hover>Book a session</a></p>
+        </div>
         <div class="footer-col">
           <span class="f-label">Studio</span>
           <p data-cms="footer_address">Level 1/239 Ponsonby Road<br />Ponsonby, Auckland 1011<br />Aotearoa New Zealand</p>

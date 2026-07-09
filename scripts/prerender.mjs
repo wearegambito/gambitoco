@@ -67,7 +67,13 @@ function head({ title, description, canonical, ogImage, ogType = "website", json
 
 const nav = () => `<header class="c-nav">
     <a class="c-nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" /></a>
-    <a class="c-nav-cta" href="/#contact">Start the conversation</a>
+    <nav class="c-nav-links" aria-label="Primary">
+      <a href="/#services">Services</a>
+      <a href="/#work">Work</a>
+      <a href="/insights/">Insights</a>
+      <a href="/faq/">FAQ</a>
+    </nav>
+    <a class="c-nav-cta" href="/book/">Book a session</a>
   </header>`;
 
 function ctaBlock(sc) {
@@ -83,6 +89,7 @@ function ctaBlock(sc) {
 function footer(sc) {
   return `<footer class="c-footer">
     <div class="c-footer-cols">
+      <div><span class="f-label">Explore</span><p><a href="/#services">Services</a><br /><a href="/insights/">Insights</a><br /><a href="/faq/">FAQ</a><br /><a href="/book/">Book a session</a></p></div>
       <div><span class="f-label">Studio</span><p>${sc.footer_address || ""}</p></div>
       <div><span class="f-label">Talk to us</span><p><a href="mailto:${esc(sc.footer_email || "hello@gambito.co")}">${esc(sc.footer_email || "hello@gambito.co")}</a><br /><a href="tel:${esc((sc.footer_phone || "").replace(/[^\d+]/g, ""))}">${esc(sc.footer_phone || "")}</a></p></div>
       <div><span class="f-label">Elsewhere</span><p><a href="${esc(sc.footer_linkedin_url || "#")}">LinkedIn</a><br /><a href="${esc(sc.footer_instagram_url || "#")}">Instagram</a></p></div>
