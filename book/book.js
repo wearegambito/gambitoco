@@ -14,16 +14,16 @@ const tzAbbr = (() => {
 const detectedPlace = (localTz.split("/").pop() || localTz).replace(/_/g, " ");
 const fmtDay = (d) => d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 const fmtTime = (d) => d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-const fmtShort = (d) => d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
-const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
-const mondayOf = (d) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
-const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+const monthStart = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+const addMonths = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
 
 let config = {};
 let slots = [];
 let selected = null;
-let weekStart = null; // Monday of the currently-shown week
+let viewMonth = null; // first day of the month currently shown in the calendar
+let selectedDayKey = null; // which day's times are open below the calendar
 
 async function load() {
   const [{ data: content }, { data: slotRows, error }] = await Promise.all([
@@ -71,46 +71,90 @@ function renderPicker() {
     return;
   }
 
-  // paginate one week (Mon–Sun) at a time, between the first and last week that hold slots
-  const firstWeek = mondayOf(new Date(slots[0].start_time));
-  const lastWeek = mondayOf(new Date(slots[slots.length - 1].start_time));
-  if (!weekStart) weekStart = firstWeek;
-  if (weekStart < firstWeek) weekStart = firstWeek;
-  if (weekStart > lastWeek) weekStart = lastWeek;
-  const weekEnd = addDays(weekStart, 7);
-  const weekSlots = slots.filter((s) => { const d = new Date(s.start_time); return d >= weekStart && d < weekEnd; });
-
-  const groups = new Map();
-  for (const s of weekSlots) {
-    const key = new Date(s.start_time).toDateString();
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(s);
+  // group available slots by local calendar day
+  const byDay = new Map();
+  for (const s of slots) {
+    const k = dayKey(new Date(s.start_time));
+    if (!byDay.has(k)) byDay.set(k, []);
+    byDay.get(k).push(s);
   }
-  const daysHtml = weekSlots.length
-    ? [...groups.values()].map((daySlots) => {
-        const day = new Date(daySlots[0].start_time);
-        const times = daySlots.map((s) => `<button class="slot" data-id="${s.id}">${esc(fmtTime(new Date(s.start_time)))}</button>`).join("");
-        return `<div class="book-day"><h2 class="book-day-title">${esc(fmtDay(day))}</h2><div class="slot-row">${times}</div></div>`;
-      }).join("")
-    : `<p class="book-empty-week">No open times this week. Use <b>Next →</b> to see the following week.</p>`;
 
-  const canPrev = weekStart > firstWeek;
-  const canNext = weekStart < lastWeek;
+  // paginate one month at a time, clamped to the range that actually holds slots
+  const firstMonth = monthStart(new Date(slots[0].start_time));
+  const lastMonth = monthStart(new Date(slots[slots.length - 1].start_time));
+  if (!viewMonth) viewMonth = firstMonth;
+  if (viewMonth < firstMonth) viewMonth = firstMonth;
+  if (viewMonth > lastMonth) viewMonth = lastMonth;
+  const y = viewMonth.getFullYear(), m = viewMonth.getMonth();
+
+  // available days that fall in the shown month, in date order
+  const monthDays = [...new Set(
+    slots.map((s) => new Date(s.start_time))
+      .filter((d) => d.getFullYear() === y && d.getMonth() === m)
+      .map(dayKey)
+  )];
+  // keep the open day valid for this month; otherwise default to its first open day
+  if (!selectedDayKey || !byDay.has(selectedDayKey) || !monthDays.includes(selectedDayKey)) {
+    selectedDayKey = monthDays[0] || null;
+  }
+
+  const todayKey = dayKey(new Date());
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const leadBlanks = (new Date(y, m, 1).getDay() + 6) % 7; // Monday-first grid offset
+
+  let cells = "";
+  for (let i = 0; i < leadBlanks; i++) cells += `<span class="cal-cell cal-blank"></span>`;
+  for (let n = 1; n <= daysInMonth; n++) {
+    const k = `${y}-${m}-${n}`;
+    const classes = ["cal-cell", "cal-day"];
+    if (k === todayKey) classes.push("is-today");
+    if (byDay.has(k)) {
+      classes.push("has-slots");
+      if (k === selectedDayKey) classes.push("is-selected");
+      const count = byDay.get(k).length;
+      cells += `<button class="${classes.join(" ")}" data-day="${k}" aria-label="${count} time${count === 1 ? "" : "s"} available"><span class="cal-num">${n}</span><span class="cal-dot" aria-hidden="true"></span></button>`;
+    } else {
+      classes.push("is-empty");
+      cells += `<span class="${classes.join(" ")}"><span class="cal-num">${n}</span></span>`;
+    }
+  }
+  const heads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => `<span class="cal-hcell">${d}</span>`).join("");
+
+  // times for the selected day, shown beneath the calendar
+  let timesHtml;
+  if (selectedDayKey && byDay.has(selectedDayKey)) {
+    const daySlots = byDay.get(selectedDayKey);
+    const day = new Date(daySlots[0].start_time);
+    const times = daySlots.map((s) => `<button class="slot" data-id="${s.id}">${esc(fmtTime(new Date(s.start_time)))}</button>`).join("");
+    timesHtml = `<h2 class="book-day-title">${esc(fmtDay(day))}</h2><div class="slot-row">${times}</div>`;
+  } else {
+    timesHtml = `<p class="cal-hint">No open times this month — try the next one.</p>`;
+  }
+
+  const canPrev = viewMonth > firstMonth;
+  const canNext = viewMonth < lastMonth;
+  const monthLabel = viewMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
   app.innerHTML = `${pageHead()}
     <p class="book-tznote">All times below are shown in <b>your local timezone</b> — we've detected you're in <b>${esc(detectedPlace)}</b> (${esc(tzAbbr)}, ${esc(localTz)}). They'll update automatically to wherever you are. Each session is ${esc(config.booking_duration || "30")} minutes.</p>
-    <div class="week-nav">
-      <button class="week-btn" id="prev-week" ${canPrev ? "" : "disabled"} aria-label="Previous week">← Previous</button>
-      <span class="week-label">${esc(fmtShort(weekStart))} – ${esc(fmtShort(addDays(weekStart, 6)))}</span>
-      <button class="week-btn" id="next-week" ${canNext ? "" : "disabled"} aria-label="Next week">Next →</button>
+    <div class="cal">
+      <div class="cal-nav">
+        <button class="week-btn" id="prev-month" ${canPrev ? "" : "disabled"} aria-label="Previous month">←</button>
+        <span class="cal-month">${esc(monthLabel)}</span>
+        <button class="week-btn" id="next-month" ${canNext ? "" : "disabled"} aria-label="Next month">→</button>
+      </div>
+      <div class="cal-grid cal-head">${heads}</div>
+      <div class="cal-grid cal-body">${cells}</div>
+      <p class="cal-legend"><span class="cal-dot" aria-hidden="true"></span> days with open times</p>
     </div>
-    <div class="book-days">${daysHtml}</div>
+    <div class="cal-times" id="cal-times">${timesHtml}</div>
     ${footer()}`;
 
-  const prev = app.querySelector("#prev-week");
-  const next = app.querySelector("#next-week");
-  if (prev && canPrev) prev.addEventListener("click", () => { weekStart = addDays(weekStart, -7); renderPicker(); });
-  if (next && canNext) next.addEventListener("click", () => { weekStart = addDays(weekStart, 7); renderPicker(); });
+  const prev = app.querySelector("#prev-month");
+  const next = app.querySelector("#next-month");
+  if (prev && canPrev) prev.addEventListener("click", () => { viewMonth = addMonths(viewMonth, -1); selectedDayKey = null; renderPicker(); });
+  if (next && canNext) next.addEventListener("click", () => { viewMonth = addMonths(viewMonth, 1); selectedDayKey = null; renderPicker(); });
+  app.querySelectorAll(".cal-day.has-slots").forEach((btn) => btn.addEventListener("click", () => { selectedDayKey = btn.dataset.day; renderPicker(); }));
   app.querySelectorAll(".slot").forEach((btn) => btn.addEventListener("click", () => {
     selected = slots.find((s) => s.id === btn.dataset.id);
     renderForm();

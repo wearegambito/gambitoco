@@ -6,6 +6,7 @@
   --ink-dim: #a3a58c;
   --ink-faint: #5c6b60;
   --ember: #fa4d56;
+  --go: #3ecf8e;
   --line: rgba(240, 231, 212, 0.12);
   --font-display: "Cabinet Grotesk", sans-serif;
   --font-body: "Satoshi", sans-serif;
@@ -259,6 +260,41 @@ em { font-family: var(--serif); font-style: italic; font-weight: 500; }
 .week-label { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
 .book-empty-week { color: var(--ink-dim); padding: 1.5rem 0; }
 .book-empty-week b { color: var(--ink); }
+
+/* month calendar picker */
+.cal {
+  max-width: 560px;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 20px;
+  padding: 1.4rem 1.4rem 1.5rem; margin-bottom: 2.2rem;
+}
+.cal-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+.cal-nav .week-btn { padding: 0.4rem 0.95rem; font-size: 1.05rem; line-height: 1; }
+.cal-month { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.4rem; }
+.cal-head { margin-bottom: 0.4rem; }
+.cal-hcell { text-align: center; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); padding: 0.3rem 0; }
+.cal-cell { aspect-ratio: 1; }
+.cal-blank { visibility: hidden; }
+.cal-day {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.26rem;
+  width: 100%; background: transparent; border: 1px solid transparent; border-radius: 12px;
+  font-family: var(--font-body); color: var(--ink-faint); cursor: default; padding: 0;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.cal-num { font-size: 0.95rem; font-weight: 500; line-height: 1; }
+.cal-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--go); }
+.cal-day.is-empty .cal-dot { display: none; }
+.cal-day.has-slots { color: var(--ink); cursor: pointer; border-color: var(--line); background: rgba(240, 231, 212, 0.02); }
+.cal-day.has-slots:hover { border-color: var(--go); background: rgba(62, 207, 142, 0.09); transform: translateY(-1px); }
+.cal-day.is-today .cal-num { color: var(--ember); }
+.cal-day.is-selected,
+.cal-day.is-selected:hover { border-color: var(--ember); background: rgba(250, 77, 86, 0.13); color: var(--ink); transform: none; }
+.cal-day.is-selected .cal-dot { background: var(--ember); }
+.cal-legend { display: flex; align-items: center; gap: 0.5rem; margin-top: 1.3rem; font-size: 0.78rem; color: var(--ink-faint); }
+.cal-legend .cal-dot { display: inline-block; }
+.cal-times { margin-top: 0.5rem; min-height: 3rem; }
+.cal-hint { color: var(--ink-dim); padding: 1rem 0; }
+
 .book-days { display: flex; flex-direction: column; gap: 2rem; }
 .book-day-title {
   font-family: var(--font-display); font-weight: 700; font-size: 1.15rem;
