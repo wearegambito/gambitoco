@@ -239,6 +239,22 @@ em { font-family: var(--serif); font-style: italic; font-weight: 500; }
 .book-empty a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--ember); }
 .book-tznote { color: var(--ink-faint); font-size: 0.9rem; margin-bottom: 2.5rem; }
 .book-tznote b { color: var(--ink-dim); }
+.week-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.2rem; margin-bottom: 2rem;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 100px;
+}
+.week-btn {
+  background: transparent; border: 1px solid var(--line); color: var(--ink);
+  font-family: var(--font-body); font-size: 0.9rem; font-weight: 600;
+  padding: 0.5rem 1.1rem; border-radius: 100px; cursor: pointer;
+  transition: border-color 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+}
+.week-btn:hover:not(:disabled) { border-color: var(--ember); background: rgba(250, 77, 86, 0.08); }
+.week-btn:disabled { opacity: 0.3; cursor: default; }
+.week-label { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
+.book-empty-week { color: var(--ink-dim); padding: 1.5rem 0; }
+.book-empty-week b { color: var(--ink); }
 .book-days { display: flex; flex-direction: column; gap: 2rem; }
 .book-day-title {
   font-family: var(--font-display); font-weight: 700; font-size: 1.15rem;

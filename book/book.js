@@ -14,10 +14,16 @@ const tzAbbr = (() => {
 const detectedPlace = (localTz.split("/").pop() || localTz).replace(/_/g, " ");
 const fmtDay = (d) => d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 const fmtTime = (d) => d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+const fmtShort = (d) => d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const mondayOf = (d) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
 
 let config = {};
 let slots = [];
 let selected = null;
+let weekStart = null; // Monday of the currently-shown week
 
 async function load() {
   const [{ data: content }, { data: slotRows, error }] = await Promise.all([
@@ -64,24 +70,47 @@ function renderPicker() {
     app.innerHTML = `${pageHead()}<p class="book-empty">No times are open at the moment. Email <a href="mailto:hello@gambito.co">hello@gambito.co</a> and we'll make one work for you.</p>${footer()}`;
     return;
   }
+
+  // paginate one week (Mon–Sun) at a time, between the first and last week that hold slots
+  const firstWeek = mondayOf(new Date(slots[0].start_time));
+  const lastWeek = mondayOf(new Date(slots[slots.length - 1].start_time));
+  if (!weekStart) weekStart = firstWeek;
+  if (weekStart < firstWeek) weekStart = firstWeek;
+  if (weekStart > lastWeek) weekStart = lastWeek;
+  const weekEnd = addDays(weekStart, 7);
+  const weekSlots = slots.filter((s) => { const d = new Date(s.start_time); return d >= weekStart && d < weekEnd; });
+
   const groups = new Map();
-  for (const s of slots) {
-    const d = new Date(s.start_time);
-    const key = d.toDateString();
+  for (const s of weekSlots) {
+    const key = new Date(s.start_time).toDateString();
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(s);
   }
-  const daysHtml = [...groups.entries()].map(([, daySlots]) => {
-    const day = new Date(daySlots[0].start_time);
-    const times = daySlots.map((s) => `<button class="slot" data-id="${s.id}">${esc(fmtTime(new Date(s.start_time)))}</button>`).join("");
-    return `<div class="book-day"><h2 class="book-day-title">${esc(fmtDay(day))}</h2><div class="slot-row">${times}</div></div>`;
-  }).join("");
+  const daysHtml = weekSlots.length
+    ? [...groups.values()].map((daySlots) => {
+        const day = new Date(daySlots[0].start_time);
+        const times = daySlots.map((s) => `<button class="slot" data-id="${s.id}">${esc(fmtTime(new Date(s.start_time)))}</button>`).join("");
+        return `<div class="book-day"><h2 class="book-day-title">${esc(fmtDay(day))}</h2><div class="slot-row">${times}</div></div>`;
+      }).join("")
+    : `<p class="book-empty-week">No open times this week. Use <b>Next →</b> to see the following week.</p>`;
+
+  const canPrev = weekStart > firstWeek;
+  const canNext = weekStart < lastWeek;
 
   app.innerHTML = `${pageHead()}
     <p class="book-tznote">All times below are shown in <b>your local timezone</b> — we've detected you're in <b>${esc(detectedPlace)}</b> (${esc(tzAbbr)}, ${esc(localTz)}). They'll update automatically to wherever you are. Each session is ${esc(config.booking_duration || "30")} minutes.</p>
+    <div class="week-nav">
+      <button class="week-btn" id="prev-week" ${canPrev ? "" : "disabled"} aria-label="Previous week">← Previous</button>
+      <span class="week-label">${esc(fmtShort(weekStart))} – ${esc(fmtShort(addDays(weekStart, 6)))}</span>
+      <button class="week-btn" id="next-week" ${canNext ? "" : "disabled"} aria-label="Next week">Next →</button>
+    </div>
     <div class="book-days">${daysHtml}</div>
     ${footer()}`;
 
+  const prev = app.querySelector("#prev-week");
+  const next = app.querySelector("#next-week");
+  if (prev && canPrev) prev.addEventListener("click", () => { weekStart = addDays(weekStart, -7); renderPicker(); });
+  if (next && canNext) next.addEventListener("click", () => { weekStart = addDays(weekStart, 7); renderPicker(); });
   app.querySelectorAll(".slot").forEach((btn) => btn.addEventListener("click", () => {
     selected = slots.find((s) => s.id === btn.dataset.id);
     renderForm();
