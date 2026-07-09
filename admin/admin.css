@@ -11,6 +11,7 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 body {
   background: var(--bg);
@@ -104,6 +105,23 @@ a { color: inherit; }
   padding: 0.5rem 1rem; border-radius: 100px; cursor: pointer; font-size: 0.85rem;
 }
 .admin-signout:hover { color: var(--ink); }
+.admin-publish {
+  background: var(--ember); border: none; color: var(--ink);
+  padding: 0.5rem 1.1rem; border-radius: 100px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 700; transition: opacity 0.2s ease;
+}
+.admin-publish:hover { opacity: 0.88; }
+.admin-publish:disabled { opacity: 0.45; cursor: default; }
+.panel-note {
+  font-size: 0.85rem; color: var(--ink-dim); margin-bottom: 1.4rem;
+  padding: 0.9rem 1.1rem; background: rgba(240, 231, 212, 0.04);
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.panel-note b { color: var(--ink); }
+.panel-note code {
+  font-family: ui-monospace, monospace; font-size: 0.8rem;
+  background: rgba(240, 231, 212, 0.08); padding: 0.1rem 0.4rem; border-radius: 5px;
+}
 
 .admin-main { max-width: 1000px; margin: 0 auto; padding: 3rem 2rem 6rem; }
 .admin-panel { display: none; }
@@ -129,7 +147,7 @@ a { color: inherit; }
   display: block; font-size: 0.8rem; color: var(--ink-dim);
   margin-bottom: 0.4rem; letter-spacing: 0.02em;
 }
-.field input, .field textarea {
+.field input, .field textarea, .field select {
   width: 100%;
   background: var(--bg-2);
   border: 1px solid var(--line);
@@ -138,8 +156,11 @@ a { color: inherit; }
   outline: none;
   resize: vertical;
 }
-.field input:focus, .field textarea:focus { border-color: rgba(240, 231, 212, 0.35); }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: rgba(240, 231, 212, 0.35); }
 .field textarea { min-height: 4.5rem; line-height: 1.5; }
+.field textarea.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.9rem; min-height: 8rem; }
+.field textarea.mono.tall { min-height: 22rem; }
+.field input[type="date"] { color-scheme: dark; }
 .field-hint { font-size: 0.75rem; color: var(--ink-faint); margin-top: 0.3rem; }
 
 /* ---------- card list (services / case studies) ---------- */

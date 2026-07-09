@@ -34,9 +34,12 @@
         <button class="admin-tab is-active" data-tab="content">Content</button>
         <button class="admin-tab" data-tab="services">Services</button>
         <button class="admin-tab" data-tab="work">Case studies</button>
+        <button class="admin-tab" data-tab="insights">Insights</button>
+        <button class="admin-tab" data-tab="faq">FAQ</button>
       </nav>
       <div class="admin-nav-right">
-        <a href="/" target="_blank" class="admin-view-live" data-hover>View live site ↗</a>
+        <button class="admin-publish" id="publish-btn" title="Rebuild the live site to apply changes to the service, insights and FAQ pages">Publish ↻</button>
+        <a href="/" target="_blank" class="admin-view-live" data-hover>View live ↗</a>
         <button class="admin-signout" id="signout-btn">Sign out</button>
       </div>
     </header>
@@ -71,6 +74,28 @@
         </div>
         <p class="panel-status" id="work-status"></p>
         <div class="card-list" id="work-list"></div>
+      </section>
+
+      <!-- INSIGHTS TAB -->
+      <section class="admin-panel" data-panel="insights">
+        <div class="panel-head">
+          <h2>Insights — articles</h2>
+          <button class="btn" id="add-insight"><span>+ New article</span></button>
+        </div>
+        <p class="panel-note">These are static, SEO-optimised pages. After editing, hit <b>Publish</b> to rebuild the live site.</p>
+        <p class="panel-status" id="insights-status"></p>
+        <div class="card-list" id="insights-list"></div>
+      </section>
+
+      <!-- FAQ TAB -->
+      <section class="admin-panel" data-panel="faq">
+        <div class="panel-head">
+          <h2>FAQ</h2>
+          <button class="btn" id="add-faq"><span>+ Add question</span></button>
+        </div>
+        <p class="panel-note">Powers the <code>/faq</code> page. After editing, hit <b>Publish</b> to rebuild the live site.</p>
+        <p class="panel-status" id="faq-status"></p>
+        <div class="card-list" id="faq-list"></div>
       </section>
 
     </main>
