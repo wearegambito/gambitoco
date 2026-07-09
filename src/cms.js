@@ -63,13 +63,18 @@ export function applyCmsContent({ content, services, caseStudies }) {
   const workGrid = document.querySelector(".work-grid");
   if (workGrid && caseStudies && caseStudies.length) {
     workGrid.innerHTML = caseStudies
-      .map(
-        (c) => `
-        <a class="w-card w-span${c.span === "7" ? "7" : "5"}" href="${escapeHtml(c.link_url || "#contact")}" data-hover>
-          <figure class="w-media"><img src="${escapeHtml(c.image_url)}" alt="${escapeHtml(c.title)}" loading="lazy" /></figure>
+      .map((c) => {
+        const href = c.link_url || "#contact";
+        const external = /^https?:\/\//i.test(href);
+        const linkAttrs = external ? ' target="_blank" rel="noopener noreferrer"' : "";
+        const extBadge = external ? `<span class="w-ext" aria-hidden="true">↗</span>` : "";
+        const extLabel = external ? " (opens in a new tab)" : "";
+        return `
+        <a class="w-card w-span${c.span === "7" ? "7" : "5"}" href="${escapeHtml(href)}"${linkAttrs} data-hover aria-label="${escapeHtml(c.title)}${extLabel}">
+          <figure class="w-media"><img src="${escapeHtml(c.image_url)}" alt="${escapeHtml(c.title)}" loading="lazy" />${extBadge}</figure>
           <div class="w-meta"><h3>${escapeHtml(c.title)}</h3><span>${escapeHtml(c.category)}</span></div>
-        </a>`
-      )
+        </a>`;
+      })
       .join("");
   }
 }
