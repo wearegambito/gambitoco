@@ -330,7 +330,7 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
 .s-num {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: clamp(1.3rem, 1.8vw, 1.7rem);
+  font-size: clamp(1.6rem, 2.3vw, 2.3rem);
   line-height: 1;
   color: var(--ember);
   letter-spacing: 0.02em;
