@@ -9,6 +9,9 @@ const tzAbbr = (() => {
     return new Intl.DateTimeFormat("en", { timeZoneName: "short" }).formatToParts(new Date()).find((p) => p.type === "timeZoneName")?.value || localTz;
   } catch { return localTz; }
 })();
+// the browser exposes the timezone (not precise location); its IANA city is a
+// good, honest proxy for "where we think you are", e.g. Pacific/Auckland → Auckland
+const detectedPlace = (localTz.split("/").pop() || localTz).replace(/_/g, " ");
 const fmtDay = (d) => d.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 const fmtTime = (d) => d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
@@ -75,7 +78,7 @@ function renderPicker() {
   }).join("");
 
   app.innerHTML = `${pageHead()}
-    <p class="book-tznote">Times shown in your timezone — <b>${esc(tzAbbr)}</b> (${esc(localTz)}). Each session is ${esc(config.booking_duration || "30")} minutes.</p>
+    <p class="book-tznote">All times below are shown in <b>your local timezone</b> — we've detected you're in <b>${esc(detectedPlace)}</b> (${esc(tzAbbr)}, ${esc(localTz)}). They'll update automatically to wherever you are. Each session is ${esc(config.booking_duration || "30")} minutes.</p>
     <div class="book-days">${daysHtml}</div>
     ${footer()}`;
 

@@ -55,7 +55,7 @@ const RESOURCES = {
     fields: [
       { name: "number", label: "Number", type: "input" },
       { name: "title", label: "Title", type: "input" },
-      { name: "slug", label: "URL slug", type: "input", hint: "Page lives at /services/<slug>/" },
+      { name: "slug", label: "URL slug", type: "input", hint: "Page lives at /services/{slug}/" },
       { name: "tag", label: "Tag line", type: "input" },
       { name: "description", label: "Card description (homepage)", type: "textarea", full: true },
       { name: "body", label: "Detail page content", type: "markdown", full: true, hint: "Markdown. Use ## for headings, - for bullets, **bold**." },
@@ -64,6 +64,33 @@ const RESOURCES = {
       { name: "seo_description", label: "SEO description", type: "textarea", full: true },
     ],
     newRow: (n) => ({ order_index: n, number: String(n).padStart(2, "0"), title: "New service", slug: "new-service-" + Date.now(), description: "", tag: "", body: "", published: false }),
+  },
+  offerings: {
+    table: "offerings",
+    listSel: "#offerings-list", statusSel: "#offerings-status", addBtnSel: "#add-offering",
+    order: { column: "order_index", ascending: true }, orderable: true,
+    savedMsg: "Saved. Hit Publish to rebuild the live page.",
+    fields: [
+      { name: "service_slug", label: "Parent service slug", type: "input", hint: "e.g. discovery — must match a service's slug." },
+      { name: "slug", label: "URL slug", type: "input", hint: "Lives at /services/{service}/{slug}/" },
+      { name: "title", label: "Title", type: "input" },
+      { name: "eyebrow", label: "Eyebrow", type: "input", hint: "e.g. Discovery · Sprint" },
+      { name: "tagline", label: "Tagline", type: "input", full: true },
+      { name: "intro", label: "Intro", type: "textarea", full: true },
+      { name: "hero_image", label: "Hero image", type: "image", full: true },
+      { name: "formats", label: "Formats", type: "json", full: true, hint: 'JSON array of {"name","meta","detail"}.' },
+      { name: "highlights", label: "Stat highlights", type: "json", full: true, hint: 'JSON array of {"value","label"}.' },
+      { name: "process", label: "Process phases", type: "json", full: true, hint: 'JSON array of {"phase","title","items":[...]}.' },
+      { name: "deliverables", label: "Deliverables", type: "json", full: true, hint: 'JSON array of strings.' },
+      { name: "good_for", label: "Works well for", type: "json", full: true, hint: 'JSON array of strings.' },
+      { name: "not_for", label: "Not the right fit for", type: "json", full: true, hint: 'JSON array of strings.' },
+      { name: "body", label: "Extra body (optional)", type: "markdown", full: true, hint: "Markdown, appended below the structured sections." },
+      { name: "cta_label", label: "CTA label", type: "input" },
+      { name: "cta_link", label: "CTA link", type: "input" },
+      { name: "seo_title", label: "SEO title", type: "input", full: true },
+      { name: "seo_description", label: "SEO description", type: "textarea", full: true },
+    ],
+    newRow: (n) => ({ order_index: n, service_slug: "discovery", slug: "new-offering-" + Date.now(), title: "New offering", tagline: "", published: false }),
   },
   case_studies: {
     table: "case_studies",
@@ -87,7 +114,7 @@ const RESOURCES = {
     savedMsg: "Saved. Hit Publish to rebuild the live pages.",
     fields: [
       { name: "title", label: "Title", type: "input", full: true },
-      { name: "slug", label: "URL slug", type: "input", hint: "Lives at /insights/<slug>/" },
+      { name: "slug", label: "URL slug", type: "input", hint: "Lives at /insights/{slug}/" },
       { name: "category", label: "Category", type: "input" },
       { name: "author", label: "Author", type: "input" },
       { name: "published_at", label: "Publish date", type: "date" },
@@ -214,6 +241,7 @@ function fieldHtml(f, row) {
   let control;
   if (f.type === "textarea") control = `<textarea data-field="${f.name}">${esc(v)}</textarea>`;
   else if (f.type === "markdown") control = `<textarea data-field="${f.name}" class="mono${f.tall ? " tall" : ""}">${esc(v)}</textarea>`;
+  else if (f.type === "json") control = `<textarea data-field="${f.name}" data-json="1" class="mono tall">${esc(JSON.stringify(v ?? [], null, 2))}</textarea>`;
   else if (f.type === "date") control = `<input type="date" data-field="${f.name}" value="${attr((v || "").slice(0, 10))}" />`;
   else if (f.type === "select") control = `<select data-field="${f.name}">${f.options.map(([val, lab]) => `<option value="${val}" ${String(v) === val ? "selected" : ""}>${lab}</option>`).join("")}</select>`;
   else if (f.type === "image") control = `
@@ -257,9 +285,17 @@ function wireCards(key, rows) {
 
     card.querySelector('[data-action="save"]').addEventListener("click", async () => {
       const patch = {};
+      let jsonError = null;
       card.querySelectorAll("[data-field]").forEach((input) => {
-        patch[input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
+        if (input.dataset.json) {
+          const raw = input.value.trim();
+          try { patch[input.dataset.field] = raw ? JSON.parse(raw) : []; }
+          catch { jsonError = input.dataset.field; }
+        } else {
+          patch[input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
+        }
       });
+      if (jsonError) { setStatus(cfg.statusSel, `Invalid JSON in "${jsonError}" — check the brackets and quotes.`, "error"); return; }
       setStatus(cfg.statusSel, "Saving...");
       const { error } = await supabase.from(cfg.table).update(patch).eq("id", id);
       if (error) setStatus(cfg.statusSel, error.message, "error");

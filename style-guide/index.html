@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <title>Style Guide — Gambito Design System</title>
+  <meta name="description" content="The Gambito design system: brand direction, colour, typography, components, motion and voice." />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500,700&f[]=gambetta@2,500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #032721; --bg-2: #063a2f; --ink: #f0e7d4; --ink-dim: #a3a58c; --ink-faint: #5c6b60;
+      --ember: #fa4d56; --line: rgba(240, 231, 212, 0.12);
+      --font-display: "Cabinet Grotesk", sans-serif; --font-body: "Satoshi", sans-serif; --serif: "Gambetta", Georgia, serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--ink); font-family: var(--font-body); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    .sg-wrap { max-width: 1000px; margin: 0 auto; padding: 0 1.6rem; }
+    a { color: inherit; }
+
+    header.sg-top { display: flex; align-items: center; justify-content: space-between; padding: 2rem 1.6rem; max-width: 1000px; margin: 0 auto; }
+    header.sg-top img { height: 20px; }
+    header.sg-top a { font-size: 0.85rem; color: var(--ink-dim); text-decoration: none; }
+
+    .sg-hero { padding: 3rem 0 2rem; }
+    .sg-kicker { font-size: 0.78rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ember); margin-bottom: 1rem; }
+    .sg-hero h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 6vw, 4rem); line-height: 1.02; letter-spacing: -0.025em; }
+    .sg-hero p { color: var(--ink-dim); font-size: 1.2rem; max-width: 640px; margin-top: 1.4rem; }
+    .sg-hero em { font-family: var(--serif); font-style: italic; color: var(--ember); }
+
+    section.sg { padding: 3.5rem 0; border-top: 1px solid var(--line); }
+    .sg-h2 { font-family: var(--font-display); font-weight: 800; font-size: 1.8rem; letter-spacing: -0.02em; margin-bottom: 0.6rem; }
+    .sg-sub { color: var(--ink-faint); font-size: 0.9rem; letter-spacing: 0.02em; margin-bottom: 2rem; }
+
+    /* swatches */
+    .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .swatch { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .swatch-chip { height: 92px; }
+    .swatch-meta { padding: 0.9rem 1rem 1.1rem; }
+    .swatch-name { font-weight: 700; }
+    .swatch-hex { font-family: ui-monospace, monospace; font-size: 0.85rem; color: var(--ink-dim); margin-top: 0.2rem; }
+    .swatch-use { font-size: 0.82rem; color: var(--ink-faint); margin-top: 0.5rem; }
+
+    /* type */
+    .type-row { padding: 1.4rem 0; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 160px 1fr; gap: 1.5rem; align-items: baseline; }
+    .type-row:last-child { border-bottom: none; }
+    .type-label { font-size: 0.8rem; color: var(--ink-faint); letter-spacing: 0.04em; }
+    .type-label b { display: block; color: var(--ink-dim); font-weight: 500; margin-bottom: 0.2rem; }
+    .d-xl { font-family: var(--font-display); font-weight: 800; font-size: 3rem; letter-spacing: -0.025em; line-height: 1; }
+    .d-l { font-family: var(--font-display); font-weight: 800; font-size: 2rem; letter-spacing: -0.02em; }
+    .serif-l { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 2rem; }
+    .body-l { font-size: 1.15rem; color: var(--ink-dim); }
+    .body-m { font-size: 1rem; color: var(--ink-dim); }
+    .eyebrow { font-size: 0.78rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--ember); }
+
+    /* components */
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.2rem; }
+    .comp-cell { border: 1px solid var(--line); border-radius: 16px; padding: 1.8rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
+    .comp-label { font-size: 0.78rem; color: var(--ink-faint); letter-spacing: 0.06em; text-transform: uppercase; }
+    .btn-solid { display: inline-block; background: var(--ink); color: var(--bg); font-weight: 700; padding: 0.9rem 1.8rem; border-radius: 100px; text-decoration: none; border: none; cursor: pointer; }
+    .btn-ghost { display: inline-block; background: transparent; color: var(--ink); border: 1px solid rgba(240, 231, 212, 0.28); font-weight: 700; padding: 0.9rem 1.8rem; border-radius: 100px; text-decoration: none; }
+    .glass { background: linear-gradient(160deg, rgba(240, 231, 212, 0.09), rgba(6, 58, 47, 0.28)); backdrop-filter: blur(20px); border: 1px solid rgba(240, 231, 212, 0.16); border-radius: 16px; padding: 1.4rem 1.6rem; width: 100%; }
+    .glass h4 { font-family: var(--font-display); font-weight: 800; }
+    .glass p { color: var(--ink-dim); font-size: 0.9rem; margin-top: 0.4rem; }
+    .panel { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 1.4rem 1.6rem; width: 100%; }
+
+    /* principles */
+    .principles { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .principle { border: 1px solid var(--line); border-radius: 14px; padding: 1.4rem 1.6rem; }
+    .principle h4 { font-family: var(--font-display); font-weight: 700; margin-bottom: 0.4rem; }
+    .principle p { color: var(--ink-dim); font-size: 0.95rem; }
+    .principle .num { color: var(--ember); font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; }
+
+    .token-row { display: flex; justify-content: space-between; padding: 0.7rem 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; }
+    .token-row code { font-family: ui-monospace, monospace; color: var(--ink-dim); }
+
+    footer.sg-foot { border-top: 1px solid var(--line); padding: 2.5rem 0; color: var(--ink-faint); font-size: 0.85rem; }
+
+    @media (max-width: 640px) {
+      .type-row { grid-template-columns: 1fr; gap: 0.5rem; }
+      .principles { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="sg-top">
+    <a href="/"><img src="/logo-full.svg" alt="Gambito" /></a>
+    <a href="/">← Back to site</a>
+  </header>
+
+  <div class="sg-wrap">
+    <div class="sg-hero">
+      <p class="sg-kicker">Design System</p>
+      <h1>The Gambito <em>style guide.</em></h1>
+      <p>The system behind the site — colour, type, components, motion and voice. Built to feel like a sophisticated presence in a black classy dress: intimidatingly composed, then warm and human the moment you engage.</p>
+    </div>
+
+    <!-- BRAND -->
+    <section class="sg">
+      <h2 class="sg-h2">Brand direction</h2>
+      <p class="sg-sub">The through-line for every decision.</p>
+      <div class="principles">
+        <div class="principle"><h4>The gambit</h4><p>A gambit is a confident opening move — risking a small piece for a decisive advantage. Everything ladders back to helping founders move from hesitation to action.</p></div>
+        <div class="principle"><h4>Composed, then warm</h4><p>Deep, restrained, expensive at first glance. Approachable, empathetic and jargon-free the moment you interact. Never cold, never loud.</p></div>
+        <div class="principle"><h4>Motion is the medium</h4><p>The beauty comes from movement — a scroll-scrubbed cinematic backdrop and considered, physics-led transitions rather than decoration.</p></div>
+        <div class="principle"><h4>One bold note</h4><p>A single coral accent, used like lipstick — sparingly, deliberately, and only where it earns attention.</p></div>
+      </div>
+    </section>
+
+    <!-- LOGO -->
+    <section class="sg">
+      <h2 class="sg-h2">Logo</h2>
+      <p class="sg-sub">Coral wordmark and standalone mark, always on the racing-green field.</p>
+      <div class="comp-grid">
+        <div class="comp-cell"><span class="comp-label">Wordmark</span><img src="/logo-full.svg" alt="Gambito wordmark" style="height:26px" /></div>
+        <div class="comp-cell"><span class="comp-label">Mark</span><img src="/logo-mark.svg" alt="Gambito mark" style="height:44px" /></div>
+        <div class="comp-cell"><span class="comp-label">Favicon</span><img src="/favicon.png" alt="Gambito favicon" style="height:44px;border-radius:8px" /></div>
+      </div>
+    </section>
+
+    <!-- COLOUR -->
+    <section class="sg">
+      <h2 class="sg-h2">Colour</h2>
+      <p class="sg-sub">British racing green base · creamy beige ink · one coral accent.</p>
+      <div class="swatches">
+        <div class="swatch"><div class="swatch-chip" style="background:#032721"></div><div class="swatch-meta"><div class="swatch-name">Racing Green</div><div class="swatch-hex">#032721</div><div class="swatch-use">Primary background</div></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#063a2f"></div><div class="swatch-meta"><div class="swatch-name">Panel Green</div><div class="swatch-hex">#063a2f</div><div class="swatch-use">Cards & surfaces</div></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#f0e7d4"></div><div class="swatch-meta"><div class="swatch-name">Cream</div><div class="swatch-hex">#f0e7d4</div><div class="swatch-use">Primary text</div></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#a3a58c"></div><div class="swatch-meta"><div class="swatch-name">Sage Dim</div><div class="swatch-hex">#a3a58c</div><div class="swatch-use">Secondary text</div></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#5c6b60"></div><div class="swatch-meta"><div class="swatch-name">Deep Sage</div><div class="swatch-hex">#5c6b60</div><div class="swatch-use">Faint labels</div></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#fa4d56"></div><div class="swatch-meta"><div class="swatch-name">Coral</div><div class="swatch-hex">#fa4d56</div><div class="swatch-use">Accent — use sparingly</div></div></div>
+      </div>
+    </section>
+
+    <!-- TYPE -->
+    <section class="sg">
+      <h2 class="sg-h2">Typography</h2>
+      <p class="sg-sub">Cabinet Grotesk for display · Satoshi for body · Gambetta italic for emphasis.</p>
+      <div class="type-row"><div class="type-label"><b>Cabinet Grotesk 800</b>Display XL</div><div class="d-xl">Your boldest move</div></div>
+      <div class="type-row"><div class="type-label"><b>Cabinet Grotesk 800</b>Display L / H2</div><div class="d-l">Openings we've played</div></div>
+      <div class="type-row"><div class="type-label"><b>Gambetta 500 italic</b>Serif emphasis</div><div class="serif-l">a conversation.</div></div>
+      <div class="type-row"><div class="type-label"><b>Satoshi 400</b>Body large</div><div class="body-l">Deep technology, sharp design, and people you'll actually enjoy talking to.</div></div>
+      <div class="type-row"><div class="type-label"><b>Satoshi 500</b>Body</div><div class="body-m">One studio across the whole board — from the first question to the thousandth user.</div></div>
+      <div class="type-row"><div class="type-label"><b>Satoshi 500</b>Eyebrow / label</div><div class="eyebrow">Venture studio — Auckland</div></div>
+    </section>
+
+    <!-- COMPONENTS -->
+    <section class="sg">
+      <h2 class="sg-h2">Components</h2>
+      <p class="sg-sub">Rounded, generous, restrained.</p>
+      <div class="comp-grid">
+        <div class="comp-cell"><span class="comp-label">Primary button</span><a class="btn-solid" href="#">Make your move</a></div>
+        <div class="comp-cell"><span class="comp-label">Ghost button</span><a class="btn-ghost" href="#">See how we work</a></div>
+        <div class="comp-cell"><span class="comp-label">Glass card</span><div class="glass"><h4>Design</h4><p>Products people feel — prototyped, tested, refined.</p></div></div>
+        <div class="comp-cell"><span class="comp-label">Solid panel</span><div class="panel"><h4 style="font-family:var(--font-display);font-weight:800">Panel</h4><p style="color:var(--ink-dim);font-size:0.9rem;margin-top:0.4rem">The lifted surface used for cards and forms.</p></div></div>
+      </div>
+    </section>
+
+    <!-- MOTION -->
+    <section class="sg">
+      <h2 class="sg-h2">Motion</h2>
+      <p class="sg-sub">Every movement is scroll-driven, eased and deliberate.</p>
+      <div class="principles">
+        <div class="principle"><span class="num">01</span><h4>Scrubbed backdrop</h4><p>A page-wide video scrubs to scroll position — the frame advances as you move, never plays on its own.</p></div>
+        <div class="principle"><span class="num">02</span><h4>Scene camera</h4><p>The backdrop pans and zooms scene by scene on a single continuous timeline, settling before the contact section.</p></div>
+        <div class="principle"><span class="num">03</span><h4>Word-scrub reveals</h4><p>Copy lights up word by word as it enters view, tying reading pace to scroll.</p></div>
+        <div class="principle"><span class="num">04</span><h4>The easing</h4><p>Primary curve is <code style="font-family:ui-monospace,monospace;color:var(--ink-dim)">cubic-bezier(0.19, 1, 0.22, 1)</code> — a quick, confident settle.</p></div>
+      </div>
+    </section>
+
+    <!-- VOICE -->
+    <section class="sg">
+      <h2 class="sg-h2">Voice &amp; tone</h2>
+      <p class="sg-sub">Confident, warm, and completely free of jargon.</p>
+      <div class="principles">
+        <div class="principle"><h4>Say it plainly</h4><p>If you wouldn't say it at dinner, don't write it. Explain, never posture.</p></div>
+        <div class="principle"><h4>Short, then sharp</h4><p>Lead with a plain line, land with a pointed one. "Launch is move one."</p></div>
+        <div class="principle"><h4>Speak to the founder</h4><p>Empathetic and direct. We name the hesitation, then offer the move.</p></div>
+        <div class="principle"><h4>Chess, lightly</h4><p>The gambit metaphor is a seasoning, not the whole meal — openings, moves, the board.</p></div>
+      </div>
+    </section>
+
+    <!-- TOKENS -->
+    <section class="sg">
+      <h2 class="sg-h2">Tokens</h2>
+      <p class="sg-sub">Radius &amp; spacing shorthand.</p>
+      <div class="token-row"><span>Card radius</span><code>16–20px</code></div>
+      <div class="token-row"><span>Pill / button radius</span><code>100px</code></div>
+      <div class="token-row"><span>Section rhythm (desktop)</span><code>~12rem vertical</code></div>
+      <div class="token-row"><span>Content max width</span><code>820px prose · 1500px sections</code></div>
+      <div class="token-row"><span>Hairline</span><code>1px rgba(240,231,212,0.12)</code></div>
+    </section>
+  </div>
+
+  <footer class="sg-foot"><div class="sg-wrap">Gambito Design System · internal reference</div></footer>
+</body>
+</html>

@@ -33,6 +33,7 @@
       <nav class="admin-tabs">
         <button class="admin-tab is-active" data-tab="content">Content</button>
         <button class="admin-tab" data-tab="services">Services</button>
+        <button class="admin-tab" data-tab="offerings">Offerings</button>
         <button class="admin-tab" data-tab="work">Case studies</button>
         <button class="admin-tab" data-tab="insights">Insights</button>
         <button class="admin-tab" data-tab="faq">FAQ</button>
@@ -65,6 +66,17 @@
         </div>
         <p class="panel-status" id="services-status"></p>
         <div class="card-list" id="services-list"></div>
+      </section>
+
+      <!-- OFFERINGS TAB -->
+      <section class="admin-panel" data-panel="offerings">
+        <div class="panel-head">
+          <h2>Offerings — sub-service pages</h2>
+          <button class="btn" id="add-offering"><span>+ Add offering</span></button>
+        </div>
+        <p class="panel-note">Detailed programme pages nested under a service, e.g. <code>/services/discovery/idea-evaluation-sprint</code>. The repeating sections (formats, process, etc.) are edited as JSON. Static — hit <b>Publish</b> after editing.</p>
+        <p class="panel-status" id="offerings-status"></p>
+        <div class="card-list" id="offerings-list"></div>
       </section>
 
       <!-- WORK TAB -->

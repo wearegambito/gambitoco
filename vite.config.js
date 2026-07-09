@@ -9,6 +9,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         admin: resolve(__dirname, "admin/index.html"),
         book: resolve(__dirname, "book/index.html"),
+        styleguide: resolve(__dirname, "style-guide/index.html"),
       },
     },
   },

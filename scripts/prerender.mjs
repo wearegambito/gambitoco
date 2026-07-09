@@ -121,7 +121,7 @@ const breadcrumbLd = (site, items) => ({
 });
 
 /* ---------- page renderers ---------- */
-function servicePage(svc, sc, site) {
+function servicePage(svc, offerings, sc, site) {
   const url = abs(site, `/services/${svc.slug}/`);
   const title = svc.seo_title || `${svc.title} | Gambito`;
   const desc = svc.seo_description || svc.description;
@@ -137,6 +137,19 @@ function servicePage(svc, sc, site) {
     url,
   };
   const crumbs = breadcrumbLd(site, [{ name: "Home", path: "/" }, { name: svc.title, path: `/services/${svc.slug}/` }]);
+  const offeringsHtml = offerings.length
+    ? `<div class="offer-list">
+        <h2 class="offer-list-title">Ways to start</h2>
+        <div class="offer-cards">
+          ${offerings.map((o) => `<a class="offer-card" href="/services/${esc(svc.slug)}/${esc(o.slug)}/">
+            <span class="offer-card-eyebrow">${esc(o.eyebrow || "Programme")}</span>
+            <h3>${esc(o.title)}</h3>
+            <p>${esc(o.tagline)}</p>
+            <span class="offer-card-go">Explore →</span>
+          </a>`).join("")}
+        </div>
+      </div>`
+    : "";
   const main = `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span>${esc(svc.title)}</nav>
   <article class="wrap">
     <div class="page-head">
@@ -146,10 +159,74 @@ function servicePage(svc, sc, site) {
     </div>
     ${svc.hero_image ? `<div class="cover"><img src="${esc(svc.hero_image)}" alt="${esc(svc.title)}" /></div>` : ""}
     <div class="prose">${bodyHtml}</div>
+    ${offeringsHtml}
   </article>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
   return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, jsonLd: [serviceLd, crumbs] }), main });
+}
+
+function offeringPage(off, serviceTitle, sc, site) {
+  const path = `/services/${off.service_slug}/${off.slug}/`;
+  const url = abs(site, path);
+  const title = off.seo_title || `${off.title} | Gambito`;
+  const desc = off.seo_description || off.tagline;
+  const ogImage = abs(site, off.og_image || sc.og_image || "/favicon.png");
+  const arr = (v) => (Array.isArray(v) ? v : []);
+
+  const formats = arr(off.formats).map((f) => `<div class="fmt-card">
+      <h3>${esc(f.name)}</h3>
+      ${f.meta ? `<span class="fmt-meta">${esc(f.meta)}</span>` : ""}
+      <p>${esc(f.detail)}</p>
+    </div>`).join("");
+  const highlights = arr(off.highlights).map((h) => `<div class="stat"><span class="stat-value">${esc(h.value)}</span><span class="stat-label">${esc(h.label)}</span></div>`).join("");
+  const process = arr(off.process).map((p) => `<div class="phase">
+      <div class="phase-head"><span class="phase-tag">${esc(p.phase)}</span><h3>${esc(p.title)}</h3></div>
+      <ul>${arr(p.items).map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+    </div>`).join("");
+  const deliverables = arr(off.deliverables).map((d) => `<li>${esc(d)}</li>`).join("");
+  const goodFor = arr(off.good_for).map((d) => `<li>${esc(d)}</li>`).join("");
+  const notFor = arr(off.not_for).map((d) => `<li>${esc(d)}</li>`).join("");
+
+  const offeringLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: off.title,
+    serviceType: serviceTitle,
+    description: desc,
+    provider: { "@type": "Organization", name: "Gambito", url: site },
+    areaServed: "Worldwide",
+    url,
+  };
+  const crumbs = breadcrumbLd(site, [
+    { name: "Home", path: "/" },
+    { name: serviceTitle, path: `/services/${off.service_slug}/` },
+    { name: off.title, path },
+  ]);
+
+  const main = `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/services/${esc(off.service_slug)}/">${esc(serviceTitle)}</a><span>/</span>${esc(off.title)}</nav>
+  <div class="wrap-wide offering">
+    <header class="offer-hero">
+      ${off.eyebrow ? `<p class="page-eyebrow">${esc(off.eyebrow)}</p>` : ""}
+      <h1 class="page-title">${esc(off.title)}</h1>
+      <p class="offer-tagline">${esc(off.tagline)}</p>
+      ${off.intro ? `<p class="offer-intro">${esc(off.intro)}</p>` : ""}
+      <a class="btn-solid" href="${esc(off.cta_link || "/book/")}">${esc(off.cta_label || "Book a Gameplan Session")}</a>
+    </header>
+
+    ${highlights ? `<div class="stats-row">${highlights}</div>` : ""}
+    ${formats ? `<section class="offer-section"><h2 class="offer-h2">Two ways to run it</h2><div class="fmt-cards">${formats}</div></section>` : ""}
+    ${process ? `<section class="offer-section"><h2 class="offer-h2">How the sprint runs</h2><div class="phases">${process}</div></section>` : ""}
+    ${deliverables ? `<section class="offer-section"><h2 class="offer-h2">What's included</h2><ul class="tick-list">${deliverables}</ul></section>` : ""}
+    ${(goodFor || notFor) ? `<section class="offer-section"><div class="fit-grid">
+      ${goodFor ? `<div class="fit-col fit-good"><h3>Works well for</h3><ul>${goodFor}</ul></div>` : ""}
+      ${notFor ? `<div class="fit-col fit-bad"><h3>Not the right fit for</h3><ul>${notFor}</ul></div>` : ""}
+    </div></section>` : ""}
+    ${off.body ? `<section class="offer-section wrap prose">${marked.parse(off.body)}</section>` : ""}
+  </div>
+  ${ctaBlock(sc)}
+  ${footer(sc)}`;
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, jsonLd: [offeringLd, crumbs] }), main });
 }
 
 function insightsIndex(posts, sc, site) {
@@ -283,15 +360,18 @@ Sitemap: ${abs(site, "/sitemap.xml")}`;
 
 /* ---------- run ---------- */
 async function run() {
-  const [{ data: content }, { data: services }, { data: insights }, { data: faqs }] = await Promise.all([
+  const [{ data: content }, { data: services }, { data: insights }, { data: faqs }, { data: offerings }] = await Promise.all([
     supabase.from("site_content").select("key, value"),
     supabase.from("services").select("*").eq("published", true).order("order_index"),
     supabase.from("insights").select("*").eq("published", true).order("published_at", { ascending: false }),
     supabase.from("faqs").select("*").eq("published", true).order("order_index"),
+    supabase.from("offerings").select("*").eq("published", true).order("order_index"),
   ]);
 
   const sc = Object.fromEntries((content || []).map((r) => [r.key, r.value]));
   const site = sc.site_url || FALLBACK_SITE_URL;
+  const allOfferings = offerings || [];
+  const serviceTitle = Object.fromEntries((services || []).map((s) => [s.slug, s.title]));
 
   const urls = [
     { loc: "/", changefreq: "weekly", priority: "1.0" },
@@ -301,8 +381,14 @@ async function run() {
   ];
 
   for (const svc of services || []) {
-    await write(`services/${svc.slug}/index.html`, servicePage(svc, sc, site));
+    const svcOfferings = allOfferings.filter((o) => o.service_slug === svc.slug);
+    await write(`services/${svc.slug}/index.html`, servicePage(svc, svcOfferings, sc, site));
     urls.push({ loc: `/services/${svc.slug}/`, changefreq: "monthly", priority: "0.8", lastmod: (svc.updated_at || "").slice(0, 10) });
+  }
+
+  for (const off of allOfferings) {
+    await write(`services/${off.service_slug}/${off.slug}/index.html`, offeringPage(off, serviceTitle[off.service_slug] || "Services", sc, site));
+    urls.push({ loc: `/services/${off.service_slug}/${off.slug}/`, changefreq: "monthly", priority: "0.8", lastmod: (off.updated_at || "").slice(0, 10) });
   }
 
   if (insights && insights.length) {
@@ -320,7 +406,7 @@ async function run() {
   await write("sitemap.xml", sitemapXml(site, urls));
   await write("robots.txt", robotsTxt(site));
 
-  console.log(`\nPrerender complete: ${(services || []).length} services, ${(insights || []).length} insights, ${(faqs || []).length} faqs.`);
+  console.log(`\nPrerender complete: ${(services || []).length} services, ${allOfferings.length} offerings, ${(insights || []).length} insights, ${(faqs || []).length} faqs.`);
 }
 
 run().catch((err) => {
