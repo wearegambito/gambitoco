@@ -307,6 +307,7 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
 .services-lede { margin-top: 1.8rem; color: var(--ink-dim); max-width: 380px; font-size: 1.1rem; }
 .services-stack { display: flex; flex-direction: column; gap: 2.5rem; }
 .s-card {
+  display: block; text-decoration: none; color: inherit;
   position: sticky;
   top: 16vh;
   background: linear-gradient(160deg, rgba(240, 231, 212, 0.09), rgba(6, 58, 47, 0.28));
@@ -340,12 +341,24 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
 }
 .s-card p { color: var(--ink-dim); max-width: 560px; font-size: 1.08rem; }
 .s-tag {
-  display: inline-block;
+  display: block;
   margin-top: 1.8rem;
   font-size: 0.78rem; font-weight: 500;
   letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--ink-faint);
 }
+.s-go {
+  display: inline-block;
+  margin-top: 1.6rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: var(--ink-dim);
+  transform: translateX(0);
+  transition: color 0.35s ease, transform 0.35s ease;
+}
+.s-card:hover .s-go { color: var(--ember); transform: translateX(6px); }
 
 /* ---------- work ---------- */
 .work { padding: 6rem 3rem 12rem; }

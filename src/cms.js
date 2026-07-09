@@ -49,11 +49,12 @@ export function applyCmsContent({ content, services, caseStudies }) {
     servicesStack.innerHTML = services
       .map(
         (s) => `
-        <article class="s-card" data-hover>
+        <a class="s-card" href="/services/${escapeHtml(s.slug)}/" data-hover>
           <div class="s-card-top"><span class="s-num">${escapeHtml(s.number)}</span><h3>${escapeHtml(s.title)}</h3></div>
           <p>${escapeHtml(s.description)}</p>
           <span class="s-tag">${escapeHtml(s.tag)}</span>
-        </article>`
+          <span class="s-go">Explore ${escapeHtml(s.title)} →</span>
+        </a>`
       )
       .join("");
   }
