@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gambito — The venture studio for your boldest move</title>
+  <meta name="description" content="Gambito is an Auckland venture studio. Strategy, design and engineering for founders ready to stop hesitating — technology leaders you can actually talk to." />
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500,700&f[]=gambetta@2,500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+
+  <div class="cursor" aria-hidden="true"><span class="cursor-dot"></span></div>
+
+  <div class="page-bg" aria-hidden="true">
+    <video class="page-video" id="page-video" muted loop playsinline preload="auto">
+      <source src="/hero.mp4" type="video/mp4" />
+    </video>
+    <div class="page-veil"></div>
+  </div>
+
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="#top" aria-label="Gambito">
+      <img src="/logo-full.svg" alt="Gambito" class="nav-brand-logo" />
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#services" data-hover>Services</a>
+      <a href="#work" data-hover>Work</a>
+      <a href="#contact" data-hover>Contact</a>
+    </nav>
+    <a class="nav-cta" href="#contact" data-hover>Start the conversation</a>
+  </header>
+
+  <main id="top">
+
+    <!-- ATTENTION -->
+    <section class="hero">
+      <div class="hero-inner">
+        <p class="hero-eyebrow"><span class="hero-eyebrow-line"></span>Venture studio — Auckland, New Zealand</p>
+        <h1 class="hero-title">
+          <span class="line"><span class="line-inner">Your boldest move starts</span></span>
+          <span class="line"><span class="line-inner">with a <em>conversation.</em></span></span>
+        </h1>
+        <p class="hero-sub">Deep technology, sharp design, and people you'll actually enjoy talking to. Gambito is the studio for founders who are done hesitating.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-solid" href="#contact" data-hover><span>Make your move</span></a>
+          <a class="btn btn-ghost" href="#services" data-hover><span>See how we work</span></a>
+        </div>
+      </div>
+      <div class="hero-foot">
+        <span class="hero-scroll-cue">Scroll<span class="cue-line"></span></span>
+      </div>
+    </section>
+
+    <!-- DESIRE: the founder's story, scrubbed word by word -->
+    <section class="story" id="studio">
+      <div class="story-pin">
+        <p class="story-text" id="story-text">
+          You've carried the idea for months. Talked yourself out of it twice — not because it's wrong, but because it's <em>big.</em> The space between hesitation and action is exactly where we do our best work.
+        </p>
+      </div>
+    </section>
+
+    <!-- INTEREST: services as stacking cards -->
+    <section class="services" id="services">
+      <div class="services-grid">
+        <div class="services-head">
+          <div class="services-head-sticky">
+            <h2 class="h2-display reveal-lines">How we move</h2>
+            <p class="services-lede">One studio across the whole board — from the first question to the thousandth user.</p>
+          </div>
+        </div>
+        <div class="services-stack">
+          <article class="s-card" data-hover>
+            <div class="s-card-top"><span class="s-num">01</span><h3>Discovery</h3></div>
+            <p>Before you bet the house, know the board. Research sprints that pressure-test your idea against real markets and real people — in weeks, not quarters.</p>
+            <span class="s-tag">Idea Evaluation · Customer Insights · Continuous Discovery</span>
+          </article>
+          <article class="s-card" data-hover>
+            <div class="s-card-top"><span class="s-num">02</span><h3>Design</h3></div>
+            <p>Products people feel. We prototype, test and refine until the experience doesn't just work — it convinces. Brand, interface, and everything between.</p>
+            <span class="s-tag">Prototyping · Product Design · Brand Identity</span>
+          </article>
+          <article class="s-card" data-hover>
+            <div class="s-card-top"><span class="s-num">03</span><h3>Development</h3></div>
+            <p>Ship the gambit. MVPs engineered and launched fast, so the market answers your biggest questions before your budget does.</p>
+            <span class="s-tag">MVP Builds · AI Products · Platforms</span>
+          </article>
+          <article class="s-card" data-hover>
+            <div class="s-card-top"><span class="s-num">04</span><h3>Momentum</h3></div>
+            <p>Launch is move one. Analytics, growth loops and continuous discovery that keep your lead compounding long after day one.</p>
+            <span class="s-tag">Analytics · Growth · Iteration</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- DESIRE: selected work -->
+    <section class="work" id="work">
+      <div class="work-head">
+        <h2 class="h2-display reveal-lines">Openings we've played</h2>
+        <p class="work-lede">A few ventures that went from a nervous first meeting to a product in the world.</p>
+      </div>
+      <div class="work-grid">
+        <a class="w-card w-span7" href="#contact" data-hover>
+          <figure class="w-media"><img src="https://picsum.photos/id/1018/1600/1100" alt="Climate action platform" loading="lazy" /></figure>
+          <div class="w-meta"><h3>Climate action, tracked</h3><span>ClimateTech — Research & Platform</span></div>
+        </a>
+        <a class="w-card w-span5" href="#contact" data-hover>
+          <figure class="w-media"><img src="https://picsum.photos/id/1080/1200/1100" alt="Vertical farming venture" loading="lazy" /></figure>
+          <div class="w-meta"><h3>Farms that grow up</h3><span>AgriTech — Venture Design</span></div>
+        </a>
+        <a class="w-card w-span5" href="#contact" data-hover>
+          <figure class="w-media"><img src="https://picsum.photos/id/2/1200/1100" alt="Fintech platform" loading="lazy" /></figure>
+          <div class="w-meta"><h3>Money, minus the fog</h3><span>Fintech — Product & Build</span></div>
+        </a>
+        <a class="w-card w-span7" href="#contact" data-hover>
+          <figure class="w-media"><img src="https://picsum.photos/id/60/1600/1100" alt="Participant recruitment tool" loading="lazy" /></figure>
+          <div class="w-meta"><h3>Research, peopled</h3><span>SaaS — MVP to Market</span></div>
+        </a>
+      </div>
+    </section>
+
+    <!-- ACTION -->
+    <section class="cta" id="contact">
+      <div class="cta-inner">
+        <h2 class="cta-title">
+          <span class="line"><span class="line-inner">Make the</span></span>
+          <span class="line"><span class="line-inner"><em>first move.</em></span></span>
+        </h2>
+        <p class="cta-sub">A Gameplan Session is one hour, zero jargon, and no obligation. Worst case, you leave with a clearer picture of your own idea.</p>
+        <a class="btn btn-solid btn-big" href="mailto:hello@gambito.co" data-hover data-magnetic><span>Book a Gameplan Session</span></a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer-cols">
+        <div class="footer-col">
+          <span class="f-label">Studio</span>
+          <p>Level 1/239 Ponsonby Road<br />Ponsonby, Auckland 1011<br />Aotearoa New Zealand</p>
+        </div>
+        <div class="footer-col">
+          <span class="f-label">Talk to us</span>
+          <p><a href="mailto:hello@gambito.co" data-hover>hello@gambito.co</a><br /><a href="tel:+6497777808" data-hover>+64 9 7777 808</a></p>
+        </div>
+        <div class="footer-col">
+          <span class="f-label">Elsewhere</span>
+          <p><a href="#" data-hover>LinkedIn</a><br /><a href="#" data-hover>Instagram</a></p>
+        </div>
+        <div class="footer-col footer-note">
+          <span class="f-label">Gambito</span>
+          <p>noun — a chess opening in which a player risks a small piece to gain a decisive advantage.</p>
+        </div>
+      </div>
+      <div class="footer-base"><span>© 2026 Gambito Ltd.</span><span>Made in Auckland, played worldwide.</span></div>
+    </footer>
+
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

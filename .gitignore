@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+
+# raw/source uploads — not referenced by the built site (only public/hero.mp4 is)
+assets
+
+# internal design-exploration scratch page, not part of the live site
+backgrounds.html
