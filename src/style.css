@@ -451,7 +451,7 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
 }
 .footer-cols {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2.4rem;
   max-width: 1500px;
   margin: 0 auto 7rem;

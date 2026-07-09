@@ -18,21 +18,32 @@
   <link rel="stylesheet" href="/content.css" />
 </head>
 <body>
-  <header class="c-nav">
-    <a class="c-nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" /></a>
-    <nav class="c-nav-links" aria-label="Primary">
+  <header class="nav">
+    <a class="nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" class="nav-brand-logo" /></a>
+    <nav class="nav-links" aria-label="Primary">
       <a href="/#services">Services</a>
       <a href="/#work">Work</a>
       <a href="/insights/">Insights</a>
       <a href="/faq/">FAQ</a>
     </nav>
-    <a class="c-nav-cta" href="/#contact">Talk to us</a>
+    <a class="nav-cta" href="/book/">Start the conversation</a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
   </header>
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <nav class="mobile-menu-links" aria-label="Mobile">
+      <a href="/#services">Services</a>
+      <a href="/#work">Work</a>
+      <a href="/insights/">Insights</a>
+      <a href="/faq/">FAQ</a>
+      <a href="/book/" class="mobile-menu-cta">Book a Gameplan Session</a>
+    </nav>
+  </div>
 
   <main class="wrap book" id="book-app">
     <div class="book-loading">Loading available times…</div>
   </main>
 
   <script type="module" src="./book.js"></script>
+  <script src="/nav.js" defer></script>
 </body>
 </html>

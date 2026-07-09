@@ -65,16 +65,26 @@ function head({ title, description, canonical, ogImage, ogType = "website", json
   ${ld}`;
 }
 
-const nav = () => `<header class="c-nav">
-    <a class="c-nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" /></a>
-    <nav class="c-nav-links" aria-label="Primary">
+const nav = () => `<header class="nav">
+    <a class="nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" class="nav-brand-logo" /></a>
+    <nav class="nav-links" aria-label="Primary">
       <a href="/#services">Services</a>
       <a href="/#work">Work</a>
       <a href="/insights/">Insights</a>
       <a href="/faq/">FAQ</a>
     </nav>
-    <a class="c-nav-cta" href="/book/">Book a session</a>
-  </header>`;
+    <a class="nav-cta" href="/book/">Start the conversation</a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+  </header>
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <nav class="mobile-menu-links" aria-label="Mobile">
+      <a href="/#services">Services</a>
+      <a href="/#work">Work</a>
+      <a href="/insights/">Insights</a>
+      <a href="/faq/">FAQ</a>
+      <a href="/book/" class="mobile-menu-cta">Book a Gameplan Session</a>
+    </nav>
+  </div>`;
 
 function ctaBlock(sc) {
   return `<section class="cta-block">
@@ -87,15 +97,14 @@ function ctaBlock(sc) {
 }
 
 function footer(sc) {
-  return `<footer class="c-footer">
-    <div class="c-footer-cols">
-      <div><span class="f-label">Explore</span><p><a href="/#services">Services</a><br /><a href="/insights/">Insights</a><br /><a href="/faq/">FAQ</a><br /><a href="/book/">Book a session</a></p></div>
-      <div><span class="f-label">Studio</span><p>${sc.footer_address || ""}</p></div>
-      <div><span class="f-label">Talk to us</span><p><a href="mailto:${esc(sc.footer_email || "hello@gambito.co")}">${esc(sc.footer_email || "hello@gambito.co")}</a><br /><a href="tel:${esc((sc.footer_phone || "").replace(/[^\d+]/g, ""))}">${esc(sc.footer_phone || "")}</a></p></div>
-      <div><span class="f-label">Elsewhere</span><p><a href="${esc(sc.footer_linkedin_url || "#")}">LinkedIn</a><br /><a href="${esc(sc.footer_instagram_url || "#")}">Instagram</a></p></div>
-      <div class="c-footer-note"><span class="f-label">Gambito</span><p>${esc(sc.footer_definition || "")}</p></div>
+  return `<footer class="footer">
+    <div class="footer-cols">
+      <div class="footer-col"><span class="f-label">Explore</span><p><a href="/#services">Services</a><br /><a href="/insights/">Insights</a><br /><a href="/faq/">FAQ</a><br /><a href="/book/">Book a session</a></p></div>
+      <div class="footer-col"><span class="f-label">Studio</span><p>${sc.footer_address || ""}</p></div>
+      <div class="footer-col"><span class="f-label">Talk to us</span><p><a href="mailto:${esc(sc.footer_email || "hello@gambito.co")}">${esc(sc.footer_email || "hello@gambito.co")}</a><br /><a href="tel:${esc((sc.footer_phone || "").replace(/[^\d+]/g, ""))}">${esc(sc.footer_phone || "")}</a></p></div>
+      <div class="footer-col"><span class="f-label">Elsewhere</span><p><a href="${esc(sc.footer_linkedin_url || "#")}">LinkedIn</a><br /><a href="${esc(sc.footer_instagram_url || "#")}">Instagram</a></p></div>
     </div>
-    <div class="c-footer-base"><span>${esc(sc.footer_copyright || "© 2026 Gambito Ltd.")}</span><span>${esc(sc.footer_tagline || "")}</span></div>
+    <div class="footer-base"><span>${esc(sc.footer_copyright || "© 2026 Gambito Ltd.")}</span><span>${esc(sc.footer_tagline || "")}</span></div>
   </footer>`;
 }
 
@@ -108,6 +117,7 @@ function layout({ headHtml, main }) {
 <body>
   ${nav()}
   ${main}
+  <script src="/nav.js" defer></script>
 </body>
 </html>`;
 }
