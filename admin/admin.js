@@ -1,4 +1,5 @@
 import { supabase } from "../src/supabase.js";
+import { optimizeVideo, isVideoFile } from "./video-optimize.js";
 
 const ADMIN_EMAIL = "armic@gambito.co.nz";
 const IMAGE_BUCKET = "case-studies"; // shared image bucket for all uploads
@@ -37,7 +38,7 @@ const CONTENT_FIELDS = [
   { group: "Hero", key: "hero_cta_primary", label: "Primary button", type: "input" },
   { group: "Hero", key: "hero_cta_secondary", label: "Secondary button", type: "input" },
 
-  { group: "Background", key: "hero_video", label: "Background video", type: "media", hint: "Scroll-scrubbed — for smooth playback the clip must be re-encoded with frequent keyframes and kept small (the bundled /hero.mp4 is pre-optimised for this). A raw upload will stutter; ask the studio to optimise a new clip before swapping it in." },
+  { group: "Background", key: "hero_video", label: "Background video", type: "media", hint: "Upload an MP4/MOV and it's automatically re-encoded in your browser for smooth scroll-scrubbing (the first upload loads a ~30 MB optimiser; a short clip then takes a minute or so). Or paste an already-optimised video URL." },
 
   { group: "Story", key: "story_text", label: "Story paragraph", type: "textarea", hint: "HTML allowed — <em>…</em> for the coral emphasis word." },
 
@@ -285,10 +286,27 @@ function wireContentUploads() {
       if (!file) return;
       const wrap = fileInput.closest(".image-field");
       const urlInput = wrap.querySelector("[data-key]");
-      setStatus("#content-status", `Uploading ${file.name}…`);
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      let blob = file;
+      let name = file.name;
+
+      // videos are scroll-scrubbed, so re-encode them for smooth playback
+      // (dense keyframes) right here in the browser before uploading
+      if (isVideoFile(file)) {
+        try {
+          setStatus("#content-status", "Optimising video for smooth scrolling — this can take a minute…");
+          blob = await optimizeVideo(file, (p) => setStatus("#content-status", `Optimising video… ${Math.round(p * 100)}%`));
+          name = file.name.replace(/\.[^.]+$/, "") + "-optimised.mp4";
+          setStatus("#content-status", `Optimised to ${(blob.size / 1e6).toFixed(1)} MB. Uploading…`);
+        } catch (err) {
+          setStatus("#content-status", "Couldn't optimise the video — uploading the original, which may stutter. " + err.message, "error");
+        }
+      } else {
+        setStatus("#content-status", `Uploading ${file.name}…`);
+      }
+
+      const safe = name.replace(/[^a-zA-Z0-9._-]/g, "-");
       const path = `media/${Date.now()}-${safe}`;
-      const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+      const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, blob, { upsert: true, contentType: blob.type || file.type });
       if (error) { setStatus("#content-status", error.message, "error"); return; }
       const { data: pub } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
       urlInput.value = pub.publicUrl;
