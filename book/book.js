@@ -31,10 +31,19 @@ async function load() {
     supabase.from("booking_slots").select("id, start_time, duration_minutes").eq("status", "available").gt("start_time", new Date().toISOString()).order("start_time"),
   ]);
   config = Object.fromEntries((content || []).map((r) => [r.key, r.value]));
+  applyNavLabels();
   if (error) { renderError(); return; }
   slots = slotRows || [];
   if (config.booking_enabled === "false") renderDisabled();
   else renderPicker();
+}
+
+// keep this page's header/menu labels in sync with the CMS
+function applyNavLabels() {
+  document.querySelectorAll("[data-navkey]").forEach((a) => {
+    const v = config[a.dataset.navkey];
+    if (v) a.textContent = v;
+  });
 }
 
 function footer() {

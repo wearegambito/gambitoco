@@ -4,44 +4,87 @@ const ADMIN_EMAIL = "armic@gambito.co.nz";
 const IMAGE_BUCKET = "case-studies"; // shared image bucket for all uploads
 
 /* ---------- site content (homepage, live-fetch) ---------- */
+// short explainer shown under each group heading, so it's clear what each
+// block controls and whether it's live instantly or needs a Publish.
+const GROUP_INFO = {
+  "Navigation": "The header links and button, on every page. Live on the homepage instantly; other pages update when you Publish.",
+  "Hero": "The big opening area of the homepage. Saves go live instantly.",
+  "Background": "The video that plays behind the whole homepage.",
+  "Story": "The line that reveals as you scroll under the hero.",
+  "Services section": "The heading and intro above the service cards.",
+  "Work section": "The heading and intro above the case studies.",
+  "Call to action": "The band near the bottom of the homepage.",
+  "Footer": "On every page. Homepage updates instantly; other pages on Publish.",
+  "Insights page": "The /insights listing page — title, intro and how it looks in Google. Updates on Publish.",
+  "FAQ page": "The /faq page — title, intro and how it looks in Google. Updates on Publish.",
+  "Booking page": "The /book page copy and settings. Updates instantly.",
+  "SEO & social": "How the homepage looks in Google and when shared. (Each Service / Insight has its own SEO fields on its card.)",
+  "Deployment": "Connects the Publish button to your Netlify build.",
+};
+
 const CONTENT_FIELDS = [
-  { group: "Navigation", key: "nav_cta", label: "Nav button", type: "input" },
-  { group: "Hero", key: "hero_eyebrow", label: "Eyebrow line", type: "input" },
+  // header links + button (each is a nav button name)
+  { group: "Navigation", key: "nav_services", label: "Link 1 — Services", type: "input" },
+  { group: "Navigation", key: "nav_work", label: "Link 2 — Work", type: "input" },
+  { group: "Navigation", key: "nav_insights", label: "Link 3 — Insights", type: "input" },
+  { group: "Navigation", key: "nav_faq", label: "Link 4 — FAQ", type: "input" },
+  { group: "Navigation", key: "nav_cta", label: "Button", type: "input", hint: "The pill button in the top-right, e.g. “Start the conversation”." },
+
+  { group: "Hero", key: "hero_eyebrow", label: "Eyebrow line", type: "input", hint: "Small label above the headline." },
   { group: "Hero", key: "hero_title_1", label: "Headline — line 1", type: "input" },
-  { group: "Hero", key: "hero_title_2", label: "Headline — line 2", type: "input", hint: "HTML allowed, e.g. wrap a word in <em>...</em> for the italic accent." },
-  { group: "Hero", key: "hero_sub", label: "Subheading", type: "textarea" },
+  { group: "Hero", key: "hero_title_2", label: "Headline — line 2", type: "input", hint: "HTML allowed — wrap a word in <em>…</em> for the italic accent." },
+  { group: "Hero", key: "hero_sub", label: "Sub-heading", type: "textarea" },
   { group: "Hero", key: "hero_cta_primary", label: "Primary button", type: "input" },
   { group: "Hero", key: "hero_cta_secondary", label: "Secondary button", type: "input" },
-  { group: "Story", key: "story_text", label: "Story paragraph", type: "textarea", hint: "HTML allowed, e.g. <em>...</em> for the coral emphasis word." },
+
+  { group: "Background", key: "hero_video", label: "Background video", type: "media", hint: "Paste a video URL, or upload an MP4 below (files under ~30 MB upload most reliably)." },
+
+  { group: "Story", key: "story_text", label: "Story paragraph", type: "textarea", hint: "HTML allowed — <em>…</em> for the coral emphasis word." },
+
   { group: "Services section", key: "services_title", label: "Heading", type: "input" },
-  { group: "Services section", key: "services_lede", label: "Lede", type: "textarea" },
+  { group: "Services section", key: "services_lede", label: "Intro line", type: "textarea" },
+
   { group: "Work section", key: "work_title", label: "Heading", type: "input" },
-  { group: "Work section", key: "work_lede", label: "Lede", type: "textarea" },
+  { group: "Work section", key: "work_lede", label: "Intro line", type: "textarea" },
+
   { group: "Call to action", key: "cta_title_1", label: "Headline — line 1", type: "input" },
-  { group: "Call to action", key: "cta_title_2", label: "Headline — line 2", type: "input", hint: "HTML allowed, e.g. <em>...</em>." },
-  { group: "Call to action", key: "cta_sub", label: "Subtext", type: "textarea" },
+  { group: "Call to action", key: "cta_title_2", label: "Headline — line 2", type: "input", hint: "HTML allowed — <em>…</em>." },
+  { group: "Call to action", key: "cta_sub", label: "Sub-text", type: "textarea" },
   { group: "Call to action", key: "cta_button", label: "Button label", type: "input" },
-  { group: "Call to action", key: "cta_button_link", label: "Button link", type: "input", hint: "e.g. mailto:hello@gambito.co" },
-  { group: "Footer", key: "footer_address", label: "Studio address", type: "textarea", hint: "HTML allowed, e.g. <br /> for line breaks." },
+  { group: "Call to action", key: "cta_button_link", label: "Button link", type: "input", hint: "e.g. mailto:hello@gambito.co or /book/" },
+
+  { group: "Footer", key: "footer_address", label: "Studio address", type: "textarea", hint: "HTML allowed — <br /> for line breaks." },
   { group: "Footer", key: "footer_email", label: "Email", type: "input" },
   { group: "Footer", key: "footer_phone", label: "Phone", type: "input" },
   { group: "Footer", key: "footer_linkedin_url", label: "LinkedIn URL", type: "input" },
   { group: "Footer", key: "footer_instagram_url", label: "Instagram URL", type: "input" },
-  { group: "Footer", key: "footer_definition", label: "\"Gambito\" definition", type: "input" },
   { group: "Footer", key: "footer_copyright", label: "Copyright line", type: "input" },
   { group: "Footer", key: "footer_tagline", label: "Tagline", type: "input" },
-  { group: "SEO & social", key: "meta_title", label: "Homepage title tag", type: "input" },
-  { group: "SEO & social", key: "meta_description", label: "Homepage meta description", type: "textarea", hint: "~155 characters. Shows in Google results." },
-  { group: "SEO & social", key: "site_url", label: "Canonical site URL", type: "input", hint: "e.g. https://gambito.co — used for canonical tags & sitemap." },
-  { group: "SEO & social", key: "og_image", label: "Default share image", type: "input", hint: "Path or URL used for social previews when a page has none. Ideally 1200×630." },
-  { group: "SEO & social", key: "twitter_handle", label: "Twitter/X handle", type: "input" },
-  { group: "Booking page", key: "booking_enabled", label: "Booking enabled", type: "input", hint: "Set to true or false to turn the /book page on or off." },
+
+  { group: "Insights page", key: "insights_title", label: "Page heading", type: "input" },
+  { group: "Insights page", key: "insights_lede", label: "Intro line", type: "textarea" },
+  { group: "Insights page", key: "insights_seo_title", label: "SEO title", type: "input", hint: "Browser tab & Google result title." },
+  { group: "Insights page", key: "insights_seo_description", label: "SEO description", type: "textarea", hint: "~155 characters. Shows in Google results." },
+
+  { group: "FAQ page", key: "faq_title", label: "Page heading", type: "input" },
+  { group: "FAQ page", key: "faq_lede", label: "Intro line", type: "textarea" },
+  { group: "FAQ page", key: "faq_seo_title", label: "SEO title", type: "input", hint: "Browser tab & Google result title." },
+  { group: "FAQ page", key: "faq_seo_description", label: "SEO description", type: "textarea", hint: "~155 characters. Shows in Google results." },
+
+  { group: "Booking page", key: "booking_enabled", label: "Booking enabled", type: "input", hint: "Type true or false to turn the /book page on or off." },
   { group: "Booking page", key: "booking_title", label: "Heading", type: "input" },
   { group: "Booking page", key: "booking_intro", label: "Intro text", type: "textarea" },
   { group: "Booking page", key: "booking_confirm", label: "Confirmation message", type: "textarea" },
   { group: "Booking page", key: "booking_duration", label: "Session length (minutes)", type: "input" },
   { group: "Booking page", key: "booking_timezone", label: "Your timezone", type: "input", hint: "IANA name, e.g. Pacific/Auckland — used in emails & labels." },
   { group: "Booking page", key: "booking_from_email", label: "Sender email for booking emails", type: "input", hint: "Must be a verified sender in MailerSend, e.g. no-reply@gambito.co." },
+
+  { group: "SEO & social", key: "meta_title", label: "Homepage title tag", type: "input", hint: "The browser tab & Google result title for the homepage." },
+  { group: "SEO & social", key: "meta_description", label: "Homepage meta description", type: "textarea", hint: "~155 characters. Shows in Google results." },
+  { group: "SEO & social", key: "site_url", label: "Canonical site URL", type: "input", hint: "e.g. https://gambito.co — used for canonical tags & sitemap." },
+  { group: "SEO & social", key: "og_image", label: "Default share image", type: "input", hint: "Path or URL used for social previews when a page has none. Ideally 1200×630." },
+  { group: "SEO & social", key: "twitter_handle", label: "Twitter/X handle", type: "input" },
+
   { group: "Deployment", key: "netlify_build_hook", label: "Netlify build hook URL", type: "input", hint: "Paste your Netlify build hook here to enable the Publish button (Netlify → Site config → Build & deploy → Build hooks)." },
 ];
 
@@ -60,8 +103,9 @@ const RESOURCES = {
       { name: "description", label: "Card description (homepage)", type: "textarea", full: true },
       { name: "body", label: "Detail page content", type: "markdown", full: true, hint: "Markdown. Use ## for headings, - for bullets, **bold**." },
       { name: "hero_image", label: "Hero image", type: "image", full: true },
-      { name: "seo_title", label: "SEO title", type: "input", full: true },
-      { name: "seo_description", label: "SEO description", type: "textarea", full: true },
+      { name: "seo_title", label: "SEO title", type: "input", full: true, hint: "Browser tab & Google result title. Falls back to the page title." },
+      { name: "seo_description", label: "SEO description", type: "textarea", full: true, hint: "~155 characters. Shows in Google results." },
+      { name: "og_image", label: "Social share image", type: "image", full: true, hint: "Shown when the page is shared. 1200×630 ideal; falls back to the default share image." },
     ],
     newRow: (n) => ({ order_index: n, number: String(n).padStart(2, "0"), title: "New service", slug: "new-service-" + Date.now(), description: "", tag: "", body: "", published: false }),
   },
@@ -87,8 +131,9 @@ const RESOURCES = {
       { name: "body", label: "Extra body (optional)", type: "markdown", full: true, hint: "Markdown, appended below the structured sections." },
       { name: "cta_label", label: "CTA label", type: "input" },
       { name: "cta_link", label: "CTA link", type: "input" },
-      { name: "seo_title", label: "SEO title", type: "input", full: true },
-      { name: "seo_description", label: "SEO description", type: "textarea", full: true },
+      { name: "seo_title", label: "SEO title", type: "input", full: true, hint: "Browser tab & Google result title. Falls back to the page title." },
+      { name: "seo_description", label: "SEO description", type: "textarea", full: true, hint: "~155 characters. Shows in Google results." },
+      { name: "og_image", label: "Social share image", type: "image", full: true, hint: "Shown when the page is shared. 1200×630 ideal; falls back to the default share image." },
     ],
     newRow: (n) => ({ order_index: n, service_slug: "discovery", slug: "new-offering-" + Date.now(), title: "New offering", tagline: "", published: false }),
   },
@@ -121,8 +166,9 @@ const RESOURCES = {
       { name: "excerpt", label: "Excerpt", type: "textarea", full: true, hint: "Short summary for the card & search results." },
       { name: "cover_image", label: "Cover image", type: "image", full: true },
       { name: "body", label: "Article body", type: "markdown", full: true, tall: true, hint: "Markdown. ## heading, - bullet, **bold**, > quote, [text](url)." },
-      { name: "seo_title", label: "SEO title", type: "input", full: true },
-      { name: "seo_description", label: "SEO description", type: "textarea", full: true },
+      { name: "seo_title", label: "SEO title", type: "input", full: true, hint: "Browser tab & Google result title. Falls back to the page title." },
+      { name: "seo_description", label: "SEO description", type: "textarea", full: true, hint: "~155 characters. Shows in Google results." },
+      { name: "og_image", label: "Social share image", type: "image", full: true, hint: "Shown when the page is shared. 1200×630 ideal; falls back to the default share image." },
     ],
     newRow: () => ({ slug: "new-article-" + Date.now(), title: "New article", excerpt: "", body: "", category: "", author: "Gambito", published_at: new Date().toISOString().slice(0, 10), published: false }),
   },
@@ -206,15 +252,51 @@ async function loadContentTab() {
   el("#content-groups").innerHTML = Object.entries(groups).map(([groupName, fields]) => `
     <div class="content-group">
       <h3>${groupName}</h3>
+      ${GROUP_INFO[groupName] ? `<p class="group-desc">${GROUP_INFO[groupName]}</p>` : ""}
       ${fields.map((f) => `
-        <div class="field">
+        <div class="field${f.type === "media" ? " field-full" : ""}">
           <label for="cf-${f.key}">${f.label}</label>
-          ${f.type === "textarea"
-            ? `<textarea id="cf-${f.key}" data-key="${f.key}">${esc(values[f.key] ?? "")}</textarea>`
-            : `<input id="cf-${f.key}" data-key="${f.key}" value="${attr(values[f.key] ?? "")}" />`}
+          ${contentControl(f, values[f.key] ?? "")}
           ${f.hint ? `<div class="field-hint">${f.hint}</div>` : ""}
         </div>`).join("")}
     </div>`).join("");
+  wireContentUploads();
+}
+
+function contentControl(f, v) {
+  if (f.type === "textarea") return `<textarea id="cf-${f.key}" data-key="${f.key}">${esc(v)}</textarea>`;
+  if (f.type === "media") return `
+    <div class="image-field">
+      <video class="image-preview" data-role="preview" src="${attr(v)}" muted playsinline preload="metadata"></video>
+      <div class="image-field-controls">
+        <input id="cf-${f.key}" data-key="${f.key}" value="${attr(v)}" placeholder="Paste a video URL" />
+        <input type="file" accept="video/*" data-role="content-upload" />
+      </div>
+    </div>`;
+  return `<input id="cf-${f.key}" data-key="${f.key}" value="${attr(v)}" />`;
+}
+
+// upload handler for "media" fields on the Content tab (mirrors the image
+// uploader used on resource cards, but writes into a plain URL input)
+function wireContentUploads() {
+  document.querySelectorAll('#content-groups [data-role="content-upload"]').forEach((fileInput) => {
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const wrap = fileInput.closest(".image-field");
+      const urlInput = wrap.querySelector("[data-key]");
+      setStatus("#content-status", `Uploading ${file.name}…`);
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const path = `media/${Date.now()}-${safe}`;
+      const { error } = await supabase.storage.from(IMAGE_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+      if (error) { setStatus("#content-status", error.message, "error"); return; }
+      const { data: pub } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+      urlInput.value = pub.publicUrl;
+      const preview = wrap.querySelector('[data-role="preview"]');
+      if (preview) preview.src = pub.publicUrl;
+      setStatus("#content-status", "Uploaded — click Save changes to apply.", "success");
+    });
+  });
 }
 el("#save-content").addEventListener("click", async () => {
   const btn = el("#save-content");

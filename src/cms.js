@@ -43,6 +43,17 @@ export function applyCmsContent({ content, services, caseStudies }) {
     if (meta) meta.setAttribute("content", content.meta_description);
   }
 
+  // background video — swap the source if a custom one is set in the CMS.
+  // Runs before main.js wires up the scroll-scrub, so it reads the new file.
+  if (content.hero_video) {
+    const video = document.getElementById("page-video");
+    const source = video && video.querySelector("source");
+    if (source && content.hero_video !== source.getAttribute("src")) {
+      source.setAttribute("src", content.hero_video);
+      video.load();
+    }
+  }
+
   // services cards
   const servicesStack = document.querySelector(".services-stack");
   if (servicesStack && services && services.length) {

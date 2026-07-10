@@ -65,26 +65,33 @@ function head({ title, description, canonical, ogImage, ogType = "website", json
   ${ld}`;
 }
 
-const nav = () => `<header class="nav">
+const nav = (sc = {}) => {
+  const s = esc(sc.nav_services || "Services");
+  const w = esc(sc.nav_work || "Work");
+  const i = esc(sc.nav_insights || "Insights");
+  const f = esc(sc.nav_faq || "FAQ");
+  const cta = esc(sc.nav_cta || "Start the conversation");
+  return `<header class="nav">
     <a class="nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" class="nav-brand-logo" /></a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="/#services">Services</a>
-      <a href="/#work">Work</a>
-      <a href="/insights/">Insights</a>
-      <a href="/faq/">FAQ</a>
+      <a href="/#services">${s}</a>
+      <a href="/#work">${w}</a>
+      <a href="/insights/">${i}</a>
+      <a href="/faq/">${f}</a>
     </nav>
-    <a class="nav-cta" href="/book/">Start the conversation</a>
+    <a class="nav-cta" href="/book/">${cta}</a>
     <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
   </header>
   <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
     <nav class="mobile-menu-links" aria-label="Mobile">
-      <a href="/#services">Services</a>
-      <a href="/#work">Work</a>
-      <a href="/insights/">Insights</a>
-      <a href="/faq/">FAQ</a>
+      <a href="/#services">${s}</a>
+      <a href="/#work">${w}</a>
+      <a href="/insights/">${i}</a>
+      <a href="/faq/">${f}</a>
       <a href="/book/" class="mobile-menu-cta">Book a Gameplan Session</a>
     </nav>
   </div>`;
+};
 
 function ctaBlock(sc) {
   return `<section class="cta-block">
@@ -108,14 +115,14 @@ function footer(sc) {
   </footer>`;
 }
 
-function layout({ headHtml, main }) {
+function layout({ headHtml, main, sc }) {
   return `<!doctype html>
 <html lang="en">
 <head>
   ${headHtml}
 </head>
 <body>
-  ${nav()}
+  ${nav(sc)}
   ${main}
   <script src="/nav.js" defer></script>
 </body>
@@ -180,7 +187,7 @@ function servicePage(svc, offerings, sc, site) {
   </article>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
-  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, jsonLd: [serviceLd, crumbs] }), main });
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, jsonLd: [serviceLd, crumbs] }), main, sc });
 }
 
 function offeringPage(off, serviceTitle, sc, site) {
@@ -221,7 +228,7 @@ function offeringPage(off, serviceTitle, sc, site) {
     { name: off.title, path },
   ]);
 
-  const main = `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/services/${esc(off.service_slug)}/">${esc(serviceTitle)}</a><span>/</span>${esc(off.title)}</nav>
+  const main = `<nav class="crumb crumb-wide" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/services/${esc(off.service_slug)}/">${esc(serviceTitle)}</a><span>/</span>${esc(off.title)}</nav>
   <div class="wrap-wide offering">
     <header class="offer-hero">
       ${off.eyebrow ? `<p class="page-eyebrow">${esc(off.eyebrow)}</p>` : ""}
@@ -243,13 +250,13 @@ function offeringPage(off, serviceTitle, sc, site) {
   </div>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
-  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, jsonLd: [offeringLd, crumbs] }), main });
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, jsonLd: [offeringLd, crumbs] }), main, sc });
 }
 
 function insightsIndex(posts, sc, site) {
   const url = abs(site, "/insights/");
-  const title = "Insights — Field notes for founders | Gambito";
-  const desc = "Ideas, essays and field notes on moving from hesitation to action — building, validating and growing ventures. From the Gambito studio.";
+  const title = sc.insights_seo_title || "Insights — Field notes for founders | Gambito";
+  const desc = sc.insights_seo_description || "Ideas, essays and field notes on moving from hesitation to action — building, validating and growing ventures. From the Gambito studio.";
   const cards = posts
     .map(
       (p) => `<a class="post-card" href="/insights/${esc(p.slug)}/">
@@ -264,12 +271,12 @@ function insightsIndex(posts, sc, site) {
     )
     .join("\n      ");
   const crumbs = breadcrumbLd(site, [{ name: "Home", path: "/" }, { name: "Insights", path: "/insights/" }]);
-  const main = `<nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span>Insights</nav>
+  const main = `<nav class="crumb crumb-wide" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span>Insights</nav>
   <div class="wrap-wide">
     <div class="page-head">
       <p class="page-eyebrow">Insights</p>
-      <h1 class="page-title">Field notes for founders.</h1>
-      <p class="page-lede">Essays and ideas on moving from hesitation to action — validating, building and growing ventures.</p>
+      <h1 class="page-title">${esc(sc.insights_title || "Field notes for founders.")}</h1>
+      <p class="page-lede">${esc(sc.insights_lede || "Essays and ideas on moving from hesitation to action — validating, building and growing ventures.")}</p>
     </div>
     <div class="card-grid">
       ${cards}
@@ -277,7 +284,7 @@ function insightsIndex(posts, sc, site) {
   </div>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
-  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: abs(site, sc.og_image || "/favicon.png"), jsonLd: [orgLd(site), crumbs] }), main });
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: abs(site, sc.og_image || "/favicon.png"), jsonLd: [orgLd(site), crumbs] }), main, sc });
 }
 
 function insightPage(post, sc, site) {
@@ -311,13 +318,13 @@ function insightPage(post, sc, site) {
   </article>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
-  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, ogType: "article", published: post.published_at, modified: post.updated_at, jsonLd: [articleLd, crumbs] }), main });
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage, ogType: "article", published: post.published_at, modified: post.updated_at, jsonLd: [articleLd, crumbs] }), main, sc });
 }
 
 function faqPage(faqs, sc, site) {
   const url = abs(site, "/faq/");
-  const title = "Frequently Asked Questions | Gambito";
-  const desc = "Answers to common questions about working with Gambito — our venture studio, services, Gameplan Sessions and how we help founders move from hesitation to action.";
+  const title = sc.faq_seo_title || "Frequently Asked Questions | Gambito";
+  const desc = sc.faq_seo_description || "Answers to common questions about working with Gambito — our venture studio, services, Gameplan Sessions and how we help founders move from hesitation to action.";
   // group by category, preserving order
   const groups = [];
   for (const f of faqs) {
@@ -343,14 +350,14 @@ function faqPage(faqs, sc, site) {
   <div class="wrap">
     <div class="page-head">
       <p class="page-eyebrow">Answers</p>
-      <h1 class="page-title">Frequently asked questions.</h1>
-      <p class="page-lede">Everything founders usually want to know before making the first move.</p>
+      <h1 class="page-title">${esc(sc.faq_title || "Frequently asked questions.")}</h1>
+      <p class="page-lede">${esc(sc.faq_lede || "Everything founders usually want to know before making the first move.")}</p>
     </div>
     ${listHtml}
   </div>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
-  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: abs(site, sc.og_image || "/favicon.png"), jsonLd: [faqLd, crumbs] }), main });
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: abs(site, sc.og_image || "/favicon.png"), jsonLd: [faqLd, crumbs] }), main, sc });
 }
 
 function fmtDate(d) {

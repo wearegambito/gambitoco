@@ -140,8 +140,9 @@ a { color: inherit; }
 .content-group h3 {
   font-family: var(--font-display); font-weight: 700; font-size: 1rem;
   color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.08em;
-  margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line);
+  margin-bottom: 0.6rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--line);
 }
+.group-desc { font-size: 0.85rem; color: var(--ink-faint); margin: -0.2rem 0 1.1rem; line-height: 1.5; max-width: 60ch; }
 .field { margin-bottom: 1.1rem; }
 .field label {
   display: block; font-size: 0.8rem; color: var(--ink-dim);
