@@ -83,8 +83,8 @@ em { font-family: var(--serif); font-style: italic; font-weight: 500; }
 }
 .mobile-menu.is-open .mobile-menu-links a { opacity: 1; transform: none; }
 .mobile-menu-cta {
-  margin-top: 0.8rem; font-size: 1.05rem; font-family: var(--font-body); font-weight: 700;
-  background: var(--ink); color: var(--bg); padding: 0.9rem 2rem; border-radius: 100px;
+  margin-top: 0.8rem; font-size: 1.05rem !important; font-family: var(--font-body) !important; font-weight: 700 !important;
+  background: var(--ink); color: var(--bg) !important; padding: 0.9rem 2rem; border-radius: 100px;
 }
 
 /* ---------- breadcrumb ---------- */
