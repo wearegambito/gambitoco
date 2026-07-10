@@ -37,7 +37,7 @@ const CONTENT_FIELDS = [
   { group: "Hero", key: "hero_cta_primary", label: "Primary button", type: "input" },
   { group: "Hero", key: "hero_cta_secondary", label: "Secondary button", type: "input" },
 
-  { group: "Background", key: "hero_video", label: "Background video", type: "media", hint: "Paste a video URL, or upload an MP4 below (files under ~30 MB upload most reliably)." },
+  { group: "Background", key: "hero_video", label: "Background video", type: "media", hint: "Scroll-scrubbed — for smooth playback the clip must be re-encoded with frequent keyframes and kept small (the bundled /hero.mp4 is pre-optimised for this). A raw upload will stutter; ask the studio to optimise a new clip before swapping it in." },
 
   { group: "Story", key: "story_text", label: "Story paragraph", type: "textarea", hint: "HTML allowed — <em>…</em> for the coral emphasis word." },
 
