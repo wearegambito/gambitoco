@@ -199,7 +199,9 @@ em { font-family: var(--serif); font-style: italic; font-weight: 500; }
 
 /* ---------- footer (identical look to the homepage footer) ---------- */
 .footer {
-  position: relative; z-index: 2; background: var(--bg);
+  position: relative; z-index: 2;
+  background: rgba(3, 39, 33, 0.6);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--line); padding: 6rem 3rem 2.5rem; overflow: hidden;
 }
 .footer-cols {

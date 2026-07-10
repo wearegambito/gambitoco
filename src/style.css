@@ -444,7 +444,9 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
 .footer {
   position: relative;
   z-index: 2;
-  background: var(--bg);
+  background: rgba(3, 39, 33, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid var(--line);
   padding: 6rem 3rem 2.5rem;
   overflow: hidden;
