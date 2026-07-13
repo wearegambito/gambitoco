@@ -12,7 +12,7 @@
   <style>
     :root {
       --bg: #032721; --bg-2: #063a2f; --ink: #f0e7d4; --ink-dim: #a3a58c; --ink-faint: #5c6b60;
-      --ember: #fa4d56; --line: rgba(240, 231, 212, 0.12);
+      --ember: #fa4d56; --go: #3ecf8e; --line: rgba(240, 231, 212, 0.12);
       --font-display: "Cabinet Grotesk", sans-serif; --font-body: "Satoshi", sans-serif; --serif: "Gambetta", Georgia, serif;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -64,6 +64,9 @@
     .glass { background: linear-gradient(160deg, rgba(240, 231, 212, 0.09), rgba(6, 58, 47, 0.28)); backdrop-filter: blur(20px); border: 1px solid rgba(240, 231, 212, 0.16); border-radius: 16px; padding: 1.4rem 1.6rem; width: 100%; }
     .glass h4 { font-family: var(--font-display); font-weight: 800; }
     .glass p { color: var(--ink-dim); font-size: 0.9rem; margin-top: 0.4rem; }
+    .glass-chrome { background: rgba(3, 39, 33, 0.6); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: 16px; padding: 1.4rem 1.6rem; width: 100%; }
+    .glass-chrome h4 { font-family: var(--font-display); font-weight: 800; }
+    .glass-chrome p { color: var(--ink-dim); font-size: 0.9rem; margin-top: 0.4rem; }
     .panel { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 1.4rem 1.6rem; width: 100%; }
 
     /* principles */
@@ -131,6 +134,7 @@
         <div class="swatch"><div class="swatch-chip" style="background:#a3a58c"></div><div class="swatch-meta"><div class="swatch-name">Sage Dim</div><div class="swatch-hex">#a3a58c</div><div class="swatch-use">Secondary text</div></div></div>
         <div class="swatch"><div class="swatch-chip" style="background:#5c6b60"></div><div class="swatch-meta"><div class="swatch-name">Deep Sage</div><div class="swatch-hex">#5c6b60</div><div class="swatch-use">Faint labels</div></div></div>
         <div class="swatch"><div class="swatch-chip" style="background:#fa4d56"></div><div class="swatch-meta"><div class="swatch-name">Coral</div><div class="swatch-hex">#fa4d56</div><div class="swatch-use">Accent — use sparingly</div></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background:#3ecf8e"></div><div class="swatch-meta"><div class="swatch-name">Availability Green</div><div class="swatch-hex">#3ecf8e</div><div class="swatch-use">Booking calendar dots only</div></div></div>
       </div>
     </section>
 
@@ -138,10 +142,10 @@
     <section class="sg">
       <h2 class="sg-h2">Typography</h2>
       <p class="sg-sub">Cabinet Grotesk for display · Satoshi for body · Gambetta italic for emphasis.</p>
-      <div class="type-row"><div class="type-label"><b>Cabinet Grotesk 800</b>Display XL</div><div class="d-xl">Your boldest move</div></div>
-      <div class="type-row"><div class="type-label"><b>Cabinet Grotesk 800</b>Display L / H2</div><div class="d-l">Openings we've played</div></div>
-      <div class="type-row"><div class="type-label"><b>Gambetta 500 italic</b>Serif emphasis</div><div class="serif-l">a conversation.</div></div>
-      <div class="type-row"><div class="type-label"><b>Satoshi 400</b>Body large</div><div class="body-l">Deep technology, sharp design, and people you'll actually enjoy talking to.</div></div>
+      <div class="type-row"><div class="type-label"><b>Cabinet Grotesk 800</b>Display XL</div><div class="d-xl">Less hesitation.</div></div>
+      <div class="type-row"><div class="type-label"><b>Cabinet Grotesk 800</b>Display L / H2</div><div class="d-l">Games we've played</div></div>
+      <div class="type-row"><div class="type-label"><b>Gambetta 500 italic</b>Serif emphasis</div><div class="serif-l">conviction.</div></div>
+      <div class="type-row"><div class="type-label"><b>Satoshi 400</b>Body large</div><div class="body-l">Deep technology, sharp design, and people who actually understand your concerns.</div></div>
       <div class="type-row"><div class="type-label"><b>Satoshi 500</b>Body</div><div class="body-m">One studio across the whole board — from the first question to the thousandth user.</div></div>
       <div class="type-row"><div class="type-label"><b>Satoshi 500</b>Eyebrow / label</div><div class="eyebrow">Venture studio — Auckland</div></div>
     </section>
@@ -153,7 +157,8 @@
       <div class="comp-grid">
         <div class="comp-cell"><span class="comp-label">Primary button</span><a class="btn-solid" href="#">Make your move</a></div>
         <div class="comp-cell"><span class="comp-label">Ghost button</span><a class="btn-ghost" href="#">See how we work</a></div>
-        <div class="comp-cell"><span class="comp-label">Glass card</span><div class="glass"><h4>Design</h4><p>Products people feel — prototyped, tested, refined.</p></div></div>
+        <div class="comp-cell"><span class="comp-label">Glass card (service)</span><div class="glass"><h4>Design</h4><p>Products people feel — prototyped, tested, refined.</p></div></div>
+        <div class="comp-cell"><span class="comp-label">Translucent chrome (header / footer)</span><div class="glass-chrome"><h4>Glass bar</h4><p>Lighter glass so the background video reads through the nav &amp; footer.</p></div></div>
         <div class="comp-cell"><span class="comp-label">Solid panel</span><div class="panel"><h4 style="font-family:var(--font-display);font-weight:800">Panel</h4><p style="color:var(--ink-dim);font-size:0.9rem;margin-top:0.4rem">The lifted surface used for cards and forms.</p></div></div>
       </div>
     </section>

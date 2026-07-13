@@ -379,6 +379,7 @@ ${body}
 const robotsTxt = (site) => `User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /style-guide
 
 Sitemap: ${abs(site, "/sitemap.xml")}`;
 
