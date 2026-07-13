@@ -81,44 +81,6 @@
 
     footer.sg-foot { border-top: 1px solid var(--line); padding: 2.5rem 0; color: var(--ink-faint); font-size: 0.85rem; }
 
-    /* backdrop explorations — backlit-silhouette style in our palette */
-    .bg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 1rem; }
-    .bgcard { position: relative; aspect-ratio: 3 / 4; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); }
-    .bgcard .bg { position: absolute; inset: 0; }
-    .bgcard figcaption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 0.85rem; font-size: 0.8rem; background: linear-gradient(transparent, rgba(2, 20, 16, 0.82)); }
-    .bgnum { font-family: var(--font-display); font-weight: 700; color: var(--ink); }
-    .bglabel { color: var(--ink-dim); }
-    /* fine film grain */
-    .grain::after { content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0.08; mix-blend-mode: soft-light; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-    /* silhouettes (dark, backlit, softly blurred) */
-    .sil { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-    .sil::before, .sil::after { content: ""; position: absolute; left: 50%; transform: translateX(-50%); background: rgba(1, 16, 12, 0.9); filter: blur(3px); }
-    .fig::before { top: 24%; width: 20%; aspect-ratio: 1; border-radius: 50%; }
-    .fig::after { bottom: 0; width: 60%; height: 54%; border-radius: 46% 46% 0 0 / 76% 76% 0 0; }
-    .pawn::before { top: 20%; width: 19%; aspect-ratio: 1; border-radius: 50%; }
-    .pawn::after { bottom: 0; width: 56%; height: 60%; clip-path: polygon(40% 0, 60% 0, 65% 20%, 54% 38%, 78% 74%, 92% 100%, 8% 100%, 22% 74%, 46% 38%, 35% 20%); }
-    /* the 20 backdrops */
-    .bg-01 { background: radial-gradient(50% 45% at 50% 40%, rgba(250,77,86,.6), transparent 65%), radial-gradient(100% 90% at 50% 110%, #01130f, #032721 70%); }
-    .bg-02 { background: linear-gradient(180deg, #02201a, #063a2f 45%), radial-gradient(26% 120% at 50% 50%, rgba(250,77,86,.5), rgba(62,207,142,.16) 42%, transparent 72%); }
-    .bg-03 { background: radial-gradient(42% 52% at 38% 45%, rgba(250,77,86,.55), transparent 60%), radial-gradient(42% 52% at 62% 45%, rgba(62,207,142,.5), transparent 60%), #021d18; }
-    .bg-04 { background: radial-gradient(70% 50% at 50% 18%, rgba(240,231,212,.5), rgba(250,77,86,.2) 45%, transparent 72%), linear-gradient(180deg, transparent, #032721 75%), #03231d; }
-    .bg-05 { background: radial-gradient(35% 35% at 30% 34%, rgba(250,77,86,.5), transparent 60%), radial-gradient(36% 36% at 70% 64%, rgba(62,207,142,.45), transparent 60%), #03231d; }
-    .bg-06 { background: radial-gradient(closest-side at 50% 44%, #021d18 40%, transparent 42%), conic-gradient(from 200deg at 50% 44%, rgba(250,77,86,.5), rgba(62,207,142,.4), rgba(240,231,212,.3), rgba(250,77,86,.5)); }
-    .bg-07 { background: radial-gradient(62% 60% at 28% 30%, rgba(250,77,86,.6), transparent 60%), #04241d; }
-    .bg-08 { background: radial-gradient(60% 55% at 50% 42%, rgba(163,165,140,.4), rgba(240,231,212,.14) 50%, transparent 72%), #032721; }
-    .bg-09 { background: radial-gradient(20% 120% at 50% 50%, rgba(250,77,86,.6), transparent 70%), #03231d; }
-    .bg-10 { background: radial-gradient(48% 52% at 50% 42%, rgba(62,207,142,.55), transparent 62%), #021b16; }
-    .bg-11 { background: radial-gradient(50% 40% at 50% 45%, rgba(250,77,86,.28), transparent 60%), radial-gradient(120% 120% at 50% 50%, transparent 40%, #010f0c), #032721; }
-    .bg-12 { background: radial-gradient(45% 45% at 50% 38%, rgba(240,231,212,.55), transparent 62%), #03231d; }
-    .bg-13 { background: radial-gradient(40% 40% at 25% 30%, rgba(250,77,86,.45), transparent 55%), radial-gradient(45% 45% at 75% 35%, rgba(62,207,142,.4), transparent 55%), radial-gradient(50% 50% at 50% 82%, rgba(240,231,212,.22), transparent 60%), #03201a; }
-    .bg-14 { background: linear-gradient(180deg, #021a15 54%, rgba(250,77,86,.5) 78%, rgba(240,231,212,.32) 92%, #02150f); }
-    .bg-15 { background: radial-gradient(55% 55% at 50% 45%, rgba(250,77,86,.75), rgba(250,77,86,.22) 45%, transparent 68%), #01130f; }
-    .bg-16 { background: radial-gradient(65% 60% at 50% 40%, rgba(62,207,142,.4), rgba(6,58,47,.5) 55%, transparent 76%), #032721; }
-    .bg-17 { background: radial-gradient(80% 70% at 50% 45%, rgba(163,165,140,.34), transparent 70%), radial-gradient(50% 40% at 50% 40%, rgba(240,231,212,.24), transparent 60%), #04241d; }
-    .bg-18 { background: linear-gradient(135deg, rgba(62,207,142,.45), rgba(3,39,33,.6) 40%, rgba(250,77,86,.5) 75%, rgba(240,231,212,.3)); }
-    .bg-19 { background: radial-gradient(closest-side at 50% 46%, transparent 30%, rgba(250,77,86,.5) 38%, transparent 56%), #021b16; }
-    .bg-20 { background: linear-gradient(160deg, rgba(250,77,86,.4), transparent 45%), linear-gradient(20deg, rgba(62,207,142,.35), transparent 45%), #03211b; }
-
     @media (max-width: 640px) {
       .type-row { grid-template-columns: 1fr; gap: 0.5rem; }
       .principles { grid-template-columns: 1fr; }
@@ -222,34 +184,6 @@
         <div class="principle"><h4>Short, then sharp</h4><p>Lead with a plain line, land with a pointed one. "Launch is move one."</p></div>
         <div class="principle"><h4>Speak to the founder</h4><p>Empathetic and direct. We name the hesitation, then offer the move.</p></div>
         <div class="principle"><h4>Chess, lightly</h4><p>The gambit metaphor is a seasoning, not the whole meal — openings, moves, the board.</p></div>
-      </div>
-    </section>
-
-    <!-- BACKDROP EXPLORATIONS -->
-    <section class="sg">
-      <h2 class="sg-h2">Backdrop explorations</h2>
-      <p class="sg-sub">Twenty takes on the backlit-silhouette video style in our palette — to shortlist a hero-video direction. Exploratory; some will be culled.</p>
-      <div class="bg-grid">
-        <figure class="bgcard grain"><div class="bg bg-01"></div><div class="sil fig"></div><figcaption><span class="bgnum">01</span><span class="bglabel">Coral backlight, figure</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-02"></div><figcaption><span class="bgnum">02</span><span class="bglabel">Coral light column</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-03"></div><div class="sil pawn"></div><figcaption><span class="bgnum">03</span><span class="bglabel">Chromatic split pawn</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-04"></div><figcaption><span class="bgnum">04</span><span class="bglabel">Cream dawn</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-05"></div><figcaption><span class="bgnum">05</span><span class="bglabel">Twin orbs</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-06"></div><figcaption><span class="bgnum">06</span><span class="bglabel">Conic halo</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-07"></div><div class="sil fig"></div><figcaption><span class="bgnum">07</span><span class="bglabel">Off-centre coral sun</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-08"></div><div class="sil fig"></div><figcaption><span class="bgnum">08</span><span class="bglabel">Sage mist, figure</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-09"></div><figcaption><span class="bgnum">09</span><span class="bglabel">Coral bar (video mask)</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-10"></div><div class="sil pawn"></div><figcaption><span class="bgnum">10</span><span class="bglabel">Green backlit pawn</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-11"></div><figcaption><span class="bgnum">11</span><span class="bglabel">Deep vignette, faint coral</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-12"></div><div class="sil fig"></div><figcaption><span class="bgnum">12</span><span class="bglabel">Cream spotlight, figure</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-13"></div><figcaption><span class="bgnum">13</span><span class="bglabel">Gradient mesh</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-14"></div><figcaption><span class="bgnum">14</span><span class="bglabel">Horizon glow</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-15"></div><div class="sil fig"></div><figcaption><span class="bgnum">15</span><span class="bglabel">Ember bloom, figure</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-16"></div><figcaption><span class="bgnum">16</span><span class="bglabel">Cool green mist</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-17"></div><div class="sil fig"></div><figcaption><span class="bgnum">17</span><span class="bglabel">Figure in fog</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-18"></div><figcaption><span class="bgnum">18</span><span class="bglabel">Diagonal spectrum</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-19"></div><div class="sil pawn"></div><figcaption><span class="bgnum">19</span><span class="bglabel">Halo ring, pawn</span></figcaption></figure>
-        <figure class="bgcard grain"><div class="bg bg-20"></div><figcaption><span class="bgnum">20</span><span class="bglabel">Coral / green duotone</span></figcaption></figure>
       </div>
     </section>
 
