@@ -194,6 +194,8 @@ a { color: inherit; }
 .book-admin { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; margin-bottom: 2.5rem; }
 .book-admin-card { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 1.6rem 1.8rem; }
 .book-admin-h { font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; margin-bottom: 1.2rem; }
+.book-admin-cardhead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.2rem; }
+.book-admin-cardhead .book-admin-h { margin-bottom: 0; }
 .book-admin-h--wide { margin-top: 1rem; }
 .gen-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.2rem; }
 .gen-grid .field-full { grid-column: 1 / -1; }

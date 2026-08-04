@@ -504,9 +504,25 @@ function initBookings() {
     bookingsWired = true;
     el("#gen-slots").addEventListener("click", generateSlots);
     el("#add-oneoff").addEventListener("click", addOneoff);
+    el("#reset-slots").addEventListener("click", resetSlots);
   }
   loadSlotsAdmin();
   loadBookingsAdmin();
+}
+
+// remove every open (available) slot in one go — booked slots are kept so
+// existing bookings aren't orphaned
+async function resetSlots() {
+  const { data, error: countErr } = await supabase.from("booking_slots").select("id").eq("status", "available");
+  if (countErr) { setStatus(bStatus, countErr.message, "error"); return; }
+  const count = data?.length || 0;
+  if (!count) { setStatus(bStatus, "There are no open slots to remove.", "error"); return; }
+  if (!confirm(`Remove all ${count} open slot${count === 1 ? "" : "s"}? Booked slots are kept. This can't be undone.`)) return;
+  setStatus(bStatus, "Removing all open slots…");
+  const { error } = await supabase.from("booking_slots").delete().eq("status", "available");
+  if (error) { setStatus(bStatus, error.message, "error"); return; }
+  setStatus(bStatus, `Removed ${count} open slot${count === 1 ? "" : "s"}.`, "success");
+  loadSlotsAdmin();
 }
 
 function localSlot(dateStr, timeStr) {

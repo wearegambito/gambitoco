@@ -12,7 +12,8 @@
  */
 import { createClient } from "@supabase/supabase-js";
 import { marked } from "marked";
-import { mkdir, writeFile } from "node:fs/promises";
+import { parse } from "node-html-parser";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -383,14 +384,82 @@ Disallow: /style-guide
 
 Sitemap: ${abs(site, "/sitemap.xml")}`;
 
+/* ---------- homepage bake ----------
+   The homepage renders its live CMS content client-side (src/cms.js). If the
+   static markup in index.html differs from the CMS, the first paint shows the
+   stale fallback and then visibly swaps. Bake the current CMS content straight
+   into dist/index.html at build time so the first paint already matches — the
+   client fetch then confirms it with no visible change (and still updates
+   instantly if the CMS was edited after this deploy). Mirrors applyCmsContent
+   + the card renderers in src/cms.js. */
+async function bakeHomepage(sc, services, caseStudies) {
+  const file = join(DIST, "index.html");
+  let html;
+  try { html = await readFile(file, "utf8"); }
+  catch { console.warn("[prerender] dist/index.html not found — skipping homepage bake."); return; }
+  const root = parse(html, { comment: true });
+
+  root.querySelectorAll("[data-cms]").forEach((el) => {
+    const key = el.getAttribute("data-cms");
+    if (!(key in sc)) return;
+    const value = sc[key];
+    const attrName = el.getAttribute("data-cms-attr");
+    const hrefPrefix = el.getAttribute("data-cms-href");
+    if (attrName) {
+      el.setAttribute(attrName, value);
+    } else if (hrefPrefix) {
+      const clean = hrefPrefix === "tel:" ? value.replace(/[^\d+]/g, "") : value;
+      el.setAttribute("href", hrefPrefix + clean);
+      el.set_content(esc(value));
+    } else {
+      el.set_content(value); // value may contain <em>, <br> etc.
+    }
+  });
+
+  if (sc.meta_title) root.querySelector("title")?.set_content(esc(sc.meta_title));
+  if (sc.meta_description) root.querySelector('meta[name="description"]')?.setAttribute("content", sc.meta_description);
+  if (sc.hero_video) root.querySelector("#page-video source")?.setAttribute("src", sc.hero_video);
+
+  const stack = root.querySelector(".services-stack");
+  if (stack && services.length) {
+    stack.set_content(services.map((s) => `
+        <a class="s-card" href="/services/${esc(s.slug)}/" data-hover>
+          <div class="s-card-top"><span class="s-num">${esc(s.number)}</span><h3>${esc(s.title)}</h3></div>
+          <p>${esc(s.description)}</p>
+          <span class="s-tag">${esc(s.tag)}</span>
+          <span class="s-go">Explore ${esc(s.title)} →</span>
+        </a>`).join(""));
+  }
+
+  const grid = root.querySelector(".work-grid");
+  if (grid && caseStudies.length) {
+    grid.set_content(caseStudies.map((c) => {
+      const href = c.link_url || "#contact";
+      const external = /^https?:\/\//i.test(href);
+      const linkAttrs = external ? ' target="_blank" rel="noopener noreferrer"' : "";
+      const extBadge = external ? `<span class="w-ext" aria-hidden="true">↗</span>` : "";
+      const extLabel = external ? " (opens in a new tab)" : "";
+      return `
+        <a class="w-card w-span${c.span === "7" ? "7" : "5"}" href="${esc(href)}"${linkAttrs} data-hover aria-label="${esc(c.title)}${extLabel}">
+          <figure class="w-media"><img src="${esc(c.image_url)}" alt="${esc(c.title)}" loading="lazy" />${extBadge}</figure>
+          <div class="w-meta"><h3>${esc(c.title)}</h3><span>${esc(c.category)}</span></div>
+        </a>`;
+    }).join(""));
+  }
+
+  await writeFile(file, root.toString(), "utf8");
+  console.log("  baked homepage index.html with live CMS content");
+}
+
 /* ---------- run ---------- */
 async function run() {
-  const [{ data: content }, { data: services }, { data: insights }, { data: faqs }, { data: offerings }] = await Promise.all([
+  const [{ data: content }, { data: services }, { data: insights }, { data: faqs }, { data: offerings }, { data: caseStudies }] = await Promise.all([
     supabase.from("site_content").select("key, value"),
     supabase.from("services").select("*").eq("published", true).order("order_index"),
     supabase.from("insights").select("*").eq("published", true).order("published_at", { ascending: false }),
     supabase.from("faqs").select("*").eq("published", true).order("order_index"),
     supabase.from("offerings").select("*").eq("published", true).order("order_index"),
+    supabase.from("case_studies").select("*").eq("published", true).order("order_index"),
   ]);
 
   const sc = Object.fromEntries((content || []).map((r) => [r.key, r.value]));
