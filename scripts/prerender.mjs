@@ -32,6 +32,12 @@ const esc = (s) =>
 
 const abs = (base, path) => (/^https?:\/\//.test(path) ? path : base.replace(/\/$/, "") + (path.startsWith("/") ? path : "/" + path));
 
+// treat empty / whitespace-only values as "not set", so an unfilled (or
+// accidentally blank) field cleanly falls through to the next fallback
+const nonBlank = (v) => { const s = (v == null ? "" : String(v)).trim(); return s || null; };
+// resolve a share image: first non-blank of the candidates, else the favicon
+const ogPick = (site, ...candidates) => abs(site, candidates.map(nonBlank).find(Boolean) || "/favicon.png");
+
 async function write(relPath, html) {
   const full = join(DIST, relPath);
   await mkdir(dirname(full), { recursive: true });
@@ -150,7 +156,7 @@ function servicePage(svc, offerings, sc, site) {
   const url = abs(site, `/services/${svc.slug}/`);
   const title = svc.seo_title || `${svc.title} | Gambito`;
   const desc = svc.seo_description || svc.description;
-  const ogImage = abs(site, svc.og_image || sc.og_image || "/favicon.png");
+  const ogImage = ogPick(site, svc.og_image, svc.hero_image, sc.og_image);
   const bodyHtml = marked.parse(svc.body || "");
   const serviceLd = {
     "@context": "https://schema.org",
@@ -196,7 +202,7 @@ function offeringPage(off, serviceTitle, sc, site) {
   const url = abs(site, path);
   const title = off.seo_title || `${off.title} | Gambito`;
   const desc = off.seo_description || off.tagline;
-  const ogImage = abs(site, off.og_image || sc.og_image || "/favicon.png");
+  const ogImage = ogPick(site, off.og_image, off.hero_image, sc.og_image);
   const arr = (v) => (Array.isArray(v) ? v : []);
 
   const formats = arr(off.formats).map((f) => `<div class="fmt-card">
@@ -285,14 +291,15 @@ function insightsIndex(posts, sc, site) {
   </div>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
-  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: abs(site, sc.og_image || "/favicon.png"), jsonLd: [orgLd(site), crumbs] }), main, sc });
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: ogPick(site, sc.og_image), jsonLd: [orgLd(site), crumbs] }), main, sc });
 }
 
 function insightPage(post, sc, site) {
   const url = abs(site, `/insights/${post.slug}/`);
   const title = post.seo_title || `${post.title} | Gambito`;
   const desc = post.seo_description || post.excerpt;
-  const ogImage = abs(site, post.og_image || post.cover_image || sc.og_image || "/favicon.png");
+  // a blog post's share image: its own og_image, else its cover image, else the site default
+  const ogImage = ogPick(site, post.og_image, post.cover_image, sc.og_image);
   const bodyHtml = marked.parse(post.body || "");
   const articleLd = {
     "@context": "https://schema.org",
@@ -358,7 +365,7 @@ function faqPage(faqs, sc, site) {
   </div>
   ${ctaBlock(sc)}
   ${footer(sc)}`;
-  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: abs(site, sc.og_image || "/favicon.png"), jsonLd: [faqLd, crumbs] }), main, sc });
+  return layout({ headHtml: head({ title, description: desc, canonical: url, ogImage: ogPick(site, sc.og_image), jsonLd: [faqLd, crumbs] }), main, sc });
 }
 
 function fmtDate(d) {
