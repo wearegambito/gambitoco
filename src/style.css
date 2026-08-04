@@ -213,6 +213,12 @@ main { overflow-x: clip; width: 100%; position: relative; z-index: 1; }
   -webkit-mask-image: radial-gradient(ellipse 40% 100% at 50% 50%, #000 45%, transparent 80%);
   mask-image: radial-gradient(ellipse 40% 100% at 50% 50%, #000 45%, transparent 80%);
 }
+/* open on the hero's close-up from first paint, so the backdrop isn't briefly
+   shown un-zoomed before main.js (which awaits the CMS fetch) applies it.
+   Matches the gsap.set start (scale 3.6); skipped when motion is reduced. */
+@media (prefers-reduced-motion: no-preference) {
+  .page-video { transform: scale(3.6); }
+}
 .page-veil {
   position: absolute; inset: 0;
   background:

@@ -500,6 +500,8 @@ async function run() {
   await write("sitemap.xml", sitemapXml(site, urls));
   await write("robots.txt", robotsTxt(site));
 
+  await bakeHomepage(sc, services || [], caseStudies || []);
+
   console.log(`\nPrerender complete: ${(services || []).length} services, ${allOfferings.length} offerings, ${(insights || []).length} insights, ${(faqs || []).length} faqs.`);
 }
 
