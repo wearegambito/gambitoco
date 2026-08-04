@@ -240,3 +240,16 @@ a { color: inherit; }
   .booking-row { grid-template-columns: 1fr; }
   .booking-row .notes { grid-column: 1; }
 }
+
+/* ---------- content engine: ideas ---------- */
+.idea-form { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 1.6rem 1.8rem; margin-bottom: 1.4rem; }
+.idea-form .btn { margin-top: 0.4rem; }
+.ref-previews { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
+.ref-thumb { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+.idea-title { font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; margin-bottom: 0.3rem; }
+.idea-brief { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.5; }
+.idea-meta { color: var(--ink-faint); font-size: 0.8rem; letter-spacing: 0.02em; margin-top: 0.7rem; }
+.idea-badge { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.3rem 0.7rem; border-radius: 100px; border: 1px solid var(--line); color: var(--ink-dim); }
+.idea-badge--generating { color: var(--ember); border-color: rgba(250, 77, 86, 0.4); }
+.idea-badge--drafted { color: #3ecf8e; border-color: rgba(62, 207, 142, 0.4); }
+.idea-badge--failed { color: var(--ember); border-color: rgba(250, 77, 86, 0.5); }

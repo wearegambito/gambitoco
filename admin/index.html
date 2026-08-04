@@ -38,6 +38,7 @@
         <button class="admin-tab" data-tab="insights">Insights</button>
         <button class="admin-tab" data-tab="faq">FAQ</button>
         <button class="admin-tab" data-tab="bookings">Bookings</button>
+        <button class="admin-tab" data-tab="ideas">Ideas</button>
       </nav>
       <div class="admin-nav-right">
         <button class="admin-publish" id="publish-btn" title="Rebuild the live site to apply changes to the service, insights and FAQ pages">Publish ↻</button>
@@ -160,6 +161,38 @@
 
         <h3 class="book-admin-h book-admin-h--wide">Upcoming bookings</h3>
         <div id="bookings-list" class="bookings-admin"></div>
+      </section>
+
+      <!-- IDEAS / CONTENT ENGINE TAB -->
+      <section class="admin-panel" data-panel="ideas">
+        <div class="panel-head"><h2>Content engine — ideas</h2></div>
+        <p class="panel-note">Capture an idea and, optionally, drop in style reference images — Pinterest screenshots, saved Instagram posts, anything that sets the visual direction. References are described by AI on upload, then generation turns the idea + our style guide + those references into imagery and copy, and drafts the post straight into <b>Buffer</b> for review. Buffer is the approval surface — nothing publishes from here.</p>
+        <p class="panel-status" id="ideas-status"></p>
+
+        <div class="idea-form">
+          <div class="edit-card-grid">
+            <div class="field field-full"><label>Idea / brief</label><textarea id="idea-brief" placeholder="What's the post about? The angle, the message, the hook…"></textarea></div>
+            <div class="field"><label>Title (internal)</label><input id="idea-title" placeholder="Short label" /></div>
+            <div class="field"><label>Post type</label>
+              <select id="idea-posttype">
+                <option value="post">Feed post</option>
+                <option value="reel">Reel</option>
+                <option value="story">Story</option>
+                <option value="carousel">Carousel</option>
+              </select>
+            </div>
+            <div class="field field-full"><label>Notes / direction (optional)</label><textarea id="idea-notes" placeholder="Tone, must-includes, references to a past post…"></textarea></div>
+            <div class="field field-full"><label>Style reference images (optional)</label>
+              <input type="file" id="idea-refs" accept="image/*" multiple />
+              <div class="field-hint">Screenshots, saved posts, moodboards — anything that sets the visual direction. Stored privately and described by AI (palette, lighting, composition, mood).</div>
+              <div class="ref-previews" id="idea-ref-previews"></div>
+            </div>
+          </div>
+          <button class="btn" id="save-idea"><span>Save idea</span></button>
+        </div>
+
+        <h3 class="book-admin-h book-admin-h--wide">Ideas</h3>
+        <div class="card-list" id="ideas-list"></div>
       </section>
 
     </main>

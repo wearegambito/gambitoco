@@ -1,8 +1,9 @@
-import { supabase } from "../src/supabase.js";
+import { supabase, SUPABASE_URL } from "../src/supabase.js";
 import { optimizeVideo, isVideoFile } from "./video-optimize.js";
 
 const ADMIN_EMAIL = "armic@gambito.co.nz";
 const IMAGE_BUCKET = "case-studies"; // shared image bucket for all uploads
+const REF_BUCKET = "style-references"; // private bucket for content-engine style references
 
 /* ---------- site content (homepage, live-fetch) ---------- */
 // short explainer shown under each group heading, so it's clear what each
@@ -212,6 +213,7 @@ function showApp() {
   Object.keys(RESOURCES).forEach(loadResource);
   wireAddButtons();
   initBookings();
+  initIdeas();
 }
 
 el("#login-form").addEventListener("submit", async (e) => {
@@ -614,6 +616,127 @@ async function loadBookingsAdmin() {
       ${b.notes ? `<div class="notes">${esc(b.notes)}</div>` : ""}
     </div>`;
   }).join("");
+}
+
+/* ---------- content engine: idea intake ---------- */
+let ideasWired = false;
+const iStatus = "#ideas-status";
+
+function initIdeas() {
+  if (!ideasWired) {
+    ideasWired = true;
+    el("#save-idea").addEventListener("click", saveIdea);
+    el("#idea-refs").addEventListener("change", previewRefs);
+  }
+  loadIdeas();
+}
+
+function previewRefs() {
+  const box = el("#idea-ref-previews");
+  const files = [...el("#idea-refs").files];
+  box.innerHTML = files.map((f) => `<img class="ref-thumb" src="${URL.createObjectURL(f)}" alt="" />`).join("");
+}
+
+async function saveIdea() {
+  const brief = el("#idea-brief").value.trim();
+  if (!brief) { setStatus(iStatus, "Add a brief so there's something to work from.", "error"); return; }
+  const btn = el("#save-idea");
+  btn.disabled = true;
+  setStatus(iStatus, "Saving idea…");
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: idea, error } = await supabase.from("content_ideas").insert({
+    title: el("#idea-title").value.trim() || brief.slice(0, 60),
+    brief,
+    notes: el("#idea-notes").value.trim(),
+    post_type: el("#idea-posttype").value,
+    target_service: "instagram",
+    created_by: session?.user?.email || "",
+  }).select().single();
+  if (error) { btn.disabled = false; setStatus(iStatus, error.message, "error"); return; }
+
+  // upload style references to the PRIVATE bucket + record rows
+  const files = [...el("#idea-refs").files];
+  let uploaded = 0;
+  for (const file of files) {
+    setStatus(iStatus, `Uploading reference ${uploaded + 1} of ${files.length}…`);
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+    const path = `${idea.id}/${Date.now()}-${safe}`;
+    const up = await supabase.storage.from(REF_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+    if (up.error) { setStatus(iStatus, up.error.message, "error"); continue; }
+    await supabase.from("content_style_references").insert({ idea_id: idea.id, storage_path: path, mime: file.type });
+    uploaded++;
+  }
+
+  // describe references on ingest (edge function; safe no-op until the AI key is set)
+  if (uploaded) {
+    fetch(`${SUPABASE_URL}/functions/v1/describe-references`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ideaId: idea.id }),
+    }).catch(() => {});
+  }
+
+  ["idea-brief", "idea-title", "idea-notes", "idea-refs"].forEach((id) => (el("#" + id).value = ""));
+  el("#idea-ref-previews").innerHTML = "";
+  btn.disabled = false;
+  setStatus(iStatus, `Idea saved${uploaded ? ` with ${uploaded} reference${uploaded > 1 ? "s" : ""}` : ""}.`, "success");
+  loadIdeas();
+}
+
+async function loadIdeas() {
+  const { data, error } = await supabase
+    .from("content_ideas")
+    .select("*, content_style_references(count), content_runs(id,status,stage,created_at)")
+    .order("created_at", { ascending: false });
+  if (error) { setStatus(iStatus, error.message, "error"); return; }
+  const box = el("#ideas-list");
+  if (!data.length) { box.innerHTML = `<p class="slots-empty">No ideas yet — capture one above.</p>`; return; }
+
+  box.innerHTML = data.map((idea) => {
+    const refs = idea.content_style_references?.[0]?.count ?? 0;
+    const runs = (idea.content_runs || []).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    const latest = runs[0];
+    const runLabel = latest ? `Run: ${esc(latest.status)}${latest.stage && latest.stage !== "done" ? ` · ${esc(latest.stage)}` : ""}` : "Not generated yet";
+    return `
+      <div class="edit-card" data-idea="${idea.id}">
+        <div class="edit-card-top">
+          <span class="idea-badge idea-badge--${esc(idea.status)}">${esc(idea.status)}</span>
+          <div class="edit-card-actions">
+            <button class="btn btn-ghost btn-small" data-action="generate"><span>Generate</span></button>
+            <button class="btn btn-danger btn-small" data-action="delete"><span>Delete</span></button>
+          </div>
+        </div>
+        <p class="idea-title">${esc(idea.title)}</p>
+        <p class="idea-brief">${esc(idea.brief)}</p>
+        <p class="idea-meta">${esc(idea.post_type)} · ${refs} reference${refs === 1 ? "" : "s"} · ${runLabel}</p>
+      </div>`;
+  }).join("");
+
+  box.querySelectorAll(".edit-card").forEach((card) => {
+    const id = card.dataset.idea;
+    card.querySelector('[data-action="delete"]').addEventListener("click", async () => {
+      if (!confirm("Delete this idea and its references, runs and drafts? This can't be undone.")) return;
+      const { error } = await supabase.from("content_ideas").delete().eq("id", id);
+      if (error) setStatus(iStatus, error.message, "error"); else loadIdeas();
+    });
+    card.querySelector('[data-action="generate"]').addEventListener("click", async (e) => {
+      const b = e.currentTarget; b.disabled = true;
+      setStatus(iStatus, "Starting generation…");
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-content`, {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ideaId: id }),
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || out.ok === false) throw new Error(out.error || `HTTP ${res.status}`);
+        setStatus(iStatus, "Generation started — the draft will appear in Buffer for review.", "success");
+      } catch (err) {
+        setStatus(iStatus, "Generation isn't wired up yet: " + err.message, "error");
+      }
+      b.disabled = false;
+      loadIdeas();
+    });
+  });
 }
 
 checkSession();
