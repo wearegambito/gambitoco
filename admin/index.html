@@ -169,6 +169,19 @@
         <p class="panel-note">Capture an idea and, optionally, drop in style reference images — Pinterest screenshots, saved Instagram posts, anything that sets the visual direction. References are described by AI on upload, then generation turns the idea + our style guide + those references into imagery and copy, and drafts the post straight into <b>Buffer</b> for review. Buffer is the approval surface — nothing publishes from here.</p>
         <p class="panel-status" id="ideas-status"></p>
 
+        <div class="idea-suggest">
+          <div class="idea-suggest-head">
+            <div>
+              <h3 class="book-admin-h">Need a starting point?</h3>
+              <p class="field-hint">Generate 5 on-brand ideas to spark from. Pick one to load it into the form below, then add your own detail and reference images before saving. Or just write your own in the form.</p>
+            </div>
+            <button class="btn" id="suggest-ideas"><span>✨ Suggest 5 ideas</span></button>
+          </div>
+          <input id="suggest-steer" class="suggest-steer" placeholder="Optional — steer the ideas, e.g. “about our discovery sprint”, “founder mindset”, “seasonal”" />
+          <p class="panel-status" id="suggest-status"></p>
+          <div class="suggest-list" id="idea-suggestions"></div>
+        </div>
+
         <div class="idea-form">
           <div class="edit-card-grid">
             <div class="field field-full"><label>Idea / brief</label><textarea id="idea-brief" placeholder="What's the post about? The angle, the message, the hook…"></textarea></div>

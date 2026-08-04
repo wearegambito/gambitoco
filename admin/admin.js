@@ -627,8 +627,68 @@ function initIdeas() {
     ideasWired = true;
     el("#save-idea").addEventListener("click", saveIdea);
     el("#idea-refs").addEventListener("change", previewRefs);
+    el("#suggest-ideas").addEventListener("click", suggestIdeas);
+    el("#suggest-steer").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); suggestIdeas(); } });
   }
   loadIdeas();
+}
+
+const sStatus = "#suggest-status";
+
+async function suggestIdeas() {
+  const btn = el("#suggest-ideas");
+  btn.disabled = true;
+  setStatus(sStatus, "Thinking up ideas…");
+  try {
+    // pass recent idea titles so the AI doesn't repeat what we already have
+    const { data: existing } = await supabase
+      .from("content_ideas").select("title").order("created_at", { ascending: false }).limit(40);
+    const avoid = (existing || []).map((i) => i.title).filter(Boolean);
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/suggest-ideas`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ steer: el("#suggest-steer").value.trim(), avoid }),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok || out.ok === false) throw new Error(out.error || `HTTP ${res.status}`);
+    renderSuggestions(out.ideas || []);
+    const n = (out.ideas || []).length;
+    setStatus(sStatus, n ? `${n} ideas — pick one to load it into the form, or suggest again for more.` : "No ideas came back — try again.", n ? "success" : "error");
+  } catch (err) {
+    setStatus(sStatus, "Couldn't suggest ideas: " + err.message, "error");
+  }
+  btn.disabled = false;
+}
+
+function renderSuggestions(ideas) {
+  const box = el("#idea-suggestions");
+  if (!ideas.length) { box.innerHTML = ""; return; }
+  box.innerHTML = ideas.map((it, i) => `
+    <div class="suggest-card" data-i="${i}">
+      <div class="suggest-card-top">
+        <span class="idea-badge idea-badge--new">${esc(it.post_type || "post")}</span>
+        <button class="btn btn-ghost btn-small" data-action="use"><span>Use this →</span></button>
+      </div>
+      <p class="idea-title">${esc(it.title || "")}</p>
+      <p class="idea-brief">${esc(it.brief || "")}</p>
+      ${it.hook ? `<p class="suggest-hook">“${esc(it.hook)}”</p>` : ""}
+    </div>`).join("");
+  box.querySelectorAll(".suggest-card").forEach((card) => {
+    const it = ideas[+card.dataset.i];
+    card.querySelector('[data-action="use"]').addEventListener("click", () => useSuggestion(it, card));
+  });
+}
+
+function useSuggestion(it, card) {
+  el("#idea-brief").value = it.brief || "";
+  el("#idea-title").value = it.title || "";
+  const types = ["post", "reel", "story", "carousel"];
+  el("#idea-posttype").value = types.includes(it.post_type) ? it.post_type : "post";
+  el("#idea-notes").value = it.hook ? `Hook: ${it.hook}` : "";
+  el("#idea-suggestions").querySelectorAll(".suggest-card").forEach((c) => c.classList.remove("is-used"));
+  if (card) card.classList.add("is-used");
+  el(".idea-form").scrollIntoView({ behavior: "smooth", block: "start" });
+  el("#idea-brief").focus();
+  setStatus(iStatus, "Loaded into the form — tweak the detail, add reference images, then Save idea.", "success");
 }
 
 function previewRefs() {
