@@ -56,7 +56,7 @@ async function concept(idea: any, descriptors: unknown[], slides: number) {
   const direction = (idea.image_direction || "").trim();
 
   const mediaInstruction = isCarousel
-    ? `Produce an Instagram CAROUSEL: one cover slide, 3 to 4 content slides, and one end/CTA slide (5 to 6 slides total). Slides are rendered as designed graphics with our brand colours and fonts applied automatically, so write the TEXT for each slide, not image prompts. Keep it highly readable: slide titles 6 words or fewer, body at most 2 short sentences.${direction ? ` DIRECTION from the user: ${direction}` : ""}`
+    ? `Produce an Instagram CAROUSEL: one cover slide, 3 to 4 content slides, and one end/CTA slide (5 to 6 slides total). Slides are rendered as designed graphics with our brand colours and fonts applied automatically, so write the TEXT for each slide, not image prompts. Keep it highly readable: slide titles 6 words or fewer, body at most 2 short sentences. Write every slide title and all slide copy in sentence case (capitalise only the first word and proper nouns like Gambito), never Title Case.${direction ? ` DIRECTION from the user: ${direction}` : ""}`
     : `Produce content for an Instagram ${idea.post_type}. The brand colour palette (racing green #032721, beige #f0e7d4, coral #fa4d56) and cinematic moody look are enforced automatically on every image, so focus the image prompt on subject, composition and mood rather than restating exact hex.${direction ? `\nIMAGE DIRECTION (honour closely): ${direction}` : ""}`;
 
   const mediaJson = isCarousel
