@@ -10,6 +10,7 @@ export default defineConfig({
         admin: resolve(__dirname, "admin/index.html"),
         book: resolve(__dirname, "book/index.html"),
         styleguide: resolve(__dirname, "style-guide/index.html"),
+        ideaToLaunch: resolve(__dirname, "idea-to-launch/index.html"),
       },
     },
   },

@@ -25,7 +25,8 @@ async function emailOctopusUpsert(email: string, name: string | null, tags: stri
   if (!key || !listId) return { ok: false, error: "EmailOctopus not configured" };
   const body: Record<string, unknown> = { email_address: email, status: "subscribed" };
   if (name) body.fields = { FirstName: name }; // EmailOctopus default field tag is "FirstName"
-  if (tags.length) body.tags = tags;
+  // EmailOctopus v2 wants tags as an object map { tagName: true }, not an array
+  if (tags.length) body.tags = Object.fromEntries(tags.map((t) => [t, true]));
   const res = await fetch(`${EO_BASE}/lists/${listId}/contacts`, {
     method: "PUT",
     headers: { "content-type": "application/json", authorization: `Bearer ${key}` },

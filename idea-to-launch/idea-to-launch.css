@@ -1,0 +1,96 @@
+/* Idea to Launch — campaign landing page.
+   Reuses the brand palette + fonts (content.css sets body bg/font + nav). */
+.lp, .lp-footer {
+  --green: #032721;
+  --green-2: #063a2f;
+  --ink: #f0e7d4;
+  --ink-dim: #a3a58c;
+  --ink-faint: #5c6b60;
+  --coral: #fa4d56;
+  --line: rgba(240, 231, 212, 0.12);
+  --disp: "Cabinet Grotesk", sans-serif;
+  --serif: "Gambetta", serif;
+}
+
+.lp { color: var(--ink); overflow-x: hidden; }
+.lp em { font-family: var(--serif); font-style: italic; color: var(--coral); font-weight: 500; }
+
+/* shared section rhythm */
+.lp-section { max-width: 1040px; margin: 0 auto; padding: 5.5rem 1.5rem; }
+.lp-h2 { font-family: var(--disp); font-weight: 800; font-size: clamp(1.7rem, 4vw, 2.6rem); line-height: 1.08; margin-bottom: 1.1rem; }
+.lp-lead { color: var(--ink-dim); font-size: clamp(1rem, 1.6vw, 1.18rem); line-height: 1.6; max-width: 62ch; }
+
+/* buttons */
+.lp-btn { display: inline-block; font-weight: 700; font-size: 0.98rem; padding: 0.9rem 1.5rem; border-radius: 100px; text-decoration: none; transition: transform 0.15s ease, background 0.2s, border-color 0.2s; }
+.lp-btn-solid { background: var(--coral); color: #1a0406; border: 1px solid var(--coral); }
+.lp-btn-solid:hover { transform: translateY(-2px); }
+.lp-btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.lp-btn-ghost:hover { border-color: rgba(240, 231, 212, 0.35); }
+
+/* hero */
+.lp-hero { max-width: 900px; margin: 0 auto; padding: clamp(4rem, 12vh, 8rem) 1.5rem 3.5rem; text-align: center; }
+.lp-eyebrow { font-size: 0.82rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 1.4rem; }
+.lp-hero-title { font-family: var(--disp); font-weight: 800; font-size: clamp(2.4rem, 6.5vw, 4.4rem); line-height: 1.03; letter-spacing: -0.01em; margin-bottom: 1.6rem; }
+.lp-hero-sub { color: var(--ink-dim); font-size: clamp(1.05rem, 2vw, 1.3rem); line-height: 1.55; max-width: 60ch; margin: 0 auto 2.4rem; }
+.lp-hero-ctas { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+
+/* differentiator */
+.lp-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2.6rem; }
+.lp-card { background: var(--green-2); border: 1px solid var(--line); border-radius: 18px; padding: 1.6rem 1.5rem; }
+.lp-card h3 { font-family: var(--disp); font-weight: 700; font-size: 1.15rem; margin-bottom: 0.6rem; }
+.lp-card p { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.55; }
+
+/* timeline */
+.lp-timeline { list-style: none; margin: 2.8rem 0 0; padding: 0; position: relative; }
+.lp-timeline::before { content: ""; position: absolute; left: 9px; top: 8px; bottom: 8px; width: 2px; background: var(--line); }
+.lp-step { position: relative; padding: 0 0 2.4rem 2.6rem; }
+.lp-step::before { content: ""; position: absolute; left: 0; top: 6px; width: 20px; height: 20px; border-radius: 50%; background: var(--green); border: 2px solid var(--coral); }
+.lp-step:last-child { padding-bottom: 0; }
+.lp-step-week { display: inline-block; font-family: var(--disp); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--coral); margin-bottom: 0.5rem; }
+.lp-step h3 { font-family: var(--disp); font-weight: 700; font-size: 1.35rem; margin-bottom: 0.5rem; }
+.lp-step p { color: var(--ink-dim); font-size: 1rem; line-height: 1.6; max-width: 60ch; }
+
+/* outcomes */
+.lp-outcome-grid { list-style: none; margin: 2.4rem 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem 1.6rem; }
+.lp-outcome-grid li { position: relative; padding-left: 2rem; color: var(--ink); font-size: 1.05rem; line-height: 1.5; }
+.lp-outcome-grid li::before { content: "→"; position: absolute; left: 0; top: 0; color: var(--coral); font-weight: 700; }
+.lp-outcome-note { margin-top: 2rem; font-family: var(--disp); font-weight: 700; font-size: 1.1rem; color: var(--ink); }
+
+/* research — emphasis band */
+.lp-research { max-width: none; background: var(--green-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.lp-research-inner { max-width: 1040px; margin: 0 auto; }
+
+/* community */
+.lp-community { text-align: center; }
+.lp-community .lp-lead { margin: 0 auto; }
+
+/* capture form */
+.lp-capture { display: flex; justify-content: center; }
+.lp-capture-card { width: 100%; max-width: 640px; background: var(--green-2); border: 1px solid var(--line); border-radius: 22px; padding: 2.4rem clamp(1.4rem, 4vw, 2.6rem); text-align: center; }
+.lp-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.8rem; text-align: left; }
+.lp-field { display: flex; flex-direction: column; gap: 0.4rem; }
+.lp-field-full { grid-column: 1 / -1; }
+.lp-field label { font-size: 0.85rem; color: var(--ink-dim); }
+.lp-optional { color: var(--ink-faint); }
+.lp-field input, .lp-field textarea { background: var(--green); border: 1px solid var(--line); border-radius: 12px; padding: 0.8rem 0.95rem; color: var(--ink); font: inherit; font-size: 0.98rem; }
+.lp-field input::placeholder, .lp-field textarea::placeholder { color: var(--ink-faint); }
+.lp-field input:focus, .lp-field textarea:focus { outline: none; border-color: rgba(250, 77, 86, 0.6); }
+.lp-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.lp-form-submit { grid-column: 1 / -1; margin-top: 0.3rem; cursor: pointer; font: inherit; font-weight: 700; }
+.lp-form-status { grid-column: 1 / -1; min-height: 1.2em; font-size: 0.9rem; color: var(--ink-dim); margin: 0; text-align: center; }
+.lp-form-status.is-error { color: var(--coral); }
+.lp-form-status.is-success { color: #3ecf8e; }
+.lp-capture-alt { margin-top: 1.4rem; color: var(--ink-dim); font-size: 0.92rem; }
+.lp-capture-alt a { color: var(--ink); }
+
+/* footer */
+.lp-footer { text-align: center; padding: 3rem 1.5rem 4rem; border-top: 1px solid var(--line); color: var(--ink-faint); }
+.lp-footer-logo { height: 26px; opacity: 0.85; margin-bottom: 0.9rem; }
+.lp-footer p { font-size: 0.85rem; }
+
+@media (max-width: 760px) {
+  .lp-cards { grid-template-columns: 1fr; }
+  .lp-outcome-grid { grid-template-columns: 1fr; }
+  .lp-form { grid-template-columns: 1fr; }
+  .lp-section { padding: 4rem 1.3rem; }
+}
