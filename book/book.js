@@ -207,6 +207,7 @@ async function submitBooking(e) {
   errEl.textContent = "";
   submit.disabled = true;
   submit.textContent = "Booking…";
+  window.gambitoTrack && window.gambitoTrack("booking_started", {});
 
   const payload = {
     p_slot_id: selected.id,
@@ -228,6 +229,9 @@ async function submitBooking(e) {
     }
     return;
   }
+
+  // conversion event — booking confirmed
+  window.gambitoTrack && window.gambitoTrack("booking_completed", { slot_id: selected.id });
 
   // fire-and-forget notification (works once the MailerSend key is configured)
   try {

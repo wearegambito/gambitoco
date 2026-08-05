@@ -68,6 +68,7 @@ function head({ title, description, canonical, ogImage, ogType = "website", json
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
   <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500,700&f[]=gambetta@2,500&display=swap" rel="stylesheet" />
+  <script src="/analytics.js" defer></script>
   <link rel="stylesheet" href="/content.css" />
   ${ld}`;
 }
