@@ -631,9 +631,28 @@ function initIdeas() {
     el("#suggest-steer").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); suggestIdeas(); } });
   }
   loadIdeas();
+  renderSuggestions(loadStoredSuggestions()); // restore any previously suggested ideas
 }
 
 const sStatus = "#suggest-status";
+
+// suggested ideas persist in the browser so they survive reloads and tab switches
+const SUGGEST_KEY = "gambito_idea_suggestions";
+function loadStoredSuggestions() {
+  try { const v = JSON.parse(localStorage.getItem(SUGGEST_KEY) || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
+}
+function saveStoredSuggestions(arr) {
+  try { localStorage.setItem(SUGGEST_KEY, JSON.stringify(arr.slice(0, 30))); } catch { /* ignore quota/private-mode */ }
+}
+function mergeSuggestions(fresh, existing) {
+  const seen = new Set(), out = [];
+  for (const it of [...fresh, ...existing]) {
+    const key = ((it.title || "") + "|" + (it.brief || "")).toLowerCase().trim();
+    if (seen.has(key)) continue;
+    seen.add(key); out.push(it);
+  }
+  return out.slice(0, 30);
+}
 
 async function suggestIdeas() {
   const btn = el("#suggest-ideas");
@@ -650,9 +669,11 @@ async function suggestIdeas() {
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok || out.ok === false) throw new Error(out.error || `HTTP ${res.status}`);
-    renderSuggestions(out.ideas || []);
-    const n = (out.ideas || []).length;
-    setStatus(sStatus, n ? `${n} ideas — pick one to load it into the form, or suggest again for more.` : "No ideas came back — try again.", n ? "success" : "error");
+    const fresh = out.ideas || [];
+    const merged = mergeSuggestions(fresh, loadStoredSuggestions());
+    saveStoredSuggestions(merged);
+    renderSuggestions(merged);
+    setStatus(sStatus, fresh.length ? `${fresh.length} new ideas added — they stay here until you clear them. Pick any to load it into the form.` : "No ideas came back — try again.", fresh.length ? "success" : "error");
   } catch (err) {
     setStatus(sStatus, "Couldn't suggest ideas: " + err.message, "error");
   }
@@ -666,15 +687,29 @@ function renderSuggestions(ideas) {
     <div class="suggest-card" data-i="${i}">
       <div class="suggest-card-top">
         <span class="idea-badge idea-badge--new">${esc(it.post_type || "post")}</span>
-        <button class="btn btn-ghost btn-small" data-action="use"><span>Use this →</span></button>
+        <div class="suggest-card-actions">
+          <button class="btn btn-ghost btn-small" data-action="use"><span>Use this →</span></button>
+          <button class="suggest-x" data-action="dismiss" title="Remove this suggestion">✕</button>
+        </div>
       </div>
       <p class="idea-title">${esc(it.title || "")}</p>
       <p class="idea-brief">${esc(it.brief || "")}</p>
       ${it.hook ? `<p class="suggest-hook">“${esc(it.hook)}”</p>` : ""}
-    </div>`).join("");
+    </div>`).join("") +
+    `<div class="suggest-clearrow"><button class="btn btn-ghost btn-small" data-action="clear-suggest"><span>Clear all suggestions</span></button></div>`;
   box.querySelectorAll(".suggest-card").forEach((card) => {
     const it = ideas[+card.dataset.i];
     card.querySelector('[data-action="use"]').addEventListener("click", () => useSuggestion(it, card));
+    card.querySelector('[data-action="dismiss"]').addEventListener("click", () => {
+      const remaining = loadStoredSuggestions().filter((x) => !(((x.title || "") + "|" + (x.brief || "")) === ((it.title || "") + "|" + (it.brief || ""))));
+      saveStoredSuggestions(remaining);
+      renderSuggestions(remaining);
+    });
+  });
+  box.querySelector('[data-action="clear-suggest"]').addEventListener("click", () => {
+    saveStoredSuggestions([]);
+    renderSuggestions([]);
+    setStatus(sStatus, "Suggestions cleared.");
   });
 }
 

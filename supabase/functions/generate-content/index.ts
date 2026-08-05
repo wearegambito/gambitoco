@@ -32,6 +32,23 @@ const BRAND_LOOK = "Colour palette, strictly: deep British racing green (#032721
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b, null, 2), { status: s, headers: { "content-type": "application/json", ...CORS } });
 const sb = () => createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
+// Hard safety net over the caption rules the prompt asks for, so a stray
+// model slip can't reach Instagram: no em/en dashes, no #Gambito, max 5 tags.
+function cleanCaption(text: string): string {
+  let t = String(text ?? "");
+  t = t.replace(/\s*[—–]\s*/g, ", ");           // em/en dashes -> comma
+  t = t.replace(/#gambito\b/gi, "");             // #Gambito is not a thing
+  let n = 0;
+  t = t.replace(/#[A-Za-z0-9_]+/g, (m) => (++n <= 5 ? m : "")); // keep first 5 hashtags
+  return t
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/ +([,.!?])/g, "$1")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/^[ \t]+/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 async function concept(idea: any, descriptors: unknown[], slides: number) {
   const key = Deno.env.get("ANTHROPIC_API_KEY");
   if (!key) throw new Error("ANTHROPIC_API_KEY not set");
@@ -39,7 +56,7 @@ async function concept(idea: any, descriptors: unknown[], slides: number) {
   const directionLine = direction
     ? `IMAGE DIRECTION (the user's explicit description of the picture they want — honour this closely; build the image prompt around it): ${direction}`
     : `IMAGE DIRECTION: (none given — invent a strong on-brand image from the brief)`;
-  const user = `IDEA BRIEF: ${idea.brief}\nNOTES: ${idea.notes || "(none)"}\n${directionLine}\nPOST TYPE: ${idea.post_type} (${slides} image${slides > 1 ? "s" : ""})\nSTYLE REFERENCE DESCRIPTORS: ${JSON.stringify(descriptors)}\n\nProduce content for an Instagram ${idea.post_type}. The brand colour palette (racing green #032721, beige #f0e7d4, coral #fa4d56) and cinematic moody look are enforced automatically on every image, so focus the image prompt on subject, composition and mood rather than restating exact hex. Put any hashtags inside each caption. Respond with ONLY a JSON object:\n{\n  "concept": "the creative concept in 1-2 sentences",\n  "image_prompts": [${slides} detailed text-to-image prompt(s), ${slides > 1 ? "visually consistent across slides as a set" : "a single strong image"}, honouring the IMAGE DIRECTION if given and weaving in the style references],\n  "variants": [3 copy options, each {"caption":"full caption including hashtags","hashtags":"space-separated #tags","rationale":"why this angle"}],\n  "best": 0\n}`;
+  const user = `IDEA BRIEF: ${idea.brief}\nNOTES: ${idea.notes || "(none)"}\n${directionLine}\nPOST TYPE: ${idea.post_type} (${slides} image${slides > 1 ? "s" : ""})\nSTYLE REFERENCE DESCRIPTORS: ${JSON.stringify(descriptors)}\n\nProduce content for an Instagram ${idea.post_type}. The brand colour palette (racing green #032721, beige #f0e7d4, coral #fa4d56) and cinematic moody look are enforced automatically on every image, so focus the image prompt on subject, composition and mood rather than restating exact hex.\n\nCAPTION RULES (follow every one exactly):\n1. End every caption with a question or a clear call to action that invites engagement — a reply or comment, a DM, or a visit to the website.\n2. Use AT MOST 5 hashtags, placed together at the very end of the caption. Make them specific and relevant.\n3. NEVER use #Gambito or any brand-name hashtag; it is not an established tag.\n4. NEVER use em dashes or en dashes anywhere in the copy. Use commas, full stops, or separate short sentences instead.\n5. Voice: confident, warm, plain, jargon-free; short then sharp.\n\nRespond with ONLY a JSON object:\n{\n  "concept": "the creative concept in 1-2 sentences",\n  "image_prompts": [${slides} detailed text-to-image prompt(s), ${slides > 1 ? "visually consistent across slides as a set" : "a single strong image"}, honouring the IMAGE DIRECTION if given and weaving in the style references],\n  "variants": [3 copy options, each {"caption":"full caption, ending in a question or CTA, with at most 5 relevant hashtags at the very end and no #Gambito, and absolutely no em/en dashes","hashtags":"the same hashtags (max 5, never #Gambito), space-separated","rationale":"why this angle"}],\n  "best": 0\n}`;
   const res = await fetch(ANTHROPIC_URL, {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -115,7 +132,7 @@ async function runPipeline(supabase: SupabaseClient, runId: string, idea: any) {
 
     await supabase.from("content_runs").update({ concept: c.concept || "", image_prompt: prompts.join("\n---\n"), style_snapshot: { style_guide: STYLE_GUIDE, descriptors }, stage: "imagery" }).eq("id", runId);
     const { data: variantRows } = await supabase.from("content_copy_variants").insert(
-      variants.map((v: any, i: number) => ({ run_id: runId, idea_id: idea.id, variant_index: i, caption: v.caption || "", hashtags: v.hashtags || "", rationale: v.rationale || "" })),
+      variants.map((v: any, i: number) => ({ run_id: runId, idea_id: idea.id, variant_index: i, caption: cleanCaption(v.caption || ""), hashtags: v.hashtags || "", rationale: v.rationale || "" })),
     ).select();
 
     const size = sizeFor(idea.post_type);
@@ -145,6 +162,7 @@ async function runPipeline(supabase: SupabaseClient, runId: string, idea: any) {
     const bestVariant = variants[best] || {};
     let caption = bestVariant.caption || c.concept || idea.brief;
     if (bestVariant.hashtags && !caption.includes("#")) caption += "\n\n" + bestVariant.hashtags; // hashtags in caption (first-comment needs a paid Buffer plan)
+    caption = cleanCaption(caption); // enforce: no em dashes, no #Gambito, max 5 hashtags
     await supabase.from("content_runs").update({ stage: "drafting" }).eq("id", runId);
     const post = await bufferDraft(channelId, caption, publicUrls);
 

@@ -281,3 +281,7 @@ a { color: inherit; }
 .suggest-card .idea-title { font-size: 0.98rem; }
 .suggest-card .idea-brief { font-size: 0.88rem; }
 .suggest-hook { margin-top: 0.7rem; color: var(--ink); font-size: 0.85rem; font-style: italic; line-height: 1.45; border-left: 2px solid rgba(250, 77, 86, 0.5); padding-left: 0.7rem; }
+.suggest-card-actions { display: inline-flex; align-items: center; gap: 0.4rem; }
+.suggest-x { background: transparent; border: none; color: var(--ink-faint); cursor: pointer; font-size: 0.85rem; line-height: 1; padding: 0.25rem 0.35rem; border-radius: 6px; }
+.suggest-x:hover { color: var(--ember); background: rgba(250, 77, 86, 0.1); }
+.suggest-clearrow { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 0.2rem; }
