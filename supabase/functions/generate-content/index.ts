@@ -25,13 +25,21 @@ const slideCountFor = (t: string) => (t === "carousel" ? 3 : 1);
 
 const STYLE_GUIDE = `Gambito is an Auckland venture studio. Visual identity: a sophisticated presence in a "black classy dress" — composed and expensive at first glance, warm underneath. Palette: deep British racing green (#032721) base, creamy beige (#f0e7d4) light, a single coral accent (#fa4d56) used sparingly like lipstick. Aesthetic: cinematic, minimal, moody; backlit silhouettes, volumetric haze, soft gradient rim-light, fine film grain, generous negative space, centred composition. Motif (as seasoning, never literal): chess / the gambit / the first move. Voice: confident, warm, plain, jargon-free; short then sharp; speaks to founders moving from hesitation to action.`;
 
+// Appended to EVERY image prompt sent to Higgsfield so generated imagery
+// stays on-brand in colour and mood regardless of what the model writes.
+const BRAND_LOOK = "Colour palette, strictly: deep British racing green (#032721) as the dominant background and base tone, warm creamy beige (#f0e7d4) for light, highlights and skin, and a single restrained coral (#fa4d56) accent used sparingly. Overall look: cinematic, moody, minimal and editorial — backlit silhouettes, soft volumetric haze, gentle gradient rim-light, fine film grain, generous negative space, centred composition. No bright primary colours, no busy backgrounds, no text overlays.";
+
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b, null, 2), { status: s, headers: { "content-type": "application/json", ...CORS } });
 const sb = () => createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 async function concept(idea: any, descriptors: unknown[], slides: number) {
   const key = Deno.env.get("ANTHROPIC_API_KEY");
   if (!key) throw new Error("ANTHROPIC_API_KEY not set");
-  const user = `IDEA BRIEF: ${idea.brief}\nNOTES: ${idea.notes || "(none)"}\nPOST TYPE: ${idea.post_type} (${slides} image${slides > 1 ? "s" : ""})\nSTYLE REFERENCE DESCRIPTORS: ${JSON.stringify(descriptors)}\n\nProduce content for an Instagram ${idea.post_type}. Put any hashtags inside each caption. Respond with ONLY a JSON object:\n{\n  "concept": "the creative concept in 1-2 sentences",\n  "image_prompts": [${slides} detailed text-to-image prompt(s), on-brand, ${slides > 1 ? "visually consistent across slides as a set" : "a single strong image"}, weaving in the style references],\n  "variants": [3 copy options, each {"caption":"full caption including hashtags","hashtags":"space-separated #tags","rationale":"why this angle"}],\n  "best": 0\n}`;
+  const direction = (idea.image_direction || "").trim();
+  const directionLine = direction
+    ? `IMAGE DIRECTION (the user's explicit description of the picture they want — honour this closely; build the image prompt around it): ${direction}`
+    : `IMAGE DIRECTION: (none given — invent a strong on-brand image from the brief)`;
+  const user = `IDEA BRIEF: ${idea.brief}\nNOTES: ${idea.notes || "(none)"}\n${directionLine}\nPOST TYPE: ${idea.post_type} (${slides} image${slides > 1 ? "s" : ""})\nSTYLE REFERENCE DESCRIPTORS: ${JSON.stringify(descriptors)}\n\nProduce content for an Instagram ${idea.post_type}. The brand colour palette (racing green #032721, beige #f0e7d4, coral #fa4d56) and cinematic moody look are enforced automatically on every image, so focus the image prompt on subject, composition and mood rather than restating exact hex. Put any hashtags inside each caption. Respond with ONLY a JSON object:\n{\n  "concept": "the creative concept in 1-2 sentences",\n  "image_prompts": [${slides} detailed text-to-image prompt(s), ${slides > 1 ? "visually consistent across slides as a set" : "a single strong image"}, honouring the IMAGE DIRECTION if given and weaving in the style references],\n  "variants": [3 copy options, each {"caption":"full caption including hashtags","hashtags":"space-separated #tags","rationale":"why this angle"}],\n  "best": 0\n}`;
   const res = await fetch(ANTHROPIC_URL, {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -116,7 +124,7 @@ async function runPipeline(supabase: SupabaseClient, runId: string, idea: any) {
       const { data: a } = await supabase.from("content_assets").insert({ run_id: runId, idea_id: idea.id, generator: "higgsfield", status: "generating", position: i }).select().single();
       assetRows.push(a);
     }
-    const generated = await Promise.all(prompts.map((p) => soulGenerate(p, size)));
+    const generated = await Promise.all(prompts.map((p) => soulGenerate(`${p}\n\n${BRAND_LOOK}`, size)));
 
     const publicUrls: string[] = [];
     for (let i = 0; i < generated.length; i++) {

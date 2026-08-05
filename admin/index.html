@@ -169,6 +169,15 @@
         <p class="panel-note">Capture an idea and, optionally, drop in style reference images — Pinterest screenshots, saved Instagram posts, anything that sets the visual direction. References are described by AI on upload, then generation turns the idea + our style guide + those references into imagery and copy, and drafts the post straight into <b>Buffer</b> for review. Buffer is the approval surface — nothing publishes from here.</p>
         <p class="panel-status" id="ideas-status"></p>
 
+        <div class="brand-hints">
+          <span class="brand-hints-label">Brand palette — applied to every generated image automatically</span>
+          <div class="swatches">
+            <span class="swatch"><i style="background:#032721"></i> Racing green <code>#032721</code></span>
+            <span class="swatch"><i style="background:#f0e7d4"></i> Beige <code>#f0e7d4</code></span>
+            <span class="swatch"><i style="background:#fa4d56"></i> Coral <code>#fa4d56</code></span>
+          </div>
+        </div>
+
         <div class="idea-suggest">
           <div class="idea-suggest-head">
             <div>
@@ -195,6 +204,7 @@
               </select>
             </div>
             <div class="field field-full"><label>Notes / direction (optional)</label><textarea id="idea-notes" placeholder="Tone, must-includes, references to a past post…"></textarea></div>
+            <div class="field field-full"><label>Image direction (optional)</label><textarea id="idea-image" placeholder="Describe the picture you want — subject, composition, mood. e.g. “a lone chess pawn backlit in haze, deep shadows, lots of empty space”"></textarea><div class="field-hint">What the generated image should show. Leave blank to let AI decide from the brief. Your brand colours above are applied automatically.</div></div>
             <div class="field field-full"><label>Style reference images (optional)</label>
               <input type="file" id="idea-refs" accept="image/*" multiple />
               <div class="field-hint">Screenshots, saved posts, moodboards — anything that sets the visual direction. Stored privately and described by AI (palette, lighting, composition, mood).</div>

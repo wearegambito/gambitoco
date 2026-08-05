@@ -709,6 +709,7 @@ async function saveIdea() {
     title: el("#idea-title").value.trim() || brief.slice(0, 60),
     brief,
     notes: el("#idea-notes").value.trim(),
+    image_direction: el("#idea-image").value.trim(),
     post_type: el("#idea-posttype").value,
     target_service: "instagram",
     created_by: session?.user?.email || "",
@@ -736,7 +737,7 @@ async function saveIdea() {
     }).catch(() => {});
   }
 
-  ["idea-brief", "idea-title", "idea-notes", "idea-refs"].forEach((id) => (el("#" + id).value = ""));
+  ["idea-brief", "idea-title", "idea-notes", "idea-image", "idea-refs"].forEach((id) => (el("#" + id).value = ""));
   el("#idea-ref-previews").innerHTML = "";
   btn.disabled = false;
   setStatus(iStatus, `Idea saved${uploaded ? ` with ${uploaded} reference${uploaded > 1 ? "s" : ""}` : ""}.`, "success");
@@ -815,6 +816,7 @@ function editIdeaCard(idea, card) {
         <select class="ie-type">${types.map((t) => `<option value="${t}"${t === idea.post_type ? " selected" : ""}>${t}</option>`).join("")}</select>
       </div>
       <div class="field field-full"><label>Notes / direction</label><textarea class="ie-notes" placeholder="Tone, must-includes, references…">${esc(idea.notes || "")}</textarea></div>
+      <div class="field field-full"><label>Image direction</label><textarea class="ie-image" placeholder="Describe the picture — subject, composition, mood. Brand colours applied automatically.">${esc(idea.image_direction || "")}</textarea></div>
       <div class="field field-full"><label>Add reference images</label>
         <input type="file" class="ie-refs" accept="image/*" multiple />
         <div class="field-hint">Adds to any existing references — described by AI on upload.</div>
@@ -838,6 +840,7 @@ function editIdeaCard(idea, card) {
       brief,
       title: card.querySelector(".ie-title").value.trim() || brief.slice(0, 60),
       notes: card.querySelector(".ie-notes").value.trim(),
+      image_direction: card.querySelector(".ie-image").value.trim(),
       post_type: card.querySelector(".ie-type").value,
       status: "new",
     };
