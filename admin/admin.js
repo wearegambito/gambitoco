@@ -215,6 +215,7 @@ function showApp() {
   wireAddButtons();
   initBookings();
   initIdeas();
+  initLandingPages();
 }
 
 el("#login-form").addEventListener("submit", async (e) => {
@@ -287,6 +288,118 @@ async function loadHomeStats() {
       <span class="home-stat-sub">${t.sub}</span>
     </button>`).join("");
   el("#home-stats").querySelectorAll(".home-stat").forEach((s) => s.addEventListener("click", () => goTab(s.dataset.go)));
+}
+
+/* ---------- landing pages ---------- */
+// Campaign landing pages. Each page ships its copy in static HTML with
+// [data-cms] hooks; the editor reads those keys straight off the live page
+// (so it needs zero per-page config and never drifts) and writes per-field
+// overrides into the landing_pages row, live instantly.
+const LANDING_PAGES = [
+  { slug: "idea-to-launch", label: "Idea to Launch", url: "/idea-to-launch/" },
+];
+
+const humanize = (k) => k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+// pull the default value of every [data-cms] field from the page's own HTML,
+// in document (reading) order
+async function loadLandingDefaults(url) {
+  const html = await fetch(url, { cache: "no-store" }).then((r) => r.text());
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const defaults = {}, order = [];
+  doc.querySelectorAll("[data-cms]").forEach((node) => {
+    const key = node.dataset.cms;
+    if (key in defaults) return;
+    let v;
+    if (node.tagName === "META") v = node.getAttribute("content") || "";
+    else if (node.tagName === "TITLE") v = node.textContent || "";
+    else if (node.dataset.cmsAttr) v = node.getAttribute(node.dataset.cmsAttr) || "";
+    else v = node.innerHTML.trim();
+    defaults[key] = v;
+    order.push(key);
+  });
+  return { defaults, order };
+}
+
+function initLandingPages() {
+  const box = el("#landing-list");
+  if (!box) return;
+  box.innerHTML = "";
+  for (const lp of LANDING_PAGES) {
+    const card = document.createElement("div");
+    card.className = "edit-card";
+    box.appendChild(card);
+    renderLandingEditor(lp, card);
+  }
+}
+
+async function renderLandingEditor(lp, card) {
+  card.innerHTML = `<p class="landing-loading">Loading ${esc(lp.label)}…</p>`;
+  let defaults, order, content = {}, published = true;
+  try {
+    ({ defaults, order } = await loadLandingDefaults(lp.url));
+    const { data } = await supabase.from("landing_pages").select("content, published").eq("slug", lp.slug).maybeSingle();
+    content = (data && data.content) || {};
+    published = data ? data.published : true;
+  } catch (e) {
+    card.innerHTML = `<p class="panel-status is-error">Couldn't load ${esc(lp.label)}: ${esc(e.message)}</p>`;
+    return;
+  }
+
+  let lastGroup = "";
+  const fields = order.map((k) => {
+    const group = k.split("_")[0].replace(/[0-9]+$/, "");
+    let header = "";
+    if (group !== lastGroup) { lastGroup = group; header = `<h4 class="landing-group">${esc(humanize(group))}</h4>`; }
+    const def = defaults[k] || "";
+    const val = (k in content && content[k] != null && content[k] !== "") ? content[k] : def;
+    const isLong = def.length > 55 || /<\/?[a-z]/i.test(def);
+    const control = isLong
+      ? `<textarea data-lkey="${k}" rows="2">${esc(val)}</textarea>`
+      : `<input data-lkey="${k}" value="${attr(val)}" />`;
+    return `${header}<div class="field field-full"><label>${esc(humanize(k))}</label>${control}</div>`;
+  }).join("");
+
+  card.innerHTML = `
+    <div class="edit-card-top">
+      <p class="idea-title">${esc(lp.label)}</p>
+      <div class="edit-card-actions">
+        <label class="publish-toggle"><input type="checkbox" data-action="pub" ${published ? "checked" : ""} /> Published</label>
+        <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗</span></a>
+      </div>
+    </div>
+    <div class="landing-fields">${fields}</div>
+    <div class="edit-card-actions edit-card-actions--edit">
+      <button class="btn btn-small" data-action="save-landing"><span>Save changes</span></button>
+    </div>
+    <p class="panel-status landing-status"></p>`;
+
+  const status = card.querySelector(".landing-status");
+
+  card.querySelector('[data-action="save-landing"]').addEventListener("click", async (e) => {
+    const btn = e.currentTarget; btn.disabled = true;
+    setStatus(status, "Saving…");
+    const newContent = {};
+    card.querySelectorAll("[data-lkey]").forEach((inp) => {
+      const k = inp.dataset.lkey, v = inp.value.trim(), d = (defaults[k] || "").trim();
+      if (v && v !== d) newContent[k] = inp.value; // store only fields changed from the default
+    });
+    const { error } = await supabase.from("landing_pages").upsert(
+      { slug: lp.slug, content: newContent, published: card.querySelector('[data-action="pub"]').checked, updated_at: new Date().toISOString() },
+      { onConflict: "slug" },
+    );
+    btn.disabled = false;
+    if (error) setStatus(status, error.message, "error");
+    else {
+      const n = Object.keys(newContent).length;
+      setStatus(status, `Saved, live on the page now. ${n} field${n === 1 ? "" : "s"} customised.`, "success");
+    }
+  });
+
+  card.querySelector('[data-action="pub"]').addEventListener("change", async (e) => {
+    const { error } = await supabase.from("landing_pages").update({ published: e.target.checked }).eq("slug", lp.slug);
+    setStatus(status, error ? error.message : (e.target.checked ? "Published." : "Unpublished, the page is now hidden."), error ? "error" : "success");
+  });
 }
 
 /* ---------- content tab ---------- */
