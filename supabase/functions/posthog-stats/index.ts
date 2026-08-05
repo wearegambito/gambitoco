@@ -14,8 +14,16 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const ADMIN_EMAIL = "armic@gambito.co.nz";
-const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "content-type, authorization, apikey", "access-control-allow-methods": "POST, OPTIONS" };
-const json = (b: unknown, s = 200) => new Response(JSON.stringify(b, null, 2), { status: s, headers: { "content-type": "application/json", ...CORS } });
+// invoked via supabase.functions.invoke, which sends x-client-info (+ maybe
+// x-supabase-api-version) on top of authorization/apikey/content-type, so
+// reflect whatever the browser asks for in the preflight.
+const ALLOW_HEADERS = "authorization, x-client-info, apikey, content-type, x-supabase-api-version";
+const corsFor = (req: Request) => ({
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": req.headers.get("access-control-request-headers") || ALLOW_HEADERS,
+});
+const json = (req: Request, b: unknown, s = 200) => new Response(JSON.stringify(b, null, 2), { status: s, headers: { "content-type": "application/json", ...corsFor(req) } });
 
 async function hogql(host: string, projectId: string, key: string, query: string) {
   const res = await fetch(`${host}/api/projects/${projectId}/query/`, {
@@ -29,18 +37,18 @@ async function hogql(host: string, projectId: string, key: string, query: string
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsFor(req) });
   try {
     // validate the caller's Supabase session token (signature-checked) + admin
     const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     const authClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
     const { data: { user } } = await authClient.auth.getUser(token);
-    if (!user || user.email !== ADMIN_EMAIL) return json({ ok: false, error: "forbidden" }, 403);
+    if (!user || user.email !== ADMIN_EMAIL) return json(req, { ok: false, error: "forbidden" }, 403);
 
     const key = Deno.env.get("POSTHOG_API_KEY");
     const projectId = Deno.env.get("POSTHOG_PROJECT_ID");
     const host = (Deno.env.get("POSTHOG_HOST") || "https://us.posthog.com").replace(/\/+$/, "");
-    if (!key || !projectId) return json({ ok: true, configured: false });
+    if (!key || !projectId) return json(req, { ok: true, configured: false });
 
     const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
     const days = Math.min(365, Math.max(1, parseInt(String(body.days || 30), 10) || 30));
@@ -71,8 +79,8 @@ Deno.serve(async (req) => {
       GROUP BY source ORDER BY leads DESC`);
     const leads_by_source = srcRows.map((x) => ({ source: x[0], leads: x[1] }));
 
-    return json({ ok: true, configured: true, range_days: days, totals, views_by_path, leads_by_source });
+    return json(req, { ok: true, configured: true, range_days: days, totals, views_by_path, leads_by_source });
   } catch (err) {
-    return json({ ok: false, error: String((err as Error)?.message ?? err) }, 500);
+    return json(req, { ok: false, error: String((err as Error)?.message ?? err) }, 500);
   }
 });
