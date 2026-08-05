@@ -52,11 +52,18 @@ function cleanCaption(text: string): string {
 async function concept(idea: any, descriptors: unknown[], slides: number) {
   const key = Deno.env.get("ANTHROPIC_API_KEY");
   if (!key) throw new Error("ANTHROPIC_API_KEY not set");
+  const isCarousel = idea.post_type === "carousel";
   const direction = (idea.image_direction || "").trim();
-  const directionLine = direction
-    ? `IMAGE DIRECTION (the user's explicit description of the picture they want — honour this closely; build the image prompt around it): ${direction}`
-    : `IMAGE DIRECTION: (none given — invent a strong on-brand image from the brief)`;
-  const user = `IDEA BRIEF: ${idea.brief}\nNOTES: ${idea.notes || "(none)"}\n${directionLine}\nPOST TYPE: ${idea.post_type} (${slides} image${slides > 1 ? "s" : ""})\nSTYLE REFERENCE DESCRIPTORS: ${JSON.stringify(descriptors)}\n\nProduce content for an Instagram ${idea.post_type}. The brand colour palette (racing green #032721, beige #f0e7d4, coral #fa4d56) and cinematic moody look are enforced automatically on every image, so focus the image prompt on subject, composition and mood rather than restating exact hex.\n\nCAPTION RULES (follow every one exactly):\n1. End every caption with a question or a clear call to action that invites engagement — a reply or comment, a DM, or a visit to the website.\n2. Use AT MOST 5 hashtags, placed together at the very end of the caption. Make them specific and relevant.\n3. NEVER use #Gambito or any brand-name hashtag; it is not an established tag.\n4. NEVER use em dashes or en dashes anywhere in the copy. Use commas, full stops, or separate short sentences instead.\n5. Voice: confident, warm, plain, jargon-free; short then sharp.\n\nRespond with ONLY a JSON object:\n{\n  "concept": "the creative concept in 1-2 sentences",\n  "image_prompts": [${slides} detailed text-to-image prompt(s), ${slides > 1 ? "visually consistent across slides as a set" : "a single strong image"}, honouring the IMAGE DIRECTION if given and weaving in the style references],\n  "variants": [3 copy options, each {"caption":"full caption, ending in a question or CTA, with at most 5 relevant hashtags at the very end and no #Gambito, and absolutely no em/en dashes","hashtags":"the same hashtags (max 5, never #Gambito), space-separated","rationale":"why this angle"}],\n  "best": 0\n}`;
+
+  const mediaInstruction = isCarousel
+    ? `Produce an Instagram CAROUSEL: one cover slide, 3 to 4 content slides, and one end/CTA slide (5 to 6 slides total). Slides are rendered as designed graphics with our brand colours and fonts applied automatically, so write the TEXT for each slide, not image prompts. Keep it highly readable: slide titles 6 words or fewer, body at most 2 short sentences.${direction ? ` DIRECTION from the user: ${direction}` : ""}`
+    : `Produce content for an Instagram ${idea.post_type}. The brand colour palette (racing green #032721, beige #f0e7d4, coral #fa4d56) and cinematic moody look are enforced automatically on every image, so focus the image prompt on subject, composition and mood rather than restating exact hex.${direction ? `\nIMAGE DIRECTION (honour closely): ${direction}` : ""}`;
+
+  const mediaJson = isCarousel
+    ? `"kicker": "a 1-3 word topic label shown on every slide, e.g. Founder mindset",\n  "slides": [\n    {"kind":"cover","title":"the hook headline, short and punchy"},\n    {"kind":"content","title":"short slide title","body":"1 to 2 short sentences"},\n    {"kind":"content","title":"...","body":"..."},\n    {"kind":"content","title":"...","body":"..."},\n    {"kind":"end","title":"a call-to-action headline","body":"one short line","cta":"gambito.co"}\n  ],`
+    : `"image_prompts": [${slides} detailed text-to-image prompt(s), ${slides > 1 ? "visually consistent across slides as a set" : "a single strong image"}, honouring the direction if given and weaving in the style references],`;
+
+  const user = `IDEA BRIEF: ${idea.brief}\nNOTES: ${idea.notes || "(none)"}\nPOST TYPE: ${idea.post_type}\nSTYLE REFERENCE DESCRIPTORS: ${JSON.stringify(descriptors)}\n\n${mediaInstruction}\n\nCAPTION RULES (follow every one exactly):\n1. End every caption with a question or a clear call to action that invites engagement — a reply or comment, a DM, or a visit to the website.\n2. Use AT MOST 5 hashtags, placed together at the very end of the caption. Make them specific and relevant.\n3. NEVER use #Gambito or any brand-name hashtag; it is not an established tag.\n4. NEVER use em dashes or en dashes anywhere in the copy. Use commas, full stops, or separate short sentences instead.\n5. Voice: confident, warm, plain, jargon-free; short then sharp.\n\nRespond with ONLY a JSON object:\n{\n  "concept": "the creative concept in 1-2 sentences",\n  ${mediaJson}\n  "variants": [3 copy options, each {"caption":"full caption, ending in a question or CTA, with at most 5 relevant hashtags at the very end and no #Gambito, and absolutely no em/en dashes","hashtags":"the same hashtags (max 5, never #Gambito), space-separated","rationale":"why this angle"}],\n  "best": 0\n}`;
   const res = await fetch(ANTHROPIC_URL, {
     method: "POST",
     headers: { "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json" },
@@ -125,37 +132,55 @@ async function runPipeline(supabase: SupabaseClient, runId: string, idea: any) {
 
     const slides = slideCountFor(idea.post_type);
     const c = await concept(idea, descriptors, slides);
-    const prompts: string[] = Array.isArray(c.image_prompts) ? c.image_prompts.slice(0, slides) : [String(c.image_prompts)];
-    while (prompts.length < slides) prompts.push(prompts[prompts.length - 1]);
     const variants = Array.isArray(c.variants) ? c.variants : [];
     const best = Math.min(Math.max(0, Number(c.best) || 0), Math.max(0, variants.length - 1));
-
-    await supabase.from("content_runs").update({ concept: c.concept || "", image_prompt: prompts.join("\n---\n"), style_snapshot: { style_guide: STYLE_GUIDE, descriptors }, stage: "imagery" }).eq("id", runId);
     const { data: variantRows } = await supabase.from("content_copy_variants").insert(
       variants.map((v: any, i: number) => ({ run_id: runId, idea_id: idea.id, variant_index: i, caption: cleanCaption(v.caption || ""), hashtags: v.hashtags || "", rationale: v.rationale || "" })),
     ).select();
 
-    const size = sizeFor(idea.post_type);
-    const assetRows: any[] = [];
-    for (let i = 0; i < prompts.length; i++) {
-      const { data: a } = await supabase.from("content_assets").insert({ run_id: runId, idea_id: idea.id, generator: "higgsfield", status: "generating", position: i }).select().single();
-      assetRows.push(a);
-    }
-    const generated = await Promise.all(prompts.map((p) => soulGenerate(`${p}\n\n${BRAND_LOOK}`, size)));
-
     const publicUrls: string[] = [];
-    for (let i = 0; i < generated.length; i++) {
-      const img = await fetch(generated[i].url);
-      if (!img.ok) throw new Error(`download generated image ${i} failed: HTTP ${img.status}`);
-      const bytes = new Uint8Array(await img.arrayBuffer());
-      const ct = img.headers.get("content-type") || "image/png";
-      const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : "jpg";
-      const path = `${idea.id}/${runId}/${i}.${ext}`;
-      const up = await supabase.storage.from(CONTENT_BUCKET).upload(path, bytes, { contentType: ct, upsert: true });
-      if (up.error) throw up.error;
-      const publicUrl = supabase.storage.from(CONTENT_BUCKET).getPublicUrl(path).data.publicUrl;
-      publicUrls.push(publicUrl);
-      await supabase.from("content_assets").update({ generator_job_id: generated[i].requestId, source_url: generated[i].url, storage_path: path, public_url: publicUrl, status: "stored" }).eq("id", assetRows[i].id);
+    const assetRows: any[] = [];
+
+    if (idea.post_type === "carousel") {
+      // designed slides (Satori) — image models can't render exact text
+      const slidesArr = (Array.isArray(c.slides) ? c.slides : []).filter((s: any) => s && (s.title || s.body));
+      if (!slidesArr.length) throw new Error("No carousel slides were generated.");
+      await supabase.from("content_runs").update({ concept: c.concept || "", image_prompt: slidesArr.map((s: any) => `[${s.kind || "content"}] ${s.title || ""}${s.body ? " — " + s.body : ""}`).join("\n"), style_snapshot: { style_guide: STYLE_GUIDE, kicker: c.kicker || "", slides: slidesArr }, stage: "rendering" }).eq("id", runId);
+      const rc = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/render-carousel`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slides: slidesArr, path_prefix: `${idea.id}/${runId}`, kicker: c.kicker || "" }),
+      });
+      const rj = await rc.json().catch(() => ({}));
+      if (!rc.ok || rj.ok === false) throw new Error("Slide rendering failed: " + (rj.error || `HTTP ${rc.status}`));
+      for (const a of (rj.assets || [])) {
+        const { data: row } = await supabase.from("content_assets").insert({ run_id: runId, idea_id: idea.id, generator: "satori", status: "stored", position: a.position, storage_path: a.storage_path, public_url: a.public_url }).select().single();
+        assetRows.push(row);
+        publicUrls.push(a.public_url);
+      }
+    } else {
+      // single image / story / reel — Higgsfield Soul
+      const prompts: string[] = Array.isArray(c.image_prompts) ? c.image_prompts.slice(0, slides) : [String(c.image_prompts)];
+      while (prompts.length < slides) prompts.push(prompts[prompts.length - 1]);
+      await supabase.from("content_runs").update({ concept: c.concept || "", image_prompt: prompts.join("\n---\n"), style_snapshot: { style_guide: STYLE_GUIDE, descriptors }, stage: "imagery" }).eq("id", runId);
+      const size = sizeFor(idea.post_type);
+      for (let i = 0; i < prompts.length; i++) {
+        const { data: a } = await supabase.from("content_assets").insert({ run_id: runId, idea_id: idea.id, generator: "higgsfield", status: "generating", position: i }).select().single();
+        assetRows.push(a);
+      }
+      const generated = await Promise.all(prompts.map((p) => soulGenerate(`${p}\n\n${BRAND_LOOK}`, size)));
+      for (let i = 0; i < generated.length; i++) {
+        const img = await fetch(generated[i].url);
+        if (!img.ok) throw new Error(`download generated image ${i} failed: HTTP ${img.status}`);
+        const bytes = new Uint8Array(await img.arrayBuffer());
+        const ct = img.headers.get("content-type") || "image/png";
+        const ext = ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : "jpg";
+        const path = `${idea.id}/${runId}/${i}.${ext}`;
+        const up = await supabase.storage.from(CONTENT_BUCKET).upload(path, bytes, { contentType: ct, upsert: true });
+        if (up.error) throw up.error;
+        const publicUrl = supabase.storage.from(CONTENT_BUCKET).getPublicUrl(path).data.publicUrl;
+        publicUrls.push(publicUrl);
+        await supabase.from("content_assets").update({ generator_job_id: generated[i].requestId, source_url: generated[i].url, storage_path: path, public_url: publicUrl, status: "stored" }).eq("id", assetRows[i].id);
+      }
     }
 
     const channelId = CHANNELS[idea.target_service] || CHANNELS.instagram;
