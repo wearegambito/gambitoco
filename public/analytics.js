@@ -14,10 +14,10 @@
  */
 (function () {
   var CONFIG = {
-    // PostHog project API key, e.g. "phc_xxxxxxxx". Get it from PostHog →
-    // Settings → Project → Project API Key.
-    POSTHOG_KEY: "REPLACE_POSTHOG_KEY",
+    // PostHog project API key (phc_… is a public client-side key by design).
+    POSTHOG_KEY: "phc_mSX9TtXfRa6Wi4q84fNj3qsZNrhYMbALKGTKAdqmiGUu",
     // "https://us.i.posthog.com" (US cloud) or "https://eu.i.posthog.com" (EU).
+    // NOTE: defaulting to US — switch to eu.i.posthog.com if the project is EU-hosted.
     POSTHOG_HOST: "https://us.i.posthog.com",
     // Google Tag Manager container id, e.g. "GTM-XXXXXXX".
     GTM_ID: "REPLACE_GTM_ID",
