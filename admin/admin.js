@@ -360,6 +360,26 @@ async function renderLandingEditor(lp, card) {
     return `${header}<div class="field field-full"><label>${esc(humanize(k))}</label>${control}</div>`;
   }).join("");
 
+  // A/B test authoring: PostHog owns the split + goal; the CMS owns the copy.
+  const exp = content.experiment || {};
+  const testVariant = (exp.variants && exp.variants.test) || {};
+  const expField = Object.keys(testVariant)[0] || "";
+  const expValue = expField ? testVariant[expField] : "";
+  const fieldOptions = order.map((k) => `<option value="${k}"${k === expField ? " selected" : ""}>${esc(humanize(k))}</option>`).join("");
+  const expHtml = `
+    <h4 class="landing-group">A/B test (optional)</h4>
+    <div class="field field-full"><label>Experiment flag key</label>
+      <input data-exp="flag" value="${attr(exp.flag || "")}" placeholder="e.g. idea-to-launch-hero" />
+      <div class="field-hint">Create a matching experiment in PostHog with this exact key and variants named <code>control</code> and <code>test</code>. Leave blank to turn the test off.</div>
+    </div>
+    <div class="field field-full"><label>Field to test</label>
+      <select data-exp="field"><option value="">— none —</option>${fieldOptions}</select>
+      <div class="field-hint">Variant A (control) shows this field's current value above; variant B (test) shows the value below.</div>
+    </div>
+    <div class="field field-full"><label>Variant B value</label>
+      <textarea data-exp="value" rows="2" placeholder="Alternative copy for the selected field">${esc(expValue)}</textarea>
+    </div>`;
+
   card.innerHTML = `
     <div class="edit-card-top">
       <p class="idea-title">${esc(lp.label)}</p>
@@ -368,7 +388,7 @@ async function renderLandingEditor(lp, card) {
         <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗</span></a>
       </div>
     </div>
-    <div class="landing-fields">${fields}</div>
+    <div class="landing-fields">${fields}${expHtml}</div>
     <div class="edit-card-actions edit-card-actions--edit">
       <button class="btn btn-small" data-action="save-landing"><span>Save changes</span></button>
     </div>
@@ -384,6 +404,13 @@ async function renderLandingEditor(lp, card) {
       const k = inp.dataset.lkey, v = inp.value.trim(), d = (defaults[k] || "").trim();
       if (v && v !== d) newContent[k] = inp.value; // store only fields changed from the default
     });
+    // A/B experiment (only if flag + field + variant B are all set)
+    const expFlag = card.querySelector('[data-exp="flag"]').value.trim();
+    const expF = card.querySelector('[data-exp="field"]').value;
+    const expV = card.querySelector('[data-exp="value"]').value;
+    if (expFlag && expF && expV.trim()) {
+      newContent.experiment = { flag: expFlag, variants: { control: {}, test: { [expF]: expV } } };
+    }
     const { error } = await supabase.from("landing_pages").upsert(
       { slug: lp.slug, content: newContent, published: card.querySelector('[data-action="pub"]').checked, updated_at: new Date().toISOString() },
       { onConflict: "slug" },
