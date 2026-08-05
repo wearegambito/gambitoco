@@ -260,6 +260,72 @@ function initHome() {
     });
   });
   loadHomeStats();
+  loadAnalytics();
+}
+
+const fmtNum = (n) => Number(n || 0).toLocaleString();
+
+// PostHog traffic + conversions, and per-landing-page breakdown
+async function loadAnalytics() {
+  const box = el("#home-analytics"), lbox = el("#home-landing");
+  let stats;
+  try {
+    const { data, error } = await supabase.functions.invoke("posthog-stats", { body: { days: 30 } });
+    if (error) throw error;
+    stats = data;
+  } catch (e) {
+    box.innerHTML = `<p class="home-hint">Couldn't load analytics: ${esc(e.message || e)}</p>`;
+    renderLandingStats(lbox, null);
+    return;
+  }
+  if (!stats || stats.configured === false) {
+    box.innerHTML = `<p class="home-hint">Connect PostHog to see traffic here: add a PostHog personal API key (<code>POSTHOG_API_KEY</code>) and your numeric project id (<code>POSTHOG_PROJECT_ID</code>) as Supabase edge-function secrets.</p>`;
+  } else {
+    const t = stats.totals || {};
+    const tiles = [
+      { big: t.pageviews, label: "Pageviews" },
+      { big: t.visitors, label: "Visitors" },
+      { big: t.leads, label: "Leads" },
+      { big: t.cta_clicks, label: "CTA clicks" },
+      { big: t.bookings, label: "Bookings" },
+    ];
+    box.innerHTML = tiles.map((x) => `<div class="home-stat home-stat--plain"><span class="home-stat-big">${fmtNum(x.big)}</span><span class="home-stat-label">${x.label}</span></div>`).join("");
+  }
+  renderLandingStats(lbox, stats);
+}
+
+async function renderLandingStats(box, stats) {
+  const pub = {};
+  try {
+    const { data } = await supabase.from("landing_pages").select("slug, published");
+    (data || []).forEach((r) => (pub[r.slug] = r.published));
+  } catch { /* ignore */ }
+  const configured = stats && stats.configured !== false && stats.ok !== false;
+  const viewsByPath = (stats && stats.views_by_path) || [];
+  const leadsBySource = (stats && stats.leads_by_source) || [];
+
+  box.innerHTML = LANDING_PAGES.map((lp) => {
+    const published = pub[lp.slug];
+    const badge = `<span class="home-landing-status ${published === false ? "is-off" : "is-on"}">${published === false ? "Unpublished" : "Published"}</span>`;
+    let metrics;
+    if (configured) {
+      const views = viewsByPath.filter((v) => (v.path || "").includes("/" + lp.slug)).reduce((s, v) => s + Number(v.views || 0), 0);
+      const leads = Number(leadsBySource.find((s) => s.source === lp.slug)?.leads || 0);
+      const conv = views ? ((leads / views) * 100).toFixed(1) + "%" : "—";
+      metrics = `<span class="home-landing-metric"><b>${fmtNum(views)}</b> views</span><span class="home-landing-metric"><b>${fmtNum(leads)}</b> leads</span><span class="home-landing-metric"><b>${conv}</b> conv.</span>`;
+    } else {
+      metrics = `<span class="home-landing-metric home-hint">Connect PostHog for traffic</span>`;
+    }
+    return `<div class="home-landing-row">
+      <div class="home-landing-main"><span class="home-landing-name">${esc(lp.label)}</span>${badge}</div>
+      <div class="home-landing-metrics">${metrics}</div>
+      <div class="home-landing-actions">
+        <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗</span></a>
+        <button class="btn btn-ghost btn-small" data-lp-edit="${esc(lp.slug)}"><span>Edit</span></button>
+      </div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-lp-edit]").forEach((b) => b.addEventListener("click", () => goTab("landing")));
 }
 
 async function loadHomeStats() {

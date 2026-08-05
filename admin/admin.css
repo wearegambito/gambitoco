@@ -303,6 +303,22 @@ a { color: inherit; }
 .home-stat-big { font-family: var(--font-display); font-weight: 800; font-size: 2.2rem; line-height: 1; }
 .home-stat-label { font-weight: 700; font-size: 0.95rem; margin-top: 0.3rem; }
 .home-stat-sub { color: var(--ink-faint); font-size: 0.82rem; }
+.home-stat--plain { cursor: default; }
+.home-stat--plain:hover { border-color: var(--line); }
+.home-stats .home-hint { grid-column: 1 / -1; }
+.home-hint { color: var(--ink-faint); font-size: 0.9rem; line-height: 1.5; }
+.home-hint code { color: var(--ink-dim); background: var(--bg-2); border: 1px solid var(--line); border-radius: 5px; padding: 0.1rem 0.35rem; font-size: 0.82rem; }
+
+/* landing-page rows on the dashboard */
+.home-landing { display: flex; flex-direction: column; gap: 0.7rem; }
+.home-landing-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 1.4rem; background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.3rem; flex-wrap: wrap; }
+.home-landing-main { display: flex; align-items: center; gap: 0.7rem; }
+.home-landing-name { font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; }
+.home-landing-status { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.22rem 0.6rem; border-radius: 100px; border: 1px solid var(--line); color: var(--ink-faint); }
+.home-landing-status.is-on { color: #3ecf8e; border-color: rgba(62, 207, 142, 0.4); }
+.home-landing-metrics { display: flex; gap: 1.3rem; color: var(--ink-dim); font-size: 0.9rem; flex-wrap: wrap; }
+.home-landing-metric b { color: var(--ink); font-weight: 700; }
+.home-landing-actions { display: flex; gap: 0.5rem; }
 
 /* AI image generation control on image fields */
 .img-gen { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
