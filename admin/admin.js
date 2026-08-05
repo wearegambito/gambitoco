@@ -236,12 +236,23 @@ supabase.auth.onAuthStateChange((_e, session) => { if (session) showApp(); });
 
 /* ---------- tabs ---------- */
 function initTabs() {
+  const nav = el(".admin-nav");
+  const ham = el("#admin-hamburger");
+  if (ham && nav) {
+    ham.addEventListener("click", () => {
+      const open = nav.classList.toggle("menu-open");
+      ham.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
   document.querySelectorAll(".admin-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("is-active"));
       document.querySelectorAll(".admin-panel").forEach((p) => p.classList.remove("is-active"));
       tab.classList.add("is-active");
       el(`.admin-panel[data-panel="${tab.dataset.tab}"]`).classList.add("is-active");
+      // collapse the mobile menu after picking a tab, and jump to the top
+      if (nav) { nav.classList.remove("menu-open"); ham?.setAttribute("aria-expanded", "false"); }
+      window.scrollTo(0, 0);
     });
   });
 }
