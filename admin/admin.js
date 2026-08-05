@@ -166,11 +166,11 @@ const RESOURCES = {
       { name: "author", label: "Author", type: "input" },
       { name: "published_at", label: "Publish date", type: "date" },
       { name: "excerpt", label: "Excerpt", type: "textarea", full: true, hint: "Short summary for the card & search results." },
-      { name: "cover_image", label: "Cover image", type: "image", full: true },
+      { name: "cover_image", label: "Cover image", type: "image", full: true, generate: true },
       { name: "body", label: "Article body", type: "markdown", full: true, tall: true, hint: "Markdown. ## heading, - bullet, **bold**, > quote, [text](url)." },
       { name: "seo_title", label: "SEO title", type: "input", full: true, hint: "Browser tab & Google result title. Falls back to the page title." },
       { name: "seo_description", label: "SEO description", type: "textarea", full: true, hint: "~155 characters. Shows in Google results." },
-      { name: "og_image", label: "Social share image", type: "image", full: true, hint: "Shown when the page is shared. 1200×630 ideal; falls back to the default share image." },
+      { name: "og_image", label: "Social share image", type: "image", full: true, generate: true, hint: "Shown when the page is shared. 1200×630 ideal; falls back to the cover image." },
     ],
     newRow: () => ({ slug: "new-article-" + Date.now(), title: "New article", excerpt: "", body: "", category: "", author: "Gambito", published_at: new Date().toISOString().slice(0, 10), published: false }),
   },
@@ -209,6 +209,7 @@ function showApp() {
   el("#login-screen").hidden = true;
   el("#admin-app").hidden = false;
   initTabs();
+  initHome();
   loadContentTab();
   Object.keys(RESOURCES).forEach(loadResource);
   wireAddButtons();
@@ -242,6 +243,50 @@ function initTabs() {
       el(`.admin-panel[data-panel="${tab.dataset.tab}"]`).classList.add("is-active");
     });
   });
+}
+
+/* ---------- home / dashboard tab ---------- */
+const goTab = (name) => el(`.admin-tab[data-tab="${name}"]`)?.click();
+
+function initHome() {
+  document.querySelectorAll(".home-action").forEach((b) => {
+    b.addEventListener("click", () => {
+      goTab(b.dataset.go);
+      // let the target panel become active before triggering its action
+      if (b.dataset.add) setTimeout(() => el(b.dataset.add)?.click(), 40);
+      if (b.dataset.suggest) setTimeout(() => el("#suggest-ideas")?.click(), 40);
+      if (b.dataset.focus) setTimeout(() => el(b.dataset.focus)?.focus(), 40);
+    });
+  });
+  loadHomeStats();
+}
+
+async function loadHomeStats() {
+  const nowISO = new Date().toISOString();
+  const [ins, ideas, cs, bk, slots] = await Promise.all([
+    supabase.from("insights").select("id,published"),
+    supabase.from("content_ideas").select("id,status"),
+    supabase.from("case_studies").select("id"),
+    supabase.from("bookings").select("id").gte("start_time", nowISO),
+    supabase.from("booking_slots").select("id").eq("status", "available").gt("start_time", nowISO),
+  ]);
+  const insData = ins.data || [], ideaData = ideas.data || [];
+  const live = insData.filter((x) => x.published).length;
+  const drafts = insData.length - live;
+  const drafted = ideaData.filter((x) => x.status === "drafted").length;
+  const tiles = [
+    { go: "insights", big: insData.length, label: "Insights", sub: `${live} live · ${drafts} draft${drafts === 1 ? "" : "s"}` },
+    { go: "ideas", big: ideaData.length, label: "Post ideas", sub: drafted ? `${drafted} drafted in Buffer` : "capture your next one" },
+    { go: "work", big: cs.data?.length ?? 0, label: "Case studies", sub: "in the portfolio" },
+    { go: "bookings", big: bk.data?.length ?? 0, label: "Upcoming bookings", sub: `${slots.data?.length ?? 0} open slot${(slots.data?.length ?? 0) === 1 ? "" : "s"}` },
+  ];
+  el("#home-stats").innerHTML = tiles.map((t) => `
+    <button class="home-stat" data-go="${t.go}">
+      <span class="home-stat-big">${t.big}</span>
+      <span class="home-stat-label">${t.label}</span>
+      <span class="home-stat-sub">${t.sub}</span>
+    </button>`).join("");
+  el("#home-stats").querySelectorAll(".home-stat").forEach((s) => s.addEventListener("click", () => goTab(s.dataset.go)));
 }
 
 /* ---------- content tab ---------- */
@@ -352,6 +397,10 @@ function fieldHtml(f, row) {
         <div class="image-field-controls">
           <input type="file" accept="image/*" data-role="upload" />
           <input data-field="${f.name}" value="${attr(v)}" placeholder="or paste an image URL" />
+          ${f.generate ? `<div class="img-gen">
+            <input class="img-gen-dir" placeholder="Optional — describe the image you want (subject, mood). Brand colours applied automatically." />
+            <button type="button" class="btn btn-ghost btn-small" data-role="gen-image"><span>✨ Generate image</span></button>
+          </div>` : ""}
         </div>
       </div>`;
   else control = `<input data-field="${f.name}" value="${attr(v)}" />`;
@@ -429,6 +478,33 @@ function wireCards(key, rows) {
         wrap.querySelector("[data-field]").value = pub.publicUrl;
         wrap.querySelector('[data-role="preview"]').src = pub.publicUrl;
         setStatus(cfg.statusSel, "Image uploaded — click Save to apply.", "success");
+      });
+    });
+
+    // AI cover/social image generation (insights) — same engine as social posts
+    card.querySelectorAll('[data-role="gen-image"]').forEach((genBtn) => {
+      genBtn.addEventListener("click", async () => {
+        const wrap = genBtn.closest(".image-field");
+        const title = card.querySelector('[data-field="title"]')?.value.trim() || "";
+        const summary = card.querySelector('[data-field="excerpt"]')?.value.trim() || "";
+        const direction = wrap.querySelector(".img-gen-dir")?.value.trim() || "";
+        if (!title && !summary && !direction) { setStatus(cfg.statusSel, "Add a title or describe the image first.", "error"); return; }
+        genBtn.disabled = true;
+        setStatus(cfg.statusSel, "Generating image — this takes ~15–40s…");
+        try {
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-blog-image`, {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ id, title, summary, direction }),
+          });
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok || out.ok === false) throw new Error(out.error || `HTTP ${res.status}`);
+          wrap.querySelector("[data-field]").value = out.url;
+          wrap.querySelector('[data-role="preview"]').src = out.url;
+          setStatus(cfg.statusSel, "Image generated — click Save to apply. Not right? Tweak the description and generate again.", "success");
+        } catch (err) {
+          setStatus(cfg.statusSel, "Couldn't generate the image: " + err.message, "error");
+        }
+        genBtn.disabled = false;
       });
     });
   });

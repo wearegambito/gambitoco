@@ -31,7 +31,8 @@
         <span>Studio</span>
       </div>
       <nav class="admin-tabs">
-        <button class="admin-tab is-active" data-tab="content">Content</button>
+        <button class="admin-tab is-active" data-tab="home">Home</button>
+        <button class="admin-tab" data-tab="content">Content</button>
         <button class="admin-tab" data-tab="services">Services</button>
         <button class="admin-tab" data-tab="offerings">Offerings</button>
         <button class="admin-tab" data-tab="work">Case studies</button>
@@ -49,8 +50,24 @@
 
     <main class="admin-main">
 
+      <!-- HOME / DASHBOARD TAB -->
+      <section class="admin-panel is-active" data-panel="home">
+        <div class="home-head">
+          <h2>Welcome back 👋</h2>
+          <p class="home-sub">Your studio's content hub. Keep the momentum up — publish an insight, capture a post idea, or line up something for social.</p>
+        </div>
+        <div class="home-actions">
+          <button class="home-action" data-go="insights" data-add="#add-insight"><span class="home-action-ic">✍️</span><span class="home-action-t">Write an insight</span><span class="home-action-d">Start a new blog article</span></button>
+          <button class="home-action" data-go="ideas" data-suggest="1"><span class="home-action-ic">✨</span><span class="home-action-t">Suggest post ideas</span><span class="home-action-d">Brainstorm 5 on-brand posts</span></button>
+          <button class="home-action" data-go="ideas" data-focus="#idea-brief"><span class="home-action-ic">💡</span><span class="home-action-t">Capture an idea</span><span class="home-action-d">Save a post idea to work on</span></button>
+          <button class="home-action" data-go="work" data-add="#add-case-study"><span class="home-action-ic">🏆</span><span class="home-action-t">Add a case study</span><span class="home-action-d">Show off a project</span></button>
+        </div>
+        <h3 class="home-stats-h">At a glance</h3>
+        <div class="home-stats" id="home-stats"></div>
+      </section>
+
       <!-- CONTENT TAB -->
-      <section class="admin-panel is-active" data-panel="content">
+      <section class="admin-panel" data-panel="content">
         <div class="panel-head">
           <h2>Site content</h2>
           <button class="btn" id="save-content"><span>Save changes</span></button>
