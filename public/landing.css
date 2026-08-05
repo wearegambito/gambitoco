@@ -1,4 +1,4 @@
-/* Idea to Launch — campaign landing page.
+/* Shared campaign landing-page styles (used by every /landing page).
    Reuses the brand palette + fonts (content.css sets body bg/font + nav). */
 .lp, .lp-footer {
   --green: #032721;
@@ -34,11 +34,13 @@
 .lp-hero-sub { color: var(--ink-dim); font-size: clamp(1.05rem, 2vw, 1.3rem); line-height: 1.55; max-width: 60ch; margin: 0 auto 2.4rem; }
 .lp-hero-ctas { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
 
-/* differentiator */
+/* card grids */
 .lp-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2.6rem; }
+.lp-cards--2 { grid-template-columns: 1fr 1fr; }
 .lp-card { background: var(--green-2); border: 1px solid var(--line); border-radius: 18px; padding: 1.6rem 1.5rem; }
 .lp-card h3 { font-family: var(--disp); font-weight: 700; font-size: 1.15rem; margin-bottom: 0.6rem; }
 .lp-card p { color: var(--ink-dim); font-size: 0.95rem; line-height: 1.55; }
+.lp-card--lens h3 { font-size: 1.35rem; }
 
 /* timeline */
 .lp-timeline { list-style: none; margin: 2.8rem 0 0; padding: 0; position: relative; }
@@ -56,13 +58,17 @@
 .lp-outcome-grid li::before { content: "→"; position: absolute; left: 0; top: 0; color: var(--coral); font-weight: 700; }
 .lp-outcome-note { margin-top: 2rem; font-family: var(--disp); font-weight: 700; font-size: 1.1rem; color: var(--ink); }
 
-/* research — emphasis band */
+/* emphasis band */
+.lp-band { max-width: none; background: var(--green-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.lp-band-inner { max-width: 1040px; margin: 0 auto; }
+
+/* centred section */
+.lp-centre, .lp-community { text-align: center; }
+.lp-centre .lp-lead, .lp-community .lp-lead { margin: 0 auto; }
+
+/* aliases kept for the Idea to Launch page's original class names */
 .lp-research { max-width: none; background: var(--green-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .lp-research-inner { max-width: 1040px; margin: 0 auto; }
-
-/* community */
-.lp-community { text-align: center; }
-.lp-community .lp-lead { margin: 0 auto; }
 
 /* capture form */
 .lp-capture { display: flex; justify-content: center; }
@@ -72,7 +78,7 @@
 .lp-field-full { grid-column: 1 / -1; }
 .lp-field label { font-size: 0.85rem; color: var(--ink-dim); }
 .lp-optional { color: var(--ink-faint); }
-.lp-field input, .lp-field textarea { background: var(--green); border: 1px solid var(--line); border-radius: 12px; padding: 0.8rem 0.95rem; color: var(--ink); font: inherit; font-size: 0.98rem; }
+.lp-field input, .lp-field textarea { background: var(--green); border: 1px solid var(--line); border-radius: 12px; padding: 0.8rem 0.95rem; color: var(--ink); font: inherit; font-size: 16px; }
 .lp-field input::placeholder, .lp-field textarea::placeholder { color: var(--ink-faint); }
 .lp-field input:focus, .lp-field textarea:focus { outline: none; border-color: rgba(250, 77, 86, 0.6); }
 .lp-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
@@ -89,7 +95,7 @@
 .lp-footer p { font-size: 0.85rem; }
 
 @media (max-width: 760px) {
-  .lp-cards { grid-template-columns: 1fr; }
+  .lp-cards, .lp-cards--2 { grid-template-columns: 1fr; }
   .lp-outcome-grid { grid-template-columns: 1fr; }
   .lp-form { grid-template-columns: 1fr; }
   .lp-section { padding: 4rem 1.3rem; }

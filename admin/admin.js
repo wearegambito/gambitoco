@@ -374,6 +374,7 @@ async function loadHomeStats() {
 // overrides into the landing_pages row, live instantly.
 const LANDING_PAGES = [
   { slug: "idea-to-launch", label: "Idea to Launch", url: "/idea-to-launch/" },
+  { slug: "efficiency-audit", label: "The Efficiency Audit", url: "/efficiency-audit/" },
 ];
 
 const humanize = (k) => k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
