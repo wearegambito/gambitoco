@@ -1,26 +1,21 @@
 // posthog-stats: read-only analytics for the admin dashboard. Queries the
 // PostHog HogQL API with a PRIVATE personal API key (never exposed to the
 // browser) and returns site-wide totals + per-path / per-source breakdowns for
-// the last N days. Admin-gated (verify_jwt=true + email check).
+// the last N days.
+//
+// Deployed with verify_jwt=FALSE so the CORS preflight isn't blocked by the
+// gateway; the caller's Supabase session token is validated INSIDE (getUser)
+// and the email must be the admin.
 //
 // Secrets (set in the Supabase dashboard):
 //   POSTHOG_API_KEY      personal API key with query-read scope (phx_…)
 //   POSTHOG_PROJECT_ID   the numeric PostHog project id
 //   POSTHOG_HOST         optional, defaults to https://us.posthog.com
-const ADMIN_EMAIL = "armic@gambito.co.nz";
-const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "content-type, authorization", "access-control-allow-methods": "POST, OPTIONS" };
-const json = (b: unknown, s = 200) => new Response(JSON.stringify(b, null, 2), { status: s, headers: { "content-type": "application/json", ...CORS } });
+import { createClient } from "npm:@supabase/supabase-js@2";
 
-function emailFromJwt(auth: string | null): string | null {
-  try {
-    const tok = (auth || "").replace(/^Bearer\s+/i, "");
-    const payload = tok.split(".")[1];
-    if (!payload) return null;
-    const b = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const decoded = JSON.parse(atob(b + "=".repeat((4 - (b.length % 4)) % 4)));
-    return decoded.email || null;
-  } catch { return null; }
-}
+const ADMIN_EMAIL = "armic@gambito.co.nz";
+const CORS = { "access-control-allow-origin": "*", "access-control-allow-headers": "content-type, authorization, apikey", "access-control-allow-methods": "POST, OPTIONS" };
+const json = (b: unknown, s = 200) => new Response(JSON.stringify(b, null, 2), { status: s, headers: { "content-type": "application/json", ...CORS } });
 
 async function hogql(host: string, projectId: string, key: string, query: string) {
   const res = await fetch(`${host}/api/projects/${projectId}/query/`, {
@@ -36,8 +31,11 @@ async function hogql(host: string, projectId: string, key: string, query: string
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   try {
-    // admin only
-    if (emailFromJwt(req.headers.get("authorization")) !== ADMIN_EMAIL) return json({ ok: false, error: "forbidden" }, 403);
+    // validate the caller's Supabase session token (signature-checked) + admin
+    const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+    const authClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const { data: { user } } = await authClient.auth.getUser(token);
+    if (!user || user.email !== ADMIN_EMAIL) return json({ ok: false, error: "forbidden" }, 403);
 
     const key = Deno.env.get("POSTHOG_API_KEY");
     const projectId = Deno.env.get("POSTHOG_PROJECT_ID");
