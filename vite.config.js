@@ -11,7 +11,7 @@ export default defineConfig({
         book: resolve(__dirname, "book/index.html"),
         styleguide: resolve(__dirname, "style-guide/index.html"),
         ideaToLaunch: resolve(__dirname, "idea-to-launch/index.html"),
-        efficiencyAudit: resolve(__dirname, "efficiency-audit/index.html"),
+        clearThePath: resolve(__dirname, "clear-the-path/index.html"),
       },
     },
   },

@@ -1,8 +1,8 @@
 import { SUPABASE_URL } from "../src/supabase.js";
 import { initLanding } from "../src/landing.js";
 
-const SLUG = "efficiency-audit";
-const MAGNET = "efficiency-audit-breakdown";
+const SLUG = "clear-the-path";
+const MAGNET = "clear-the-path-breakdown";
 
 // hydrate any CMS overrides for this page (falls back to the static copy)
 initLanding(SLUG);
