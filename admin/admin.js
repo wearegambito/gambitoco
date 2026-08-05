@@ -762,6 +762,7 @@ async function loadIdeas() {
         <div class="edit-card-top">
           <span class="idea-badge idea-badge--${esc(idea.status)}">${esc(idea.status)}</span>
           <div class="edit-card-actions">
+            <button class="btn btn-ghost btn-small" data-action="edit"><span>Edit</span></button>
             <button class="btn btn-ghost btn-small" data-action="generate"><span>Generate</span></button>
             <button class="btn btn-danger btn-small" data-action="delete"><span>Delete</span></button>
           </div>
@@ -774,6 +775,10 @@ async function loadIdeas() {
 
   box.querySelectorAll(".edit-card").forEach((card) => {
     const id = card.dataset.idea;
+    card.querySelector('[data-action="edit"]').addEventListener("click", () => {
+      const idea = data.find((x) => x.id === id);
+      if (idea) editIdeaCard(idea, card);
+    });
     card.querySelector('[data-action="delete"]').addEventListener("click", async () => {
       if (!confirm("Delete this idea and its references, runs and drafts? This can't be undone.")) return;
       const { error } = await supabase.from("content_ideas").delete().eq("id", id);
@@ -796,6 +801,70 @@ async function loadIdeas() {
       b.disabled = false;
       loadIdeas();
     });
+  });
+}
+
+// inline edit of an existing idea (brief / title / notes / post type + add references)
+function editIdeaCard(idea, card) {
+  const types = ["post", "reel", "story", "carousel"];
+  card.innerHTML = `
+    <div class="edit-card-grid">
+      <div class="field field-full"><label>Idea / brief</label><textarea class="ie-brief" placeholder="What's the post about?">${esc(idea.brief || "")}</textarea></div>
+      <div class="field"><label>Title (internal)</label><input class="ie-title" value="${attr(idea.title || "")}" /></div>
+      <div class="field"><label>Post type</label>
+        <select class="ie-type">${types.map((t) => `<option value="${t}"${t === idea.post_type ? " selected" : ""}>${t}</option>`).join("")}</select>
+      </div>
+      <div class="field field-full"><label>Notes / direction</label><textarea class="ie-notes" placeholder="Tone, must-includes, references…">${esc(idea.notes || "")}</textarea></div>
+      <div class="field field-full"><label>Add reference images</label>
+        <input type="file" class="ie-refs" accept="image/*" multiple />
+        <div class="field-hint">Adds to any existing references — described by AI on upload.</div>
+      </div>
+    </div>
+    <div class="edit-card-actions edit-card-actions--edit">
+      <button class="btn btn-small" data-action="save-edit"><span>Save changes</span></button>
+      <button class="btn btn-ghost btn-small" data-action="cancel-edit"><span>Cancel</span></button>
+    </div>`;
+
+  card.querySelector('[data-action="cancel-edit"]').addEventListener("click", loadIdeas);
+  card.querySelector('[data-action="save-edit"]').addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    const brief = card.querySelector(".ie-brief").value.trim();
+    if (!brief) { setStatus(iStatus, "Add a brief so there's something to work from.", "error"); return; }
+    btn.disabled = true;
+    setStatus(iStatus, "Saving changes…");
+
+    // reset status to "new" so it's clear the idea has changed since its last run
+    const patch = {
+      brief,
+      title: card.querySelector(".ie-title").value.trim() || brief.slice(0, 60),
+      notes: card.querySelector(".ie-notes").value.trim(),
+      post_type: card.querySelector(".ie-type").value,
+      status: "new",
+    };
+    const { error } = await supabase.from("content_ideas").update(patch).eq("id", idea.id);
+    if (error) { btn.disabled = false; setStatus(iStatus, error.message, "error"); return; }
+
+    // upload any newly added references to the PRIVATE bucket + record rows
+    const files = [...card.querySelector(".ie-refs").files];
+    let uploaded = 0;
+    for (const file of files) {
+      setStatus(iStatus, `Uploading reference ${uploaded + 1} of ${files.length}…`);
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const path = `${idea.id}/${Date.now()}-${safe}`;
+      const up = await supabase.storage.from(REF_BUCKET).upload(path, file, { upsert: true, contentType: file.type });
+      if (up.error) { setStatus(iStatus, up.error.message, "error"); continue; }
+      await supabase.from("content_style_references").insert({ idea_id: idea.id, storage_path: path, mime: file.type });
+      uploaded++;
+    }
+    if (uploaded) {
+      fetch(`${SUPABASE_URL}/functions/v1/describe-references`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ideaId: idea.id }),
+      }).catch(() => {});
+    }
+
+    setStatus(iStatus, `Idea updated${uploaded ? ` · ${uploaded} reference${uploaded > 1 ? "s" : ""} added` : ""}. Hit Generate for a fresh round.`, "success");
+    loadIdeas();
   });
 }
 

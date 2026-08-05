@@ -254,6 +254,7 @@ a { color: inherit; }
 .idea-badge--drafted { color: #3ecf8e; border-color: rgba(62, 207, 142, 0.4); }
 .idea-badge--failed { color: var(--ember); border-color: rgba(250, 77, 86, 0.5); }
 .idea-badge--new { color: var(--ink-dim); }
+.edit-card-actions--edit { margin-top: 1.1rem; justify-content: flex-end; }
 
 /* content engine: AI idea suggestions */
 .idea-suggest { background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; padding: 1.4rem 1.6rem; margin-bottom: 1.4rem; }
