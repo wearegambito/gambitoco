@@ -213,9 +213,12 @@ cards.forEach((card, i) => {
     transformOrigin: "center top",
     ease: "none",
     scrollTrigger: {
+      // the pinned card sits at top:16vh; the next card only starts
+      // physically overlapping it around 45% and fully covers it near 18%.
+      // hold the card sharp until it's actually being covered, then blur.
       trigger: cards[i + 1],
-      start: "top 80%",
-      end: "top 20%",
+      start: "top 45%",
+      end: "top 18%",
       scrub: true,
     },
   });
