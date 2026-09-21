@@ -463,16 +463,40 @@ async function loadLandingDefaults(url) {
   return { defaults, order };
 }
 
-function initLandingPages() {
+function initLandingPages() { renderLandingIndex(); }
+
+// LIST view — the campaign landing pages
+function renderLandingIndex() {
   const box = el("#landing-list");
   if (!box) return;
-  box.innerHTML = "";
-  for (const lp of LANDING_PAGES) {
-    const card = document.createElement("div");
-    card.className = "edit-card";
-    box.appendChild(card);
-    renderLandingEditor(lp, card);
-  }
+  box.innerHTML = `<div class="idx-list">` + LANDING_PAGES.map((lp) => `
+    <div class="idx-row" data-slug="${attr(lp.slug)}" role="button" tabindex="0">
+      <div class="idx-main">
+        <span class="idx-title">${esc(lp.label)}</span>
+        <span class="idx-meta">${esc(lp.url)}</span>
+      </div>
+      ${CHEV}
+    </div>`).join("") + `</div>`;
+  box.querySelectorAll(".idx-row").forEach((row) => {
+    const lp = LANDING_PAGES.find((x) => x.slug === row.dataset.slug);
+    const open = () => openLanding(lp);
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
+}
+
+// DETAIL view — the copy editor for one landing page
+function openLanding(lp) {
+  const box = el("#landing-list");
+  box.innerHTML = `
+    <div class="detail-head">
+      <button class="detail-back" data-back>${BACK_IC}<span>All landing pages</span></button>
+      <span class="detail-title">${esc(lp.label)}</span>
+    </div>
+    <div class="edit-card" data-landing></div>`;
+  box.querySelector("[data-back]").addEventListener("click", renderLandingIndex);
+  renderLandingEditor(lp, box.querySelector("[data-landing]"));
+  window.scrollTo(0, 0);
 }
 
 async function renderLandingEditor(lp, card) {
@@ -524,11 +548,8 @@ async function renderLandingEditor(lp, card) {
 
   card.innerHTML = `
     <div class="edit-card-top">
-      <p class="idea-title">${esc(lp.label)}</p>
-      <div class="edit-card-actions">
-        <label class="publish-toggle"><input type="checkbox" data-action="pub" ${published ? "checked" : ""} /> Published</label>
-        <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗</span></a>
-      </div>
+      <label class="publish-toggle"><input type="checkbox" data-action="pub" ${published ? "checked" : ""} /> Published</label>
+      <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗</span></a>
     </div>
     <div class="landing-fields">${fields}${expHtml}</div>
     <div class="edit-card-actions edit-card-actions--edit">
@@ -571,26 +592,62 @@ async function renderLandingEditor(lp, card) {
   });
 }
 
-/* ---------- content tab ---------- */
+/* ---------- content tab (list of groups → group editor) ---------- */
+let contentValues = {};
+const contentGroups = () => {
+  const groups = {};
+  CONTENT_FIELDS.forEach((f) => { (groups[f.group] ||= []).push(f); });
+  return groups;
+};
+
 async function loadContentTab() {
   const status = el("#content-status");
   const { data, error } = await supabase.from("site_content").select("key, value");
   if (error) { setStatus(status, error.message, "error"); return; }
-  const values = Object.fromEntries(data.map((r) => [r.key, r.value]));
-  const groups = {};
-  CONTENT_FIELDS.forEach((f) => { (groups[f.group] ||= []).push(f); });
-  el("#content-groups").innerHTML = Object.entries(groups).map(([groupName, fields]) => `
-    <div class="content-group">
-      <h3>${groupName}</h3>
-      ${GROUP_INFO[groupName] ? `<p class="group-desc">${GROUP_INFO[groupName]}</p>` : ""}
+  contentValues = Object.fromEntries(data.map((r) => [r.key, r.value]));
+  renderContentIndex();
+}
+
+// LIST view — the content areas of the site, each a group of fields
+function renderContentIndex() {
+  el("#save-content").hidden = true;
+  el("#content-groups").innerHTML = `<div class="idx-list">` + Object.entries(contentGroups()).map(([name, fields]) => `
+    <div class="idx-row" data-group="${attr(name)}" role="button" tabindex="0">
+      <div class="idx-main">
+        <span class="idx-title">${esc(name)}</span>
+        ${GROUP_INFO[name] ? `<span class="idx-meta">${esc(GROUP_INFO[name])}</span>` : ""}
+      </div>
+      <span class="idx-count">${fields.length} field${fields.length === 1 ? "" : "s"}</span>
+      ${CHEV}
+    </div>`).join("") + `</div>`;
+  el("#content-groups").querySelectorAll(".idx-row").forEach((row) => {
+    const open = () => renderContentGroup(row.dataset.group);
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
+}
+
+// DETAIL view — edit one content group's fields
+function renderContentGroup(name) {
+  const fields = contentGroups()[name] || [];
+  el("#save-content").hidden = false;
+  el("#content-groups").innerHTML = `
+    <div class="detail-head">
+      <button class="detail-back" data-back>${BACK_IC}<span>All content</span></button>
+      <span class="detail-title">${esc(name)}</span>
+    </div>
+    ${GROUP_INFO[name] ? `<p class="group-desc">${esc(GROUP_INFO[name])}</p>` : ""}
+    <div class="content-group content-group--edit">
       ${fields.map((f) => `
         <div class="field${f.type === "media" ? " field-full" : ""}">
           <label for="cf-${f.key}">${f.label}</label>
-          ${contentControl(f, values[f.key] ?? "")}
+          ${contentControl(f, contentValues[f.key] ?? "")}
           ${f.hint ? `<div class="field-hint">${f.hint}</div>` : ""}
         </div>`).join("")}
-    </div>`).join("");
+    </div>`;
+  el("#content-groups").querySelector("[data-back]").addEventListener("click", renderContentIndex);
   wireContentUploads();
+  window.scrollTo(0, 0);
 }
 
 function contentControl(f, v) {
@@ -653,15 +710,21 @@ el("#save-content").addEventListener("click", async () => {
   const { error } = await supabase.from("site_content").upsert(rows, { onConflict: "key" });
   btn.disabled = false;
   if (error) setStatus("#content-status", error.message, "error");
-  else setStatus("#content-status", "Saved — live on the homepage now.", "success");
+  else {
+    rows.forEach((r) => { contentValues[r.key] = r.value; }); // keep cache fresh for re-render
+    setStatus("#content-status", "Saved — live on the homepage now.", "success");
+  }
 });
 
-/* ---------- generic resource CRUD ---------- */
+/* ---------- generic resource CRUD (list → detail) ---------- */
+const resourceRows = {}; // cache of the latest rows per resource, for the index view
+
 async function loadResource(key) {
   const cfg = RESOURCES[key];
   const { data, error } = await supabase.from(cfg.table).select("*").order(cfg.order.column, { ascending: cfg.order.ascending });
   if (error) { setStatus(cfg.statusSel, error.message, "error"); return; }
-  renderList(key, data || []);
+  resourceRows[key] = data || [];
+  renderIndex(key);
 }
 
 function fieldHtml(f, row) {
@@ -707,22 +770,63 @@ function emptyState(key) {
   </div>`;
 }
 
-function renderList(key, rows) {
+const SECTION_LABEL = { services: "services", offerings: "offerings", case_studies: "case studies", insights: "insights", faqs: "questions" };
+const CHEV = '<svg class="idx-chev ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
+const BACK_IC = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
+
+function rowTitle(key, r) { return esc(r.title || r.question || r.name || r.slug || "Untitled"); }
+function rowMeta(key, r) {
+  let m = "";
+  if (key === "insights") m = [r.category, (r.published_at || "").slice(0, 10)].filter(Boolean).join(" · ");
+  else if (key === "offerings") m = [r.service_slug, r.slug].filter(Boolean).join(" / ");
+  else if (key === "services") m = r.tag || (r.slug ? "/services/" + r.slug : "");
+  else m = r.category || "";
+  return esc(m);
+}
+function statusPill(r) {
+  return r.published ? `<span class="idx-status is-on">Live</span>` : `<span class="idx-status">Draft</span>`;
+}
+
+// LIST view — a scannable index of items; click a row to open its editor
+function renderIndex(key) {
   const cfg = RESOURCES[key];
+  const rows = resourceRows[key] || [];
+  const box = el(cfg.listSel);
   if (!rows.length) {
-    el(cfg.listSel).innerHTML = emptyState(key);
-    el(cfg.listSel).querySelector("[data-empty-add]")?.addEventListener("click", () => el(cfg.addBtnSel)?.click());
+    box.innerHTML = emptyState(key);
+    box.querySelector("[data-empty-add]")?.addEventListener("click", () => el(cfg.addBtnSel)?.click());
     return;
   }
-  el(cfg.listSel).innerHTML = rows.map((r, i) => `
+  box.innerHTML = `<div class="idx-list">` + rows.map((r, i) => `
+    <div class="idx-row" data-id="${r.id}" role="button" tabindex="0">
+      <div class="idx-main">
+        <span class="idx-title">${rowTitle(key, r)}</span>
+        ${rowMeta(key, r) ? `<span class="idx-meta">${rowMeta(key, r)}</span>` : ""}
+      </div>
+      ${statusPill(r)}
+      ${cfg.orderable ? `<div class="idx-order">
+        <button class="icon-btn" data-action="up" ${i === 0 ? "disabled" : ""} aria-label="Move up">↑</button>
+        <button class="icon-btn" data-action="down" ${i === rows.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>
+      </div>` : ""}
+      ${CHEV}
+    </div>`).join("") + `</div>`;
+
+  box.querySelectorAll(".idx-row").forEach((row, i) => {
+    const id = row.dataset.id;
+    row.addEventListener("click", (e) => { if (!e.target.closest("[data-action]")) openDetail(key, id); });
+    row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(key, id); } });
+    row.querySelector('[data-action="up"]')?.addEventListener("click", (e) => { e.stopPropagation(); swapOrder(key, rows, i, i - 1); });
+    row.querySelector('[data-action="down"]')?.addEventListener("click", (e) => { e.stopPropagation(); swapOrder(key, rows, i, i + 1); });
+  });
+}
+
+function cardHtml(key, r) {
+  const cfg = RESOURCES[key];
+  return `
     <div class="edit-card" data-id="${r.id}">
       <div class="edit-card-top">
-        <div class="edit-card-order">
-          ${cfg.orderable ? `<button class="icon-btn" data-action="up" ${i === 0 ? "disabled" : ""}>↑</button>
-          <button class="icon-btn" data-action="down" ${i === rows.length - 1 ? "disabled" : ""}>↓</button>` : ""}
-        </div>
+        <label class="publish-toggle"><input type="checkbox" data-field="published" ${r.published ? "checked" : ""} /> Published</label>
         <div class="edit-card-actions">
-          <label class="publish-toggle"><input type="checkbox" data-field="published" ${r.published ? "checked" : ""} /> Published</label>
           <button class="btn btn-ghost btn-small" data-action="save"><span>Save</span></button>
           <button class="btn btn-danger btn-small" data-action="delete"><span>Delete</span></button>
         </div>
@@ -730,13 +834,27 @@ function renderList(key, rows) {
       <div class="edit-card-grid">
         ${cfg.fields.map((f) => fieldHtml(f, r)).join("")}
       </div>
-    </div>`).join("");
-  wireCards(key, rows);
+    </div>`;
 }
 
-function wireCards(key, rows) {
+// DETAIL view — the editor for one item, with a back link to the list
+function openDetail(key, id) {
   const cfg = RESOURCES[key];
-  el(cfg.listSel).querySelectorAll(".edit-card").forEach((card, i) => {
+  const r = (resourceRows[key] || []).find((x) => String(x.id) === String(id));
+  if (!r) return;
+  const box = el(cfg.listSel);
+  box.innerHTML = `
+    <div class="detail-head">
+      <button class="detail-back" data-back>${BACK_IC}<span>All ${esc(SECTION_LABEL[key] || "items")}</span></button>
+      <span class="detail-title">${rowTitle(key, r)}</span>
+    </div>` + cardHtml(key, r);
+  box.querySelector("[data-back]").addEventListener("click", () => renderIndex(key));
+  wireCard(key, box.querySelector(".edit-card"), r);
+  window.scrollTo(0, 0);
+}
+
+function wireCard(key, card, r) {
+    const cfg = RESOURCES[key];
     const id = card.dataset.id;
 
     card.querySelector('[data-action="save"]').addEventListener("click", async () => {
@@ -755,7 +873,12 @@ function wireCards(key, rows) {
       setStatus(cfg.statusSel, "Saving...");
       const { error } = await supabase.from(cfg.table).update(patch).eq("id", id);
       if (error) setStatus(cfg.statusSel, error.message, "error");
-      else setStatus(cfg.statusSel, cfg.savedMsg, "success");
+      else {
+        Object.assign(r, patch); // keep the cached row (and the list) in sync
+        const dt = el(cfg.listSel).querySelector(".detail-title");
+        if (dt) dt.innerHTML = rowTitle(key, r);
+        setStatus(cfg.statusSel, cfg.savedMsg, "success");
+      }
     });
 
     card.querySelector('[data-action="delete"]').addEventListener("click", async () => {
@@ -763,11 +886,6 @@ function wireCards(key, rows) {
       const { error } = await supabase.from(cfg.table).delete().eq("id", id);
       if (error) setStatus(cfg.statusSel, error.message, "error"); else loadResource(key);
     });
-
-    if (cfg.orderable) {
-      card.querySelector('[data-action="up"]')?.addEventListener("click", () => swapOrder(key, rows, i, i - 1));
-      card.querySelector('[data-action="down"]')?.addEventListener("click", () => swapOrder(key, rows, i, i + 1));
-    }
 
     card.querySelectorAll('[data-role="upload"]').forEach((fileInput) => {
       fileInput.addEventListener("change", async () => {
@@ -812,7 +930,6 @@ function wireCards(key, rows) {
         genBtn.disabled = false;
       });
     });
-  });
 }
 
 async function swapOrder(key, rows, i, j) {
@@ -838,8 +955,10 @@ function wireAddButtons() {
         const { data } = await supabase.from(cfg.table).select("order_index").order("order_index", { ascending: false }).limit(1);
         next = (data?.[0]?.order_index ?? 0) + 1;
       }
-      const { error } = await supabase.from(cfg.table).insert(cfg.newRow(next));
-      if (error) setStatus(cfg.statusSel, error.message, "error"); else loadResource(key);
+      const { data, error } = await supabase.from(cfg.table).insert(cfg.newRow(next)).select().single();
+      if (error) { setStatus(cfg.statusSel, error.message, "error"); return; }
+      await loadResource(key);          // refresh the index + cache
+      if (data?.id) openDetail(key, data.id); // drop straight into the new item's editor
     });
   });
 }

@@ -350,6 +350,39 @@ input[type="file"]::file-selector-button:hover { background: rgba(240, 231, 212,
 .empty-state-d { color: var(--ink-dim); font-size: 0.9rem; max-width: 42ch; line-height: 1.5; }
 .empty-state .btn { margin-top: 0.9rem; }
 
+/* ---------- list (index) → detail navigation ---------- */
+.idx-list { display: flex; flex-direction: column; gap: 0.65rem; }
+.idx-row {
+  display: flex; align-items: center; gap: 1rem; width: 100%; text-align: left;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1rem 1.2rem; cursor: pointer; color: var(--ink);
+  box-shadow: var(--shadow);
+  transition: border-color 0.16s var(--ease), transform 0.12s var(--ease), background 0.16s var(--ease);
+}
+.idx-row:hover { border-color: var(--line-hi); transform: translateY(-1px); background: var(--surface-hi); }
+.idx-row:focus-visible { box-shadow: var(--ring); }
+.idx-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.idx-title { font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.idx-meta { font-size: 0.82rem; color: var(--ink-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.idx-status { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.22rem 0.6rem; border-radius: 100px; border: 1px solid var(--line); color: var(--ink-faint); flex-shrink: 0; }
+.idx-status.is-on { color: var(--mint); border-color: rgba(62, 207, 142, 0.4); }
+.idx-count { font-size: 0.76rem; color: var(--ink-dim); background: var(--wash); border: 1px solid var(--line); border-radius: 100px; padding: 0.18rem 0.65rem; flex-shrink: 0; white-space: nowrap; }
+.idx-order { display: flex; gap: 0.3rem; flex-shrink: 0; }
+.idx-chev { width: 18px; height: 18px; color: var(--ink-faint); flex-shrink: 0; }
+.idx-row:hover .idx-chev { color: var(--ink); }
+
+.detail-head { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.3rem; flex-wrap: wrap; }
+.detail-back {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--wash); border: 1px solid var(--line); color: var(--ink-dim);
+  border-radius: 100px; padding: 0.45rem 0.95rem 0.45rem 0.7rem; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+.detail-back:hover { color: var(--ink); border-color: var(--line-hi); background: var(--wash-hi); }
+.detail-back .ic { width: 15px; height: 15px; }
+.detail-title { font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; color: var(--ink-dim); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ---------- bookings admin ---------- */
 .book-admin { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; margin-bottom: 2.5rem; }
 .book-admin-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.6rem 1.8rem; box-shadow: var(--shadow); }
@@ -616,4 +649,6 @@ input[type="file"]::file-selector-button:hover { background: rgba(240, 231, 212,
 @media (max-width: 460px) {
   .home-stats { grid-template-columns: 1fr; }
   .admin-view-live { display: none; }
+  .idx-row { padding: 0.9rem 1rem; gap: 0.7rem; }
+  .idx-chev { display: none; }
 }
