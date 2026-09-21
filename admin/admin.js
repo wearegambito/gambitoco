@@ -191,9 +191,33 @@ const RESOURCES = {
 const el = (sel) => document.querySelector(sel);
 const setStatus = (target, msg, kind) => {
   if (typeof target === "string") target = el(target);
-  target.textContent = msg;
-  target.className = "panel-status" + (kind ? ` is-${kind}` : "");
+  if (target) {
+    target.textContent = msg;
+    target.className = "panel-status" + (kind ? ` is-${kind}` : "");
+  }
+  // mirror final outcomes into a global toast so feedback is never missed
+  if (kind === "success" || kind === "error") toast(msg, kind);
 };
+
+// ---------- global toast notifications ----------
+function toast(msg, kind = "") {
+  const stack = el("#toast-stack");
+  if (!stack) return;
+  const icon = kind === "success"
+    ? '<svg class="toast-ic ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>'
+    : kind === "error"
+    ? '<svg class="toast-ic ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>'
+    : '<svg class="toast-ic ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
+  const t = document.createElement("div");
+  t.className = "toast" + (kind ? ` is-${kind}` : "");
+  t.setAttribute("role", "status");
+  t.innerHTML = `${icon}<span class="toast-msg"></span><button class="toast-close" aria-label="Dismiss">×</button>`;
+  t.querySelector(".toast-msg").textContent = msg;
+  const close = () => { t.classList.add("is-out"); setTimeout(() => t.remove(), 240); };
+  t.querySelector(".toast-close").addEventListener("click", close);
+  stack.appendChild(t);
+  setTimeout(close, kind === "error" ? 6000 : 3600);
+}
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -209,6 +233,7 @@ function showApp() {
   el("#login-screen").hidden = true;
   el("#admin-app").hidden = false;
   initTabs();
+  initAccount();
   initHome();
   loadContentTab();
   Object.keys(RESOURCES).forEach(loadResource);
@@ -234,27 +259,66 @@ el("#login-form").addEventListener("submit", async (e) => {
 el("#signout-btn").addEventListener("click", async () => { await supabase.auth.signOut(); showLogin(); });
 supabase.auth.onAuthStateChange((_e, session) => { if (session) showApp(); });
 
-/* ---------- tabs ---------- */
+/* ---------- tabs + sidebar drawer ---------- */
+const TAB_KEY = "gambito-admin-tab";
+let tabsWired = false;
+
+function openDrawer() { el("#admin-app")?.classList.add("nav-open"); el("#admin-hamburger")?.setAttribute("aria-expanded", "true"); }
+function closeDrawer() { el("#admin-app")?.classList.remove("nav-open"); el("#admin-hamburger")?.setAttribute("aria-expanded", "false"); }
+
+function activateTab(name, { save = true } = {}) {
+  const tab = el(`.admin-tab[data-tab="${name}"]`);
+  const panel = el(`.admin-panel[data-panel="${name}"]`);
+  if (!tab || !panel) return;
+  document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("is-active"));
+  document.querySelectorAll(".admin-panel").forEach((p) => p.classList.remove("is-active"));
+  tab.classList.add("is-active");
+  panel.classList.add("is-active");
+  closeDrawer();
+  window.scrollTo(0, 0);
+  const label = tab.querySelector("span")?.textContent || "Admin";
+  document.title = `Gambito — ${label}`;
+  if (save) {
+    try { localStorage.setItem(TAB_KEY, name); } catch {}
+    try { history.replaceState(null, "", `#${name}`); } catch {}
+  }
+}
+
 function initTabs() {
-  const nav = el(".admin-nav");
   const ham = el("#admin-hamburger");
-  if (ham && nav) {
-    ham.addEventListener("click", () => {
-      const open = nav.classList.toggle("menu-open");
-      ham.setAttribute("aria-expanded", open ? "true" : "false");
+  const scrim = el("#admin-scrim");
+  if (!tabsWired) {
+    tabsWired = true;
+    ham?.addEventListener("click", () => {
+      el("#admin-app")?.classList.contains("nav-open") ? closeDrawer() : openDrawer();
+    });
+    scrim?.addEventListener("click", closeDrawer);
+    document.querySelectorAll(".admin-tab").forEach((tab) => {
+      tab.addEventListener("click", () => activateTab(tab.dataset.tab));
     });
   }
-  document.querySelectorAll(".admin-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".admin-tab").forEach((t) => t.classList.remove("is-active"));
-      document.querySelectorAll(".admin-panel").forEach((p) => p.classList.remove("is-active"));
-      tab.classList.add("is-active");
-      el(`.admin-panel[data-panel="${tab.dataset.tab}"]`).classList.add("is-active");
-      // collapse the mobile menu after picking a tab, and jump to the top
-      if (nav) { nav.classList.remove("menu-open"); ham?.setAttribute("aria-expanded", "false"); }
-      window.scrollTo(0, 0);
-    });
-  });
+  // restore where the user left off: URL hash wins, then last-saved tab, else Home
+  let start = (location.hash || "").replace("#", "");
+  if (!el(`.admin-tab[data-tab="${start}"]`)) {
+    try { start = localStorage.getItem(TAB_KEY) || "home"; } catch { start = "home"; }
+  }
+  activateTab(el(`.admin-tab[data-tab="${start}"]`) ? start : "home", { save: false });
+}
+
+/* ---------- account + greeting ---------- */
+async function initAccount() {
+  const { data: { user } } = await supabase.auth.getUser();
+  const email = user?.email || "";
+  const first = (email.split("@")[0].split(/[._-]/)[0] || "there");
+  const name = first.charAt(0).toUpperCase() + first.slice(1);
+  const hour = new Date().getHours();
+  const part = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greet = el("#home-greeting");
+  if (greet) greet.textContent = `${part}, ${name}`;
+  const avatar = el("#account-avatar");
+  if (avatar) avatar.textContent = (name[0] || "G").toUpperCase();
+  const emailEl = el("#account-email");
+  if (emailEl) emailEl.textContent = email;
 }
 
 /* ---------- home / dashboard tab ---------- */
@@ -625,8 +689,31 @@ function fieldHtml(f, row) {
   return `<div class="${cls}"><label>${f.label}</label>${control}${f.hint ? `<div class="field-hint">${f.hint}</div>` : ""}</div>`;
 }
 
+const EMPTY_COPY = {
+  services: { ic: "🧭", t: "No services yet", d: "Add your first service card — it shows on the homepage and gets its own detail page." },
+  offerings: { ic: "📦", t: "No offerings yet", d: "Create a detailed programme page nested under a service." },
+  case_studies: { ic: "🏆", t: "No case studies yet", d: "Show off a project. Case studies appear in the work grid on the homepage." },
+  insights: { ic: "✍️", t: "No articles yet", d: "Write your first insight — these become SEO-optimised blog pages." },
+  faqs: { ic: "❓", t: "No questions yet", d: "Add a question and answer to power the FAQ page." },
+};
+function emptyState(key) {
+  const c = EMPTY_COPY[key] || { ic: "📄", t: "Nothing here yet", d: "" };
+  const hasAdd = !!RESOURCES[key].addBtnSel;
+  return `<div class="empty-state">
+    <div class="empty-state-ic">${c.ic}</div>
+    <div class="empty-state-t">${c.t}</div>
+    ${c.d ? `<div class="empty-state-d">${esc(c.d)}</div>` : ""}
+    ${hasAdd ? `<button class="btn" data-empty-add><span>Add the first one</span></button>` : ""}
+  </div>`;
+}
+
 function renderList(key, rows) {
   const cfg = RESOURCES[key];
+  if (!rows.length) {
+    el(cfg.listSel).innerHTML = emptyState(key);
+    el(cfg.listSel).querySelector("[data-empty-add]")?.addEventListener("click", () => el(cfg.addBtnSel)?.click());
+    return;
+  }
   el(cfg.listSel).innerHTML = rows.map((r, i) => `
     <div class="edit-card" data-id="${r.id}">
       <div class="edit-card-top">
@@ -1199,5 +1286,89 @@ function editIdeaCard(idea, card) {
     loadIdeas();
   });
 }
+
+/* ---------- command palette (⌘K / Ctrl+K) ---------- */
+function cmdkItems() {
+  const nav = [...document.querySelectorAll(".admin-tab")].map((t) => ({
+    group: "Go to section",
+    icon: t.querySelector(".nav-ic")?.outerHTML || "",
+    label: t.querySelector("span")?.textContent || t.dataset.tab,
+    hint: "Section",
+    run: () => activateTab(t.dataset.tab),
+  }));
+  const after = (name, sel, focus) => () => { activateTab(name); setTimeout(() => (focus ? el(sel)?.focus() : el(sel)?.click()), 70); };
+  const actions = [
+    { group: "Quick action", emoji: "✍️", label: "New article", run: after("insights", "#add-insight") },
+    { group: "Quick action", emoji: "✨", label: "Suggest post ideas", run: after("ideas", "#suggest-ideas") },
+    { group: "Quick action", emoji: "💡", label: "Capture an idea", run: after("ideas", "#idea-brief", true) },
+    { group: "Quick action", emoji: "🏆", label: "Add a case study", run: after("work", "#add-case-study") },
+    { group: "Quick action", emoji: "🚀", label: "Publish the site", run: () => el("#publish-btn")?.click() },
+    { group: "Quick action", emoji: "↗", label: "View live site", run: () => window.open("/", "_blank") },
+  ];
+  return [...nav, ...actions];
+}
+
+let cmdkOpen = false;
+function openCmdk() {
+  if (cmdkOpen || el("#admin-app")?.hidden) return;
+  cmdkOpen = true;
+  const all = cmdkItems();
+  const overlay = document.createElement("div");
+  overlay.className = "cmdk-overlay";
+  overlay.id = "cmdk-overlay";
+  overlay.innerHTML = `
+    <div class="cmdk" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="cmdk-search">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.4-3.4"/></svg>
+        <input class="cmdk-input" placeholder="Search sections and actions…" autocomplete="off" spellcheck="false" />
+        <span class="cmdk-esc">ESC</span>
+      </div>
+      <div class="cmdk-results"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const input = overlay.querySelector(".cmdk-input");
+  const results = overlay.querySelector(".cmdk-results");
+  let active = 0;
+  let filtered = all;
+
+  const markActive = () => results.querySelectorAll(".cmdk-item").forEach((b) => b.classList.toggle("is-active", +b.dataset.i === active));
+  const scrollActive = () => results.querySelector(".cmdk-item.is-active")?.scrollIntoView({ block: "nearest" });
+  const run = (i) => { const it = filtered[i]; if (!it) return; closeCmdk(); it.run(); };
+
+  const render = () => {
+    const q = input.value.trim().toLowerCase();
+    filtered = q ? all.filter((it) => (it.label + " " + it.group).toLowerCase().includes(q)) : all;
+    if (active >= filtered.length) active = 0;
+    if (!filtered.length) { results.innerHTML = `<div class="cmdk-empty">No matches for “${esc(input.value)}”</div>`; return; }
+    let html = "", lastGroup = null;
+    filtered.forEach((it, i) => {
+      if (it.group !== lastGroup) { html += `<div class="cmdk-section-label">${esc(it.group)}</div>`; lastGroup = it.group; }
+      const vis = it.icon || `<span class="cmdk-item-emoji">${it.emoji || "•"}</span>`;
+      html += `<button class="cmdk-item ${i === active ? "is-active" : ""}" data-i="${i}">${vis}<span class="cmdk-item-label">${esc(it.label)}</span>${it.hint ? `<span class="cmdk-item-hint">${esc(it.hint)}</span>` : ""}</button>`;
+    });
+    results.innerHTML = html;
+    results.querySelectorAll(".cmdk-item").forEach((b) => {
+      b.addEventListener("mousemove", () => { if (active !== +b.dataset.i) { active = +b.dataset.i; markActive(); } });
+      b.addEventListener("click", () => run(+b.dataset.i));
+    });
+  };
+
+  input.addEventListener("input", render);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); active = Math.min(active + 1, filtered.length - 1); markActive(); scrollActive(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); active = Math.max(active - 1, 0); markActive(); scrollActive(); }
+    else if (e.key === "Enter") { e.preventDefault(); run(active); }
+    else if (e.key === "Escape") { e.preventDefault(); closeCmdk(); }
+  });
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) closeCmdk(); });
+  render();
+  setTimeout(() => input.focus(), 20);
+}
+function closeCmdk() { cmdkOpen = false; el("#cmdk-overlay")?.remove(); }
+
+document.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); cmdkOpen ? closeCmdk() : openCmdk(); }
+});
+el("#cmdk-trigger")?.addEventListener("click", openCmdk);
 
 checkSession();
