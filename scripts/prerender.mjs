@@ -76,6 +76,7 @@ function head({ title, description, canonical, ogImage, ogType = "website", json
 const nav = (sc = {}) => {
   const s = esc(sc.nav_services || "Services");
   const w = esc(sc.nav_work || "Work");
+  const d = esc(sc.nav_design || "Design");
   const i = esc(sc.nav_insights || "Insights");
   const f = esc(sc.nav_faq || "FAQ");
   const cta = esc(sc.nav_cta || "Start the conversation");
@@ -84,6 +85,7 @@ const nav = (sc = {}) => {
     <nav class="nav-links" aria-label="Primary">
       <a href="/#services">${s}</a>
       <a href="/#work">${w}</a>
+      <a href="/design/">${d}</a>
       <a href="/insights/">${i}</a>
       <a href="/faq/">${f}</a>
     </nav>
@@ -94,6 +96,7 @@ const nav = (sc = {}) => {
     <nav class="mobile-menu-links" aria-label="Mobile">
       <a href="/#services">${s}</a>
       <a href="/#work">${w}</a>
+      <a href="/design/">${d}</a>
       <a href="/insights/">${i}</a>
       <a href="/faq/">${f}</a>
       <a href="/book/" class="mobile-menu-cta">Book a Gameplan Session</a>
@@ -459,15 +462,304 @@ async function bakeHomepage(sc, services, caseStudies) {
   console.log("  baked homepage index.html with live CMS content");
 }
 
+/* ---------- design service page ---------- */
+const DESIGN_DEFAULTS = {
+  ad_headline: "Senior design. AI speed. A website that runs your business.",
+  hero_subhead: "I'm Armic, founder of Gambito. 15 years designing for companies like Vodafone, Apple and Air New Zealand. Now I build complete website systems for founders, faster than an agency can.",
+  capacity_count: 2,
+  next_opening: "",
+  starting_price: "",
+  reply_time_text: "within an hour",
+  booking_url: "/book/",
+  budget_bands: ["Under $5k", "$5k–$10k", "$10k–$25k", "$25k+", "Not sure yet"],
+};
+
+const attrLabel = (cs) => {
+  if (cs.attribution === "employed") return `Armic, while at ${cs.attribution_company || cs.client_name}`;
+  if (cs.attribution === "agency") return `Armic for ${cs.client_name}, via ${cs.attribution_company || "agency"}`;
+  return "Gambito";
+};
+const tagChips = (tags) => (Array.isArray(tags) ? tags : []).map((t) => `<span class="dz-tag">${esc(t)}</span>`).join("");
+
+const ICONS = {
+  design: '<svg class="dz-card-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>',
+  cms: '<svg class="dz-card-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>',
+  auto: '<svg class="dz-card-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M4 7l3-3M4 7l3 3"/><path d="M20 17H9m11 0l-3-3m3 3l-3 3"/></svg>',
+  dash: '<svg class="dz-card-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 17v-5M12 17V7M16 17v-8"/></svg>',
+};
+
+function designLogosRow(logos) {
+  if (!logos.length) return "";
+  return `<div class="dz-logos-row">${logos.map((l) =>
+    (l.can_show_logo && l.logo_svg)
+      ? (/^https?:\/\//.test(l.logo_svg) ? `<img class="dz-logo-img" src="${esc(l.logo_svg)}" alt="${esc(l.name)}" />` : l.logo_svg)
+      : `<span class="dz-logo-name">${esc(l.name)}</span>`
+  ).join("")}</div>`;
+}
+
+function designCaseCard(cs, site) {
+  const media = cs.hero_image
+    ? `<div class="dz-cs-media"><img src="${esc(cs.hero_image)}" alt="${esc(cs.title)}" loading="lazy" /></div>`
+    : `<div class="dz-cs-media"><span class="dz-cs-media-ph">${esc(cs.client_name || cs.title)}</span></div>`;
+  const inner = `${cs.can_show_work ? media : ""}
+      <div class="dz-cs-body">
+        <span class="dz-cs-client">${esc(cs.can_show_logo ? cs.client_name : cs.client_name)}</span>
+        <h3 class="dz-cs-title">${esc(cs.title)}</h3>
+        <p class="dz-cs-summary">${esc(cs.summary)}</p>
+        ${tagChips(cs.system_tags) ? `<div class="dz-tags">${tagChips(cs.system_tags)}</div>` : ""}
+        ${cs.timeline ? `<p class="dz-cs-foot">${esc(cs.timeline)}</p>` : ""}
+      </div>`;
+  return cs.can_show_work
+    ? `<a class="dz-cs-card" href="/design/${esc(cs.slug)}/">${inner}</a>`
+    : `<div class="dz-cs-card">${inner}</div>`;
+}
+
+function designPage(settings, startups, corporates, logos, faqs, sc, site) {
+  const s = { ...DESIGN_DEFAULTS, ...(settings || {}) };
+  const bands = Array.isArray(s.budget_bands) && s.budget_bands.length ? s.budget_bands : DESIGN_DEFAULTS.budget_bands;
+  const booking = s.booking_url || "/book/";
+  const url = abs(site, "/design/");
+  const title = "Website design + AI systems for startups | Armic, Gambito";
+  const desc = "Senior design plus AI, by Armic, founder of Gambito. Complete website systems for founders — site, CMS, automations and dashboards. You own all of it.";
+
+  const personLd = {
+    "@context": "https://schema.org", "@type": "Person", name: "Armic", jobTitle: "Designer, founder of Gambito",
+    worksFor: { "@type": "Organization", name: "Gambito" }, url,
+  };
+  const serviceLd = {
+    "@context": "https://schema.org", "@type": "ProfessionalService", name: "Gambito — website design + AI systems",
+    description: desc, url, areaServed: ["AE", "US", "GB", "CA", "SG", "SA", "QA", "KW", "NZ"], provider: { "@type": "Person", name: "Armic" },
+  };
+  const crumbs = breadcrumbLd(site, [{ name: "Home", path: "/" }, { name: "Design", path: "/design/" }]);
+
+  const startupCards = startups.length
+    ? `<div class="dz-cs-grid">${startups.slice(0, 4).map((c) => designCaseCard(c, site)).join("")}</div>`
+    : "";
+
+  const corporateHighlights = corporates.length
+    ? `<div class="dz-highlights">${corporates.slice(0, 2).map((c) => `
+        <div class="dz-highlight">
+          <div class="dz-highlight-attr">${esc(attrLabel(c))}</div>
+          <h3>${esc(c.title)}</h3>
+          <p>${esc(c.summary)}</p>
+        </div>`).join("")}</div>`
+    : "";
+
+  const faqHtml = faqs.length
+    ? `<div class="dz-faq">${faqs.map((f) => `
+        <div class="dz-faq-item">
+          <button class="dz-faq-q" aria-expanded="false">${esc(f.question)}</button>
+          <div class="dz-faq-a"><div class="dz-faq-a-inner">${esc(f.answer)}</div></div>
+        </div>`).join("")}</div>`
+    : "";
+
+  const main = `<main class="dz">
+    <!-- 1. HERO -->
+    <section class="dz-hero">
+      <div class="dz-wrap">
+        <p class="dz-eyebrow">Design + AI, by Armic</p>
+        <h1 class="dz-hero-title">${esc(s.ad_headline || DESIGN_DEFAULTS.ad_headline)}</h1>
+        <p class="dz-hero-sub">${esc(s.hero_subhead || DESIGN_DEFAULTS.hero_subhead)}</p>
+        <div class="dz-hero-ctas">
+          <a class="dz-btn dz-btn--solid" href="#get-started">Tell me about your project</a>
+          <a class="dz-textlink" href="#work">See the work ↓</a>
+        </div>
+        ${logos.length ? `<div class="dz-logos"><p class="dz-logos-label">Craft behind it</p>${designLogosRow(logos)}</div>` : ""}
+        <div class="dz-hero-portrait dz-hero-portrait--placeholder">Portrait or short muted loop goes here</div>
+      </div>
+    </section>
+
+    <!-- 2. WHY DESIGN + AI -->
+    <section class="dz-section dz-why">
+      <div class="dz-wrap">
+        <p>AI can build a website in an afternoon. Most look the same. The difference is who's directing it: I bring <em>15 years of design and UX</em> to every decision the AI makes, so you get the speed without the template look.</p>
+      </div>
+    </section>
+
+    <!-- 3. WHAT YOU GET -->
+    <section class="dz-section">
+      <div class="dz-wrap">
+        <h2 class="dz-h2">What you get</h2>
+        <div class="dz-cards">
+          <div class="dz-card">${ICONS.design}<h3>A site designed around your business</h3><p>Not a template. Designed around how your business actually works and what it needs to do.</p></div>
+          <div class="dz-card">${ICONS.cms}<h3>A CMS you control</h3><p>Edit your content yourself, anytime, without waiting on a developer.</p></div>
+          <div class="dz-card">${ICONS.auto}<h3>Automations &amp; notifications</h3><p>Leads, bookings and form submissions go exactly where they need to.</p></div>
+          <div class="dz-card">${ICONS.dash}<h3>Dashboards</h3><p>See what's working, so you can make decisions with real numbers.</p></div>
+        </div>
+        <p class="dz-own"><strong>You own all of it.</strong> No retainer, no monthly fees. I hand it over and teach you to build new pages with AI.</p>
+      </div>
+    </section>
+
+    <!-- 4. SELECTED WORK: STARTUPS -->
+    <section class="dz-section" id="work">
+      <div class="dz-wrap-wide">
+        <h2 class="dz-h2">Selected work</h2>
+        <p class="dz-lead">Recent builds for founders and small teams.</p>
+        ${startupCards}
+      </div>
+    </section>
+
+    <!-- 5. 15 YEARS OF CRAFT (corporate) -->
+    <section class="dz-section dz-corporate">
+      <div class="dz-wrap">
+        <h2 class="dz-h2">15 years of craft behind it</h2>
+        <p class="dz-lead">Before Gambito, I spent 15 years in UX design and research for companies like Vodafone, Apple and Air New Zealand. <em>That's where the taste comes from.</em></p>
+        ${logos.length ? `<div class="dz-logos">${designLogosRow(logos)}</div>` : ""}
+        ${corporateHighlights}
+      </div>
+    </section>
+
+    <!-- 6. HOW IT WORKS -->
+    <section class="dz-section">
+      <div class="dz-wrap">
+        <h2 class="dz-h2">How it works</h2>
+        <div class="dz-steps">
+          <div class="dz-step"><p>A 20-minute call about your business and what the site needs to do.</p></div>
+          <div class="dz-step"><p>A fixed quote within 48 hours.</p></div>
+          <div class="dz-step"><p>The build, usually 3 to 5 weeks. You see progress every week.</p></div>
+          <div class="dz-step"><p>Handover: you own everything, and I show you how to add pages with AI.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CAPACITY -->
+    <section class="dz-section dz-capacity">
+      <div class="dz-wrap">
+        <div class="dz-capacity-card">
+          <p class="dz-capacity-line"><span class="dz-capacity-dot"></span>It's just me, so I take on ${esc(String(s.capacity_count))} projects at a time.</p>
+          ${s.next_opening ? `<p class="dz-capacity-sub">Next opening: <b>${esc(s.next_opening)}</b></p>` : ""}
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. ABOUT ARMIC -->
+    <section class="dz-section">
+      <div class="dz-wrap">
+        <h2 class="dz-h2">About Armic</h2>
+        <div class="dz-about-grid dz-about">
+          <div class="dz-about-portrait">Portrait</div>
+          <div>
+            <p>I started as a developer, then spent 15+ years in UX design and research, working with teams from startups to large companies.</p>
+            <p>Now I run Gambito, where I use AI to build complete website systems, fast, with the design judgement that only comes from doing the work for that long.</p>
+            <p>I'm based in New Zealand and work with founders across the UAE, US, UK, Canada, Singapore and the wider Gulf.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. FAQ -->
+    <section class="dz-section">
+      <div class="dz-wrap">
+        <h2 class="dz-h2">Questions</h2>
+        ${faqHtml}
+      </div>
+    </section>
+
+    <!-- 10. FINAL CTA + FORM -->
+    <section class="dz-section dz-form-section" id="get-started">
+      <div class="dz-wrap">
+        <h2 class="dz-h2" style="text-align:center">Tell me about your project</h2>
+        <p class="dz-lead" style="margin-left:auto;margin-right:auto;text-align:center">I reply personally ${esc(s.reply_time_text || "within an hour")}.</p>
+        <div class="dz-form-card" id="dz-form-card" data-booking="${esc(booking)}" data-reply="${esc(s.reply_time_text || "within an hour")}">
+          <form class="dz-form" id="dz-lead-form" novalidate>
+            <div class="dz-field"><label for="dz-name">Name <span class="req">*</span></label><input id="dz-name" name="name" type="text" autocomplete="name" required /></div>
+            <div class="dz-field"><label for="dz-email">Email <span class="req">*</span></label><input id="dz-email" name="email" type="email" autocomplete="email" required /></div>
+            <div class="dz-field"><label for="dz-whatsapp">WhatsApp number</label><input id="dz-whatsapp" name="whatsapp" type="tel" placeholder="With country code" autocomplete="tel" /></div>
+            <div class="dz-field"><label for="dz-business">Business name or website</label><input id="dz-business" name="business" type="text" /></div>
+            <div class="dz-field"><label for="dz-stage">What stage are you at? <span class="req">*</span></label>
+              <select id="dz-stage" name="stage" required>
+                <option value="">Choose one…</option>
+                <option>Idea</option>
+                <option>Pre-launch</option>
+                <option>Launched (under 2 years)</option>
+                <option>Established business</option>
+              </select>
+            </div>
+            <div class="dz-field"><label>What do you need? <span class="req">*</span></label>
+              <div class="dz-checks">
+                <label class="dz-check"><input type="checkbox" name="needs" value="New website" /> New website</label>
+                <label class="dz-check"><input type="checkbox" name="needs" value="Website + system" /> Website + system</label>
+                <label class="dz-check"><input type="checkbox" name="needs" value="Redesign" /> Redesign</label>
+                <label class="dz-check"><input type="checkbox" name="needs" value="Not sure yet" /> Not sure yet</label>
+              </div>
+            </div>
+            <div class="dz-field"><label for="dz-budget">Budget <span class="req">*</span></label>
+              <select id="dz-budget" name="budget" required>
+                <option value="">Choose a range…</option>
+                ${bands.map((b) => `<option>${esc(b)}</option>`).join("")}
+              </select>
+            </div>
+            <div class="dz-field"><label for="dz-message">Anything else?</label><textarea id="dz-message" name="message" rows="3"></textarea></div>
+            <input type="text" name="company_website" class="dz-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+            <button type="submit" class="dz-btn dz-btn--solid dz-btn--block dz-form-submit" id="dz-form-submit">Send</button>
+            <p class="dz-form-status" id="dz-form-status" role="status"></p>
+          </form>
+        </div>
+        <p class="dz-form-note">Prefer to talk? <a href="${esc(booking)}" style="color:var(--ember)">Book a 20-minute call</a>.</p>
+      </div>
+    </section>
+  </main>`;
+
+  const headHtml = head({ title, description: desc, canonical: url, ogImage: ogPick(site, sc.og_image), jsonLd: [personLd, serviceLd, crumbs] })
+    + `\n  <link rel="stylesheet" href="/design.css" />`;
+  return layout({ headHtml, main, sc }).replace("<script src=\"/nav.js\" defer></script>", "<script src=\"/nav.js\" defer></script>\n  <script src=\"/design.js\" defer></script>");
+}
+
+function designCaseStudyPage(cs, nextCs, sc, site) {
+  const url = abs(site, `/design/${cs.slug}/`);
+  const title = `${cs.title} — ${cs.client_name} | Gambito`;
+  const desc = cs.summary || `${cs.title} by Armic, Gambito.`;
+  const ogImage = ogPick(site, cs.hero_image, sc.og_image);
+  const show = cs.can_show_work;
+  const gallery = Array.isArray(cs.gallery) ? cs.gallery : [];
+  const articleLd = {
+    "@context": "https://schema.org", "@type": "CreativeWork", name: cs.title,
+    about: cs.client_name, dateCreated: cs.year ? String(cs.year) : undefined, description: desc, url,
+  };
+  const crumbs = breadcrumbLd(site, [{ name: "Home", path: "/" }, { name: "Design", path: "/design/" }, { name: cs.title, path: `/design/${cs.slug}/` }]);
+
+  const main = `<main class="dz">
+    <article class="dz-wrap dz-cs-page">
+      <nav class="crumb" aria-label="Breadcrumb"><a href="/">Home</a><span>/</span><a href="/design/">Design</a><span>/</span>${esc(cs.title)}</nav>
+      <div class="dz-cs-head">
+        <span class="dz-cs-client">${esc(attrLabel(cs))}</span>
+        <h1 class="dz-cs-h1">${esc(cs.title)}</h1>
+        <p class="dz-cs-meta">${esc([cs.client_name, cs.year].filter(Boolean).join(" · "))}</p>
+      </div>
+      <p class="dz-cs-summary-lead">${esc(cs.summary)}</p>
+      ${show && cs.hero_image ? `<div class="dz-cs-gallery" style="grid-template-columns:1fr"><img src="${esc(cs.hero_image)}" alt="${esc(cs.title)}" /></div>` : ""}
+      ${cs.problem ? `<div class="dz-cs-block"><h2>The problem</h2><p>${esc(cs.problem)}</p></div>` : ""}
+      ${cs.what_i_built ? `<div class="dz-cs-block"><h2>What I built</h2>${tagChips(cs.system_tags) ? `<div class="dz-tags" style="margin-bottom:0.8rem">${tagChips(cs.system_tags)}</div>` : ""}<p>${esc(cs.what_i_built)}</p></div>` : ""}
+      ${cs.timeline ? `<div class="dz-cs-block"><h2>Timeline</h2><p>${esc(cs.timeline)}</p></div>` : ""}
+      ${cs.result || cs.testimonial_quote ? `<div class="dz-cs-block"><h2>Result</h2><div class="dz-cs-result"><p>${esc(cs.testimonial_quote ? `“${cs.testimonial_quote}”${cs.testimonial_name ? ` — ${cs.testimonial_name}${cs.testimonial_role ? `, ${cs.testimonial_role}` : ""}` : ""}` : cs.result)}</p></div></div>` : ""}
+      ${show && gallery.length ? `<div class="dz-cs-gallery">${gallery.map((g) => `<img src="${esc(g.url || g)}" alt="${esc(g.alt || cs.title)}" loading="lazy" />`).join("")}</div>` : ""}
+      ${show && cs.live_url ? `<p><a class="dz-btn dz-btn--ghost" href="${esc(cs.live_url)}" target="_blank" rel="noopener">Visit the live site ↗</a></p>` : ""}
+      <div class="dz-cs-next">
+        ${nextCs ? `<a href="/design/${esc(nextCs.slug)}/">Next: ${esc(nextCs.title)} →</a>` : "<span></span>"}
+        <a href="/design/#get-started">Start a project →</a>
+      </div>
+    </article>
+  </main>`;
+
+  const headHtml = head({ title, description: desc, canonical: url, ogImage, ogType: "article", jsonLd: [articleLd, crumbs] })
+    + `\n  <link rel="stylesheet" href="/design.css" />`;
+  return layout({ headHtml, main, sc });
+}
+
 /* ---------- run ---------- */
 async function run() {
-  const [{ data: content }, { data: services }, { data: insights }, { data: faqs }, { data: offerings }, { data: caseStudies }] = await Promise.all([
+  const [{ data: content }, { data: services }, { data: insights }, { data: faqs }, { data: offerings }, { data: caseStudies },
+    { data: designSettingsRows }, { data: designCases }, { data: designLogos }, { data: designFaqs }] = await Promise.all([
     supabase.from("site_content").select("key, value"),
     supabase.from("services").select("*").eq("published", true).order("order_index"),
     supabase.from("insights").select("*").eq("published", true).order("published_at", { ascending: false }),
     supabase.from("faqs").select("*").eq("published", true).order("order_index"),
     supabase.from("offerings").select("*").eq("published", true).order("order_index"),
     supabase.from("case_studies").select("*").eq("published", true).order("order_index"),
+    supabase.from("design_settings").select("*").eq("id", "default"),
+    supabase.from("design_case_studies").select("*").eq("published", true).order("order_index"),
+    supabase.from("design_logos").select("*").eq("published", true).order("order_index"),
+    supabase.from("design_faqs").select("*").eq("published", true).order("order_index"),
   ]);
 
   const sc = Object.fromEntries((content || []).map((r) => [r.key, r.value]));
@@ -505,12 +797,33 @@ async function run() {
     await write("faq/index.html", faqPage(faqs, sc, site));
   }
 
+  // design service page + its case studies
+  {
+    const settings = (designSettingsRows || [])[0] || null;
+    const cases = designCases || [];
+    const startups = cases.filter((c) => c.client_type === "startup");
+    const corporates = cases.filter((c) => c.client_type === "corporate");
+    const logos = designLogos || [];
+    const dFaqs = designFaqs || [];
+    await write("design/index.html", designPage(settings, startups, corporates, logos, dFaqs, sc, site));
+    urls.push({ loc: "/design/", changefreq: "weekly", priority: "0.9" });
+
+    // case study detail pages (only those whose work can be shown)
+    const linkable = cases.filter((c) => c.can_show_work);
+    for (let i = 0; i < linkable.length; i++) {
+      const cs = linkable[i];
+      const next = linkable[(i + 1) % linkable.length];
+      await write(`design/${cs.slug}/index.html`, designCaseStudyPage(cs, linkable.length > 1 ? next : null, sc, site));
+      urls.push({ loc: `/design/${cs.slug}/`, changefreq: "monthly", priority: "0.7", lastmod: (cs.updated_at || "").slice(0, 10) });
+    }
+  }
+
   await write("sitemap.xml", sitemapXml(site, urls));
   await write("robots.txt", robotsTxt(site));
 
   await bakeHomepage(sc, services || [], caseStudies || []);
 
-  console.log(`\nPrerender complete: ${(services || []).length} services, ${allOfferings.length} offerings, ${(insights || []).length} insights, ${(faqs || []).length} faqs.`);
+  console.log(`\nPrerender complete: ${(services || []).length} services, ${allOfferings.length} offerings, ${(insights || []).length} insights, ${(faqs || []).length} faqs, ${(designCases || []).length} design case studies.`);
 }
 
 run().catch((err) => {
