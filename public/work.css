@@ -102,23 +102,51 @@ body.view-detail #detail{display:block}
 .box .media-el{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}  /* real img/video: fill, no distortion */
 .box .ph{position:absolute;inset:0}
 .box .ph::after{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(242,235,217,.06) 1px,transparent 1px);background-size:16px 16px}
-.box .tag{position:absolute;top:.7rem;left:.7rem;z-index:2;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;
-  background:rgba(4,35,29,.72);border:1px solid var(--wk-line2);border-radius:100px;padding:.25rem .6rem;color:var(--ink);display:inline-flex;align-items:center;gap:.35rem}
 .box .cap{position:absolute;left:0;right:0;bottom:0;padding:.9rem 1rem;font-size:.82rem;color:var(--ink-dim);background:linear-gradient(to top,rgba(4,35,29,.85),transparent);z-index:2}
-.play{position:absolute;inset:0;margin:auto;width:56px;height:56px;border-radius:50%;background:rgba(242,235,217,.92);display:flex;align-items:center;justify-content:center;z-index:2}
-.play::after{content:"";margin-left:3px;border-style:solid;border-width:9px 0 9px 15px;border-color:transparent transparent transparent var(--ondark)}
+/* placeholder motion so you can tell what plays (real media replaces the gradients) */
 .gifshine{position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(242,235,217,.14) 50%,transparent 70%);background-size:220% 100%;animation:wkshine 2.6s linear infinite}
+.videomo{position:absolute;inset:0;background:linear-gradient(120deg,rgba(242,235,217,.12),transparent 42%,rgba(242,235,217,.08));background-size:200% 200%;animation:wkpan 6s ease-in-out infinite alternate}
 @keyframes wkshine{to{background-position:-220% 0}}
-@media(prefers-reduced-motion:reduce){.gifshine{animation:none}}
+@keyframes wkpan{from{background-position:0% 0%}to{background-position:100% 100%}}
+@media(prefers-reduced-motion:reduce){.gifshine,.videomo{animation:none}}
 
-/* seamless "keep scrolling" cue between projects */
-.nextcue{border-top:1px solid var(--wk-line);background:var(--bg-2)}
-.nextcue-in{max-width:1240px;margin:0 auto;padding:clamp(2.4rem,6vw,4.5rem) 1.6rem;display:flex;flex-direction:column;align-items:center;gap:.6rem;text-align:center}
+/* "keep scrolling" transition — same page background, tall, with a progress bar */
+.nextcue{background:transparent}
+.nextcue-in{max-width:1240px;margin:0 auto;padding:clamp(4.5rem,11vw,8rem) 1.6rem;display:flex;flex-direction:column;align-items:center;gap:.7rem;text-align:center}
 .nextcue .lbl{font-family:var(--mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint)}
-.nextcue .nm{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,4.5vw,2.6rem)}
-.nextcue .chev{width:22px;height:22px;border-right:2px solid var(--ember);border-bottom:2px solid var(--ember);transform:rotate(45deg);margin-top:.3rem;animation:wkbob 1.6s ease-in-out infinite}
+.nextcue .nm{font-family:var(--font-display);font-weight:700;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:-.01em}
+.nextcue .chev{width:22px;height:22px;border-right:2px solid var(--ember);border-bottom:2px solid var(--ember);transform:rotate(45deg);margin:.3rem 0 1rem;animation:wkbob 1.6s ease-in-out infinite}
 @keyframes wkbob{0%,100%{transform:rotate(45deg) translate(0,0)}50%{transform:rotate(45deg) translate(3px,3px)}}
 @media(prefers-reduced-motion:reduce){.nextcue .chev{animation:none}}
-.loading-dots{font-family:var(--mono);font-size:.78rem;color:var(--ink-faint);letter-spacing:.2em}
-.detail-end{text-align:center;padding:clamp(3rem,8vw,6rem) 1.6rem}
+.prog{display:flex;align-items:center;gap:.9rem;width:min(340px,72vw)}
+.prog-lbl{font-family:var(--mono);font-size:.72rem;color:var(--ink-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.prog-bar{flex:1;height:3px;background:var(--wk-line2);border-radius:2px;overflow:hidden}
+.prog-bar i{display:block;height:100%;background:var(--ember);border-radius:2px;transition:width .3s ease}
+.detail-end{text-align:center}
+.detail-end .lbl{display:block;margin-bottom:1.4rem}
 .detail-end button{background:var(--ember);color:#fff;font-family:var(--font-display);font-weight:700;border:none;border-radius:100px;padding:.9rem 1.7rem;font-size:1rem;cursor:pointer}
+
+/* ---------- after-deck content: about / AI / CTA ---------- */
+.wk-h2{font-family:var(--font-display);font-weight:800;font-size:clamp(1.7rem,5vw,2.8rem);line-height:1.05;letter-spacing:-.02em;margin:.8rem 0 0;max-width:20ch}
+.wk-about{padding-top:clamp(3rem,7vw,6rem);padding-bottom:clamp(2rem,5vw,3.5rem)}
+.wk-about-grid{display:grid;grid-template-columns:240px 1fr;gap:clamp(1.5rem,4vw,3rem);align-items:start;margin-top:1.8rem}
+@media(max-width:680px){.wk-about-grid{grid-template-columns:1fr}}
+.wk-portrait{aspect-ratio:1;border-radius:18px;background:radial-gradient(120% 120% at 30% 20%,#0d6b55,#042a24);border:1px solid var(--wk-line);display:flex;align-items:flex-end;justify-content:center;color:var(--ink-faint);font-size:.82rem;padding:1rem;max-width:240px}
+.wk-about-copy p{color:var(--ink-dim);font-size:1.05rem;line-height:1.65;margin:0 0 1rem}
+.wk-about-copy p:last-child{margin-bottom:0}
+
+.wk-ai{background:var(--bg-2);border-top:1px solid var(--wk-line);border-bottom:1px solid var(--wk-line);padding-top:clamp(3rem,7vw,5rem);padding-bottom:clamp(3rem,7vw,5rem)}
+.wk-ai-lede{color:var(--ink-dim);font-size:1.1rem;line-height:1.6;max-width:56ch;margin:1.1rem 0 0}
+.wk-ai-points{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem;margin-top:2rem}
+@media(max-width:820px){.wk-ai-points{grid-template-columns:1fr 1fr}}
+@media(max-width:460px){.wk-ai-points{grid-template-columns:1fr}}
+.wk-point h3{font-family:var(--font-display);font-weight:700;font-size:1.12rem;margin:0}
+.wk-point p{color:var(--ink-dim);font-size:.94rem;line-height:1.5;margin:.4rem 0 0}
+
+.wk-cta{padding-top:clamp(3.5rem,8vw,6rem);padding-bottom:clamp(3.5rem,8vw,6rem)}
+.wk-cta-in{display:flex;flex-direction:column;align-items:center;text-align:center;gap:1rem}
+.wk-cta-h{font-family:var(--font-display);font-weight:800;font-size:clamp(1.9rem,5.5vw,3rem);letter-spacing:-.02em;margin:0}
+.wk-cta p{color:var(--ink-dim);max-width:42ch;margin:0}
+.wk-cta-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--ember);color:#fff;font-family:var(--font-display);font-weight:700;text-decoration:none;border-radius:100px;padding:.95rem 1.8rem;font-size:1.05rem;margin-top:.4rem}
+.wk-cta-btn:hover{filter:brightness(1.07)}
+.wk-note{color:var(--ink-faint);font-size:.82rem;text-align:center;padding-bottom:3rem;margin:0}

@@ -105,12 +105,14 @@ function layout() {
   const p = Math.max(0, Math.min(1, (-rect.top) / total));
   const front = p * (N - 1);
   for (let i = 0; i < N; i++) {
-    const d = i - front; let ty, sc, op, z, rot = 0;
-    if (d <= 0) { ty = d * 118; sc = 1 + d * 0.03; op = Math.max(0, 1 + d * 1.7); rot = d * 1.5; z = 100 + Math.round(d * 10); }
-    else { const s = Math.min(d, 4); ty = -s * 5.5; sc = 1 - s * 0.05; op = d > 4.2 ? 0 : 1; z = 90 - Math.round(d); }
+    const d = i - front, ad = Math.abs(d); let ty, sc;
+    // cards stay fully opaque; upcoming peek up behind, passed recede down into the background
+    if (d >= 0) { const s = Math.min(d, 4); ty = -s * 5.2; sc = 1 - s * 0.05; }
+    else { const s = Math.min(ad, 5); ty = s * 3.6; sc = 1 - s * 0.052; }
     const c = cards[i];
-    c.style.transform = `translateY(${ty}%) scale(${sc.toFixed(3)}) rotate(${rot.toFixed(2)}deg)`;
-    c.style.opacity = op.toFixed(3); c.style.zIndex = z;
+    c.style.transform = `translateY(${ty}%) scale(${sc.toFixed(3)})`;
+    c.style.opacity = "1";
+    c.style.zIndex = 100 - Math.round(ad * 2);
   }
   const fi = Math.max(0, Math.min(N - 1, Math.round(front)));
   if (fi !== lastFront) {
@@ -142,14 +144,29 @@ function buildRows(media) {
 }
 function mediaBox(m, p, ar) {
   const grad = `linear-gradient(145deg,${shade(p.accent, .22)},${shade(p.accent, -.4)})`;
-  let extra = "", tag = "▦ Image";
-  if (m.type === "video") { extra = '<div class="play"></div>'; tag = "▶ Video"; }
-  else if (m.type === "gif") { extra = '<div class="gifshine"></div>'; tag = "● GIF"; }
-  // NOTE: real media drops in here as <img loading="lazy"> / <video preload="none" poster>
-  // inside .box with class .media-el (object-fit:cover keeps it undistorted at the row height).
+  // Placeholder motion so you can tell what plays: video drifts, gif shimmers.
+  let motion = "";
+  if (m.type === "video") motion = '<div class="videomo"></div>';
+  else if (m.type === "gif") motion = '<div class="gifshine"></div>';
+  // Real media drops in here as <img class="media-el" loading="lazy"> or
+  // <video class="media-el" muted playsinline preload="none"> — no controls, autoplay +
+  // 5s-pause loop wired by setupVideos(). object-fit:cover keeps it undistorted at the row height.
   return `<figure class="box" style="aspect-ratio:${ar};background:${grad}">` +
-    '<div class="ph"></div>' + extra +
-    `<span class="tag">${tag}</span>` + (m.cap ? `<figcaption class="cap">${m.cap}</figcaption>` : "") + "</figure>";
+    '<div class="ph"></div>' + motion +
+    (m.cap ? `<figcaption class="cap">${m.cap}</figcaption>` : "") + "</figure>";
+}
+
+// Real <video> media: autoplay muted, no controls, loop with a 5-second pause,
+// and only while on screen. Inert when there are no real videos (placeholders).
+function setupVideos(root) {
+  root.querySelectorAll("video.media-el").forEach((v) => {
+    v.muted = true; v.playsInline = true; v.controls = false; v.loop = false; v.preload = "none";
+    v.addEventListener("ended", () => setTimeout(() => { try { v.currentTime = 0; v.play(); } catch (e) {} }, 5000));
+    const vo = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) { v.play().catch(() => {}); } else { v.pause(); }
+    }), { threshold: 0.25 });
+    vo.observe(v);
+  });
 }
 function projectSection(p) {
   const sec = elt("section", "proj"); sec.id = "proj-" + p.id; sec.dataset.index = p.index;
@@ -177,19 +194,29 @@ function projectSection(p) {
 function cueOrEnd(nextSeqPos) {
   if (nextSeqPos < N) {
     const nextP = PROJECTS[sequence[nextSeqPos]];
+    const seen = nextSeqPos, pct = Math.round((seen / N) * 100);  // how far through the tour
     const cue = elt("div", "nextcue");
-    cue.innerHTML = `<div class="nextcue-in"><span class="lbl">Keep scrolling</span><span class="nm">${nextP.name}</span><span class="chev"></span></div>`;
+    cue.innerHTML =
+      '<div class="nextcue-in">' +
+        '<span class="lbl">Keep scrolling · next project</span>' +
+        `<span class="nm">${nextP.name}</span>` +
+        '<span class="chev"></span>' +
+        `<div class="prog"><span class="prog-lbl">${pad2(seen)} / ${pad2(N)}</span><div class="prog-bar"><i style="width:${pct}%"></i></div></div>` +
+      "</div>";
     cue.dataset.seq = nextSeqPos;
     return cue;
   }
   const end = elt("div", "detail-end");
-  end.innerHTML = '<button type="button" id="toWork">← Back to all work</button>';
+  end.innerHTML = '<div class="nextcue-in"><span class="lbl">That’s the work · ' + pad2(N) + " / " + pad2(N) +
+    '</span><button type="button" id="toWork">← Back to all work</button></div>';
   return end;
 }
 function appendNext() {
   if (seqPos >= N) return;
   const p = PROJECTS[sequence[seqPos]];
-  projsWrap.appendChild(projectSection(p));
+  const section = projectSection(p);
+  projsWrap.appendChild(section);
+  setupVideos(section);                        // wire any real <video> media
   seqPos++;
   const cue = cueOrEnd(seqPos);
   projsWrap.appendChild(cue);
