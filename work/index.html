@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Work — Gambito</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/content.css" />
+  <link rel="stylesheet" href="/work.css" />
+</head>
+<body>
+  <header class="nav">
+    <a class="nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" class="nav-brand-logo" /></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="/#services">Services</a>
+      <a href="/work/">Work</a>
+      <a href="/insights/">Insights</a>
+      <a href="/faq/">FAQ</a>
+    </nav>
+    <a class="nav-cta" href="/book/">Book a call</a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+  </header>
+  <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+    <nav class="mobile-menu-links" aria-label="Mobile">
+      <a href="/#services">Services</a>
+      <a href="/work/">Work</a>
+      <a href="/insights/">Insights</a>
+      <a href="/faq/">FAQ</a>
+      <a href="/book/" class="mobile-menu-cta">Book a call</a>
+    </nav>
+  </div>
+
+  <button class="wk-back" id="wkBack" hidden>← All work</button>
+
+  <!-- ============ WORK INDEX (deck) ============ -->
+  <main id="portfolio">
+    <section class="wk-intro wrap-wide">
+      <p class="wk-eyebrow">Selected work · 2026</p>
+      <h1 class="wk-h1">Design and build, for people who sweat the details.</h1>
+      <p class="wk-lede">Scroll through the work, then open any project to see how it was made.</p>
+    </section>
+
+    <section class="deck-track" id="deckTrack">
+      <div class="deck-stage">
+        <div class="deck-cards" id="cards"></div>
+        <div class="deck-hint">Scroll to browse ↓</div>
+        <div class="deck-ui">
+          <span class="deck-count"><b id="deckNow">01</b> / <span id="deckTot">06</span></span>
+          <span class="deck-dots" id="deckDots"></span>
+        </div>
+      </div>
+      <div class="deck-fallback wrap-wide" id="deckFallback"></div>
+    </section>
+
+    <section class="wk-after wrap-wide">
+      <p>Placeholder showcase — sample projects, not real clients. Real work and media will come from the CMS.</p>
+    </section>
+  </main>
+
+  <!-- ============ PROJECT DETAIL (progressive) ============ -->
+  <main id="detail">
+    <div class="projs" id="projs"></div>
+  </main>
+
+  <footer class="wk-footer wrap-wide">Gambito · work preview with placeholder content</footer>
+
+  <script src="/nav.js" defer></script>
+  <script type="module" src="./work.js"></script>
+</body>
+</html>

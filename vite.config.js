@@ -12,6 +12,7 @@ export default defineConfig({
         styleguide: resolve(__dirname, "style-guide/index.html"),
         ideaToLaunch: resolve(__dirname, "idea-to-launch/index.html"),
         clearThePath: resolve(__dirname, "clear-the-path/index.html"),
+        work: resolve(__dirname, "work/index.html"),
       },
     },
   },
