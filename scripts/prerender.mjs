@@ -76,16 +76,17 @@ function head({ title, description, canonical, ogImage, ogType = "website", json
 const nav = (sc = {}) => {
   const s = esc(sc.nav_services || "Services");
   const w = esc(sc.nav_work || "Work");
-  const d = esc(sc.nav_design || "Design");
   const i = esc(sc.nav_insights || "Insights");
   const f = esc(sc.nav_faq || "FAQ");
   const cta = esc(sc.nav_cta || "Start the conversation");
+  // NOTE: /design is intentionally NOT in the nav yet — reachable by direct
+  // link only while its content is still placeholder. Add the link back when
+  // the page is ready to promote.
   return `<header class="nav">
     <a class="nav-brand" href="/" aria-label="Gambito"><img src="/logo-full.svg" alt="Gambito" class="nav-brand-logo" /></a>
     <nav class="nav-links" aria-label="Primary">
       <a href="/#services">${s}</a>
       <a href="/#work">${w}</a>
-      <a href="/design/">${d}</a>
       <a href="/insights/">${i}</a>
       <a href="/faq/">${f}</a>
     </nav>
@@ -96,7 +97,6 @@ const nav = (sc = {}) => {
     <nav class="mobile-menu-links" aria-label="Mobile">
       <a href="/#services">${s}</a>
       <a href="/#work">${w}</a>
-      <a href="/design/">${d}</a>
       <a href="/insights/">${i}</a>
       <a href="/faq/">${f}</a>
       <a href="/book/" class="mobile-menu-cta">Book a Gameplan Session</a>
