@@ -92,10 +92,6 @@ const CONTENT_FIELDS = [
   { group: "Design page", key: "design_ai_eyebrow", label: "How you work — eyebrow", type: "input" },
   { group: "Design page", key: "design_ai_title", label: "How you work — heading", type: "input" },
   { group: "Design page", key: "design_ai_lede", label: "How you work — intro", type: "textarea" },
-  ...[1, 2, 3, 4].flatMap((n) => [
-    { group: "Design page", key: `design_ai_p${n}_title`, label: `Point ${n} — title`, type: "input" },
-    { group: "Design page", key: `design_ai_p${n}_text`, label: `Point ${n} — text`, type: "input" },
-  ]),
   { group: "Design page", key: "design_cta_title", label: "Call to action — heading", type: "input" },
   { group: "Design page", key: "design_cta_text", label: "Call to action — text", type: "textarea" },
   { group: "Design page", key: "design_cta_button", label: "Call to action — button", type: "input" },
