@@ -430,7 +430,7 @@ async function renderLandingStats(box, stats) {
       <div class="home-landing-main"><span class="home-landing-name">${esc(lp.label)}</span>${badge}</div>
       <div class="home-landing-metrics">${metrics}</div>
       <div class="home-landing-actions">
-        <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗</span></a>
+        <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗\uFE0E</span></a>
         <button class="btn btn-ghost btn-small" data-lp-edit="${esc(lp.slug)}"><span>Edit</span></button>
       </div>
     </div>`;
@@ -584,7 +584,7 @@ async function renderLandingEditor(lp, card) {
   card.innerHTML = `
     <div class="edit-card-top">
       <label class="publish-toggle"><input type="checkbox" data-action="pub" ${published ? "checked" : ""} /> Published</label>
-      <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗</span></a>
+      <a class="btn btn-ghost btn-small" href="${attr(lp.url)}" target="_blank"><span>View ↗\uFE0E</span></a>
     </div>
     <div class="landing-fields">${fields}${expHtml}</div>
     <div class="edit-card-actions edit-card-actions--edit">
@@ -1670,7 +1670,7 @@ function cmdkItems() {
     { group: "Quick action", emoji: "🏆", label: "Add a case study", run: after("work", "#add-case-study") },
     { group: "Quick action", emoji: "🎨", label: "Add a portfolio project", run: after("portfolio", "#add-portfolio") },
     { group: "Quick action", emoji: "🚀", label: "Publish the site", run: () => el("#publish-btn")?.click() },
-    { group: "Quick action", emoji: "↗", label: "View live site", run: () => window.open("/", "_blank") },
+    { group: "Quick action", emoji: "↗\uFE0E", label: "View live site", run: () => window.open("/", "_blank") },
   ];
   return [...nav, ...actions];
 }

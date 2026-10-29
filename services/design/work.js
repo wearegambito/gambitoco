@@ -176,7 +176,7 @@ function projectSection(p) {
         `<h2>${esc(p.name)}</h2>` +
         (p.lede ? `<p class="lede">${esc(p.lede)}</p>` : "") +
         (meta ? `<dl class="meta">${meta}</dl>` : "") +
-        (href ? `<a class="visit" href="${esc(href)}" target="_blank" rel="noopener">Visit live site ↗</a>` : "") +
+        (href ? `<a class="visit" href="${esc(href)}" target="_blank" rel="noopener">Visit live site ↗\uFE0E</a>` : "") +
       "</aside>" +
       `<div class="media">${rowsHtml}</div>` +
     "</div>";
