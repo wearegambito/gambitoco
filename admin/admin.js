@@ -85,7 +85,7 @@ const CONTENT_FIELDS = [
   { group: "Design page", key: "design_eyebrow", label: "Intro — eyebrow", type: "input" },
   { group: "Design page", key: "design_title", label: "Intro — headline", type: "input" },
   { group: "Design page", key: "design_lede", label: "Intro — line under the headline", type: "textarea" },
-  { group: "Design page", key: "design_portrait", label: "Portrait", type: "image", hint: "Square works best. Resized and converted to WebP when you upload." },
+  { group: "Design page", key: "design_portrait", label: "Portrait", type: "image", hint: "Shown as a circle — a square, face-centred photo works best. Resized and converted to WebP when you upload." },
   { group: "Design page", key: "design_about_eyebrow", label: "About — eyebrow", type: "input" },
   { group: "Design page", key: "design_about_title", label: "About — heading", type: "input", hint: "e.g. “Fifteen years of craft, behind every project.”" },
   { group: "Design page", key: "design_about_body", label: "About — bio", type: "textarea", hint: "Plain text. Leave a blank line between paragraphs." },
