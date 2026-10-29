@@ -1,19 +1,30 @@
 #!/usr/bin/env node
 /* One-off: upload the optimised portfolio images in assets/portfolio/ to the Supabase
-   Storage `portfolio` bucket (paths "<project>/<file>.webp", matching services/design/projects.js).
+   Storage `portfolio` bucket (paths "<project>/<file>.webp", matching the seeded portfolio_projects rows).
 
-   Needs the service-role key, read from the environment — never commit it or paste it in chat:
-     SUPABASE_SERVICE_ROLE_KEY=... node scripts/upload-portfolio.mjs
+   Run `node scripts/upload-portfolio.mjs` and paste the service-role key when asked (input is
+   hidden), or set SUPABASE_SERVICE_ROLE_KEY. Never commit the key or paste it in chat.
    Safe to re-run (upserts). */
 import { readdirSync, readFileSync } from "fs";
 import { join } from "path";
+import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
 
-const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-if (!KEY) { console.error("Set SUPABASE_SERVICE_ROLE_KEY (Supabase Dashboard → Project Settings → API keys)."); process.exit(1); }
+// ask for the key (hidden) when it isn't in the environment
+async function askHidden(q) {
+  const { createInterface } = await import("readline");
+  const rl = createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+  rl._writeToOutput = (s) => { if (s.includes(q)) rl.output.write(s); }; // echo the prompt, not the key
+  const answer = await new Promise((r) => rl.question(q, r));
+  rl.close(); process.stdout.write("\n");
+  return answer.trim();
+}
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  await askHidden("Paste the service-role key (Supabase → Project Settings → API keys), then Enter: ");
+if (!KEY) { console.error("No key given."); process.exit(1); }
 const supabase = createClient("https://wtzklaumnzezgzgzllgn.supabase.co", KEY, { auth: { persistSession: false } });
 
-const ROOT = join(process.cwd(), "assets/portfolio");
+const ROOT = fileURLToPath(new URL("../assets/portfolio", import.meta.url)); // works from any folder
 const files = readdirSync(ROOT).flatMap((dir) =>
   dir.startsWith(".") ? [] : readdirSync(join(ROOT, dir)).filter((f) => f.endsWith(".webp")).map((f) => `${dir}/${f}`));
 
