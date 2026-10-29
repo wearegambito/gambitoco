@@ -169,6 +169,8 @@ function projectSection(p) {
   const href = p.url ? (/^https?:\/\//i.test(p.url) ? p.url : "https://" + p.url) : "";
   sec.innerHTML =
     '<div class="proj-grid">' +
+      // phones: a slim title bar that sticks to the top for as long as this project is on screen
+      `<div class="pbar" aria-hidden="true"><span class="pbar-name">${esc(p.name)}</span><span class="pbar-num">${pad2(p.index + 1)} / ${pad2(N)}</span></div>` +
       '<aside class="pinfo">' +
         `<div class="pnum">${pad2(p.index + 1)} / ${pad2(N)}</div>` +
         `<h2>${esc(p.name)}</h2>` +
