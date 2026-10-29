@@ -1,3 +1,9 @@
 [build]
   command = "npm run build"
   publish = "dist"
+
+# The design portfolio moved from /work/ to /services/design/ (hash deep links like #marlowe carry over).
+[[redirects]]
+  from = "/work/*"
+  to = "/services/design/"
+  status = 301

@@ -75,7 +75,7 @@ function head({ title, description, canonical, ogImage, ogType = "website", json
 
 const nav = (sc = {}) => {
   const s = esc(sc.nav_services || "Services");
-  const w = esc(sc.nav_work || "Work");
+  const w = esc(sc.nav_work || "Ventures");
   const i = esc(sc.nav_insights || "Insights");
   const f = esc(sc.nav_faq || "FAQ");
   const cta = esc(sc.nav_cta || "Start the conversation");
@@ -483,6 +483,9 @@ async function run() {
   ];
 
   for (const svc of services || []) {
+    // /services/design/ is the design portfolio (Vite entry services/design/index.html), not a CMS service page.
+    // Unlisted (noindex) for now, so it's left out of the sitemap too.
+    if (svc.slug === "design") continue;
     const svcOfferings = allOfferings.filter((o) => o.service_slug === svc.slug);
     await write(`services/${svc.slug}/index.html`, servicePage(svc, svcOfferings, sc, site));
     urls.push({ loc: `/services/${svc.slug}/`, changefreq: "monthly", priority: "0.8", lastmod: (svc.updated_at || "").slice(0, 10) });

@@ -1,4 +1,4 @@
-/* /work — scroll-driven stacked deck + progressively-loaded case-study detail.
+/* /services/design — design portfolio: scroll-driven stacked deck + progressively-loaded case-study detail.
    Front-end only, placeholder content. No backend. */
 "use strict";
 
@@ -243,7 +243,7 @@ function showWork() {
   document.body.classList.remove("view-detail");
   $("#wkBack").hidden = true;
   if (io) io.disconnect();
-  try { history.replaceState(null, "", "#work"); } catch (e) {}
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
   sizeTrack();
   window.scrollTo(0, 0);
   requestAnimationFrame(layout);

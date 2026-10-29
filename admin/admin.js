@@ -27,7 +27,7 @@ const GROUP_INFO = {
 const CONTENT_FIELDS = [
   // header links + button (each is a nav button name)
   { group: "Navigation", key: "nav_services", label: "Link 1 — Services", type: "input" },
-  { group: "Navigation", key: "nav_work", label: "Link 2 — Work", type: "input" },
+  { group: "Navigation", key: "nav_work", label: "Link 2 — Ventures", type: "input" },
   { group: "Navigation", key: "nav_insights", label: "Link 3 — Insights", type: "input" },
   { group: "Navigation", key: "nav_faq", label: "Link 4 — FAQ", type: "input" },
   { group: "Navigation", key: "nav_cta", label: "Button", type: "input", hint: "The pill button in the top-right, e.g. “Start the conversation”." },
