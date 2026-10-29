@@ -31,30 +31,26 @@ const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ============ WORK INDEX: the deck ============ */
 const cardsWrap = $("#cards"), cards = [];
-// the card cover is the project's first (hero) image; without one the tagline carries the card
+// the card cover is the project's first (hero) image
 const coverOf = (p) => (p.media || []).find((m) => m.path && m.type !== "video");
 // responsive <img> attrs: the 1000w variant as src, plus the full file in srcset when there is one
 const imgAttrs = (m, sizes) => m.path_sm
   ? `src="${fileUrl(m.path_sm)}" srcset="${fileUrl(m.path_sm)} 1000w, ${fileUrl(m.path)} 2000w" sizes="${sizes}"`
   : `src="${fileUrl(m.path)}"`;
+// cards are just the hero image (4:3, like the heroes); a project without media shows its name
 PROJECTS.forEach((p, i) => {
-  const c = elt("div", "card"); if (p.accent) c.style.setProperty("--accent", p.accent);
+  const c = elt("div", "card");
   const cover = coverOf(p);
-  if (cover) c.classList.add("has-cover");
+  c.setAttribute("aria-label", `${p.name} — see project`);
   c.innerHTML =
-    '<div class="band"></div>' +
-    '<div class="face">' +
-      (cover ? `<img class="cover" ${imgAttrs(cover, "(max-width:1000px) 90vw, 920px")} alt="" ${i < 2 ? "" : 'loading="lazy"'} decoding="async">` : "") +
-      (list(p.cats).length ? '<div class="cats">' + list(p.cats).map((x) => `<span class="cat">${esc(x)}</span>`).join("") + "</div>" : "") +
-      '<button class="cta" type="button">See project →</button>' +
-      (!cover && p.tagline ? `<div class="tagline">${esc(p.tagline)}</div>` : "") +
-    "</div>" +
-    `<div class="foot"><span class="pname"><span class="pmark"></span>${esc(p.name)}</span>` +
-      (p.tagline && cover ? `<span class="ptag">${esc(p.tagline)}</span>` : p.url ? `<span class="purl">${esc(p.url)}</span>` : "") + "</div>";
+    (cover ? `<img class="card-cover" ${imgAttrs(cover, "(max-width:1000px) 90vw, 920px")} alt="" ${i < 2 ? "" : 'loading="lazy"'} decoding="async">`
+      : `<span class="card-name">${esc(p.name)}</span>`) +
+    '<span class="cta">See project →</span>';
   c.addEventListener("click", () => { if (c.classList.contains("is-front")) openProject(p.index); });
   cardsWrap.appendChild(c); cards.push(c);
 });
 $("#deckTot").textContent = pad2(N);
+cards.forEach((c, i) => { c.style.zIndex = i + 1; });   // fixed order: later cards stack on top
 const dotsWrap = $("#deckDots");
 cards.forEach((_, i) => { const d = elt("i"); if (i === 0) d.className = "on"; dotsWrap.appendChild(d); });
 const dots = Array.from(dotsWrap.children);
@@ -64,12 +60,10 @@ const fb = $("#deckFallback");
 PROJECTS.forEach((p) => {
   const c = elt("div", "fc");
   const cover = coverOf(p);
-  c.innerHTML = `<div style="height:8px;background:${p.accent || "var(--ember)"}"></div>` +
-    (cover ? `<img src="${fileUrl(cover.path_sm || cover.path)}" alt="" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover">` : "") +
-    `<div style="padding:1.6rem">` +
-    (list(p.cats).length ? `<div style="font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;opacity:.7">${list(p.cats).map(esc).join(" · ")}</div>` : "") +
-    (p.tagline ? `<div style="font-family:var(--font-display);font-weight:700;font-size:1.5rem;line-height:1.1;margin:.6rem 0 1rem">${esc(p.tagline)}</div>` : "") +
-    `<div style="font-family:var(--mono);font-size:.78rem">${esc(p.name)} — see project →</div></div>`;
+  c.setAttribute("aria-label", `${p.name} — see project`);
+  c.innerHTML = cover
+    ? `<img src="${fileUrl(cover.path_sm || cover.path)}" alt="" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover">`
+    : `<div style="aspect-ratio:4/3;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:1.5rem">${esc(p.name)}</div>`;
   c.addEventListener("click", () => openProject(p.index));
   fb.appendChild(c);
 });
@@ -80,23 +74,24 @@ function sizeTrack() {
   if (reduce) { track.style.height = "auto"; return; }
   track.style.height = (stage.offsetHeight + (N - 1) * window.innerHeight * STEP) + "px";
 }
-let lastFront = -1, ticking = false;
-function layout() {
-  ticking = false;
-  if (reduce || document.body.classList.contains("view-detail")) return;
-  const rect = track.getBoundingClientRect();
+// Motion: stacking order is fixed (later cards above earlier ones), so nothing swaps mid-scroll.
+// The next card slides up from below over the front one; passed cards ease back into the stack
+// behind it. Progress eases toward the scroll position so wheel steps don't make it jump.
+let lastFront = -1, rafId = 0, shown = null;
+const deckProgress = () => {
   const total = track.offsetHeight - stage.offsetHeight;
-  const p = Math.max(0, Math.min(1, (-rect.top) / total));
+  return total > 0 ? Math.max(0, Math.min(1, -track.getBoundingClientRect().top / total)) : 0;
+};
+function paint(p) {
   const front = p * (N - 1);
   for (let i = 0; i < N; i++) {
-    const d = i - front, ad = Math.abs(d); let ty, sc;
-    // cards stay fully opaque; upcoming peek up behind, passed recede down into the background
-    if (d >= 0) { const s = Math.min(d, 4); ty = -s * 5.2; sc = 1 - s * 0.05; }
-    else { const s = Math.min(ad, 5); ty = s * 3.6; sc = 1 - s * 0.052; }
-    const c = cards[i];
-    c.style.transform = `translateY(${ty}%) scale(${sc.toFixed(3)})`;
-    c.style.opacity = "1";
-    c.style.zIndex = 100 - Math.round(ad * 2);
+    const d = i - front, c = cards[i];
+    let ty, sc, dim;
+    if (d > 0) { ty = Math.min(d, 1.2) * 115; sc = 1; dim = 1; }                  // upcoming: below, sliding up
+    else { const s = Math.min(-d, 4); ty = -s * 4.2; sc = 1 - s * 0.055; dim = 1 - s * 0.09; } // passed: back into the stack
+    c.style.transform = `translate3d(0,${ty.toFixed(3)}%,0) scale(${sc.toFixed(4)})`;
+    c.style.filter = dim < 1 ? `brightness(${dim.toFixed(3)})` : "";
+    c.style.visibility = d > 1.2 || d < -5 ? "hidden" : "";
   }
   const fi = Math.max(0, Math.min(N - 1, Math.round(front)));
   if (fi !== lastFront) {
@@ -106,7 +101,16 @@ function layout() {
     nowEl.textContent = pad2(fi + 1);
   }
 }
-function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(layout); } }
+function layout(snap) {
+  if (reduce || document.body.classList.contains("view-detail")) { rafId = 0; return; }
+  const target = deckProgress();
+  if (shown === null || snap === true) shown = target;
+  else shown += (target - shown) * 0.14;
+  if (Math.abs(target - shown) < 0.0004) shown = target;
+  paint(shown);
+  rafId = shown !== target ? requestAnimationFrame(layout) : 0;
+}
+function onScroll() { if (!rafId) rafId = requestAnimationFrame(layout); }
 
 /* ============ PROJECT DETAIL: progressive loading ============ */
 const projsWrap = $("#projs");
@@ -176,24 +180,17 @@ function projectSection(p) {
     "</div>";
   return sec;
 }
+// between projects: just a quiet "keep scrolling" line; the end-cap leads back to the deck
 function cueOrEnd(nextSeqPos) {
   if (nextSeqPos < N) {
-    const nextP = PROJECTS[sequence[nextSeqPos]];
-    const seen = nextSeqPos, pct = Math.round((seen / N) * 100);  // how far through the tour
     const cue = elt("div", "nextcue");
-    cue.innerHTML =
-      '<div class="nextcue-in">' +
-        '<span class="lbl">Keep scrolling · next project</span>' +
-        `<span class="nm">${esc(nextP.name)}</span>` +
-        '<span class="chev"></span>' +
-        `<div class="prog"><span class="prog-lbl">${pad2(seen)} / ${pad2(N)}</span><div class="prog-bar"><i style="width:${pct}%"></i></div></div>` +
-      "</div>";
+    cue.innerHTML = '<div class="nextcue-in"><span class="lbl">Keep scrolling · next project</span></div>';
     cue.dataset.seq = nextSeqPos;
     return cue;
   }
   const end = elt("div", "detail-end");
-  end.innerHTML = '<div class="nextcue-in"><span class="lbl">That’s the work · ' + pad2(N) + " / " + pad2(N) +
-    '</span><button type="button" id="toWork">← Back to all work</button></div>';
+  end.innerHTML = '<div class="nextcue-in"><span class="lbl">That’s the work</span>' +
+    '<button type="button" id="toWork">← Back to all work</button></div>';
   return end;
 }
 function appendNext() {
@@ -231,7 +228,7 @@ function showWork() {
   try { history.replaceState(null, "", location.pathname); } catch (e) {}
   sizeTrack();
   window.scrollTo(0, 0);
-  requestAnimationFrame(layout);
+  requestAnimationFrame(() => layout(true));   // jump straight to the current position
 }
 $("#wkBack").addEventListener("click", () => showWork());
 
