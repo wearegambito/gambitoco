@@ -20,7 +20,7 @@ const GROUP_INFO = {
   "Insights page": "The /insights listing page — title, intro and how it looks in Google. Updates on Publish.",
   "FAQ page": "The /faq page — title, intro and how it looks in Google. Updates on Publish.",
   "Booking page": "The /book page copy and settings. Updates instantly.",
-  "Design page": "The /services/design portfolio page around the project deck — intro, About, how you work and the closing call to action. Empty fields keep the current copy. Updates on Publish.",
+  "Design page": "The /services/design portfolio page around the project deck — intro, About and the closing call to action. Empty fields keep the current copy. Updates on Publish.",
   "SEO & social": "How the homepage looks in Google and when shared. (Each Service / Insight has its own SEO fields on its card.)",
   "Deployment": "Connects the Publish button to your Netlify build.",
 };
@@ -89,9 +89,6 @@ const CONTENT_FIELDS = [
   { group: "Design page", key: "design_about_eyebrow", label: "About — eyebrow", type: "input" },
   { group: "Design page", key: "design_about_title", label: "About — heading", type: "input", hint: "e.g. “Fifteen years of craft, behind every project.”" },
   { group: "Design page", key: "design_about_body", label: "About — bio", type: "textarea", hint: "Plain text. Leave a blank line between paragraphs." },
-  { group: "Design page", key: "design_ai_eyebrow", label: "How you work — eyebrow", type: "input" },
-  { group: "Design page", key: "design_ai_title", label: "How you work — heading", type: "input" },
-  { group: "Design page", key: "design_ai_lede", label: "How you work — intro", type: "textarea" },
   { group: "Design page", key: "design_cta_title", label: "Call to action — heading", type: "input" },
   { group: "Design page", key: "design_cta_text", label: "Call to action — text", type: "textarea" },
   { group: "Design page", key: "design_cta_button", label: "Call to action — button", type: "input" },
