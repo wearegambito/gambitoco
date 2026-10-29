@@ -54,7 +54,7 @@ function footer() {
       <div class="footer-col"><span class="f-label">Explore</span><p><a href="/#services">Services</a><br /><a href="/insights/">Insights</a><br /><a href="/faq/">FAQ</a><br /><a href="/book/">Book a session</a></p></div>
       <div class="footer-col"><span class="f-label">Studio</span><p>${c.footer_address || ""}</p></div>
       <div class="footer-col"><span class="f-label">Talk to us</span><p><a href="mailto:${esc(c.footer_email || "hello@gambito.co")}">${esc(c.footer_email || "hello@gambito.co")}</a><br /><a href="tel:${esc(tel)}">${esc(c.footer_phone || "")}</a></p></div>
-      <div class="footer-col"><span class="f-label">Elsewhere</span><p><a href="${esc(c.footer_linkedin_url || "#")}">LinkedIn</a><br /><a href="${esc(c.footer_instagram_url || "#")}">Instagram</a></p></div>
+      <div class="footer-col"><span class="f-label">Elsewhere</span><p><a href="${esc(c.footer_linkedin_url || "#")}" target="_blank" rel="noopener noreferrer">LinkedIn</a><br /><a href="${esc(c.footer_instagram_url || "#")}" target="_blank" rel="noopener noreferrer">Instagram</a></p></div>
     </div>
     <div class="footer-base"><span>${esc(c.footer_copyright || "© 2026 Gambito Ltd.")}</span><span>${esc(c.footer_tagline || "")}</span></div>
   </footer>`;

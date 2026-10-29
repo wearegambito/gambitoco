@@ -117,7 +117,7 @@ function footer(sc) {
       <div class="footer-col"><span class="f-label">Explore</span><p><a href="/#services">Services</a><br /><a href="/insights/">Insights</a><br /><a href="/faq/">FAQ</a><br /><a href="/book/">Book a session</a></p></div>
       <div class="footer-col"><span class="f-label">Studio</span><p>${sc.footer_address || ""}</p></div>
       <div class="footer-col"><span class="f-label">Talk to us</span><p><a href="mailto:${esc(sc.footer_email || "hello@gambito.co")}">${esc(sc.footer_email || "hello@gambito.co")}</a><br /><a href="tel:${esc((sc.footer_phone || "").replace(/[^\d+]/g, ""))}">${esc(sc.footer_phone || "")}</a></p></div>
-      <div class="footer-col"><span class="f-label">Elsewhere</span><p><a href="${esc(sc.footer_linkedin_url || "#")}">LinkedIn</a><br /><a href="${esc(sc.footer_instagram_url || "#")}">Instagram</a></p></div>
+      <div class="footer-col"><span class="f-label">Elsewhere</span><p><a href="${esc(sc.footer_linkedin_url || "#")}" target="_blank" rel="noopener noreferrer">LinkedIn</a><br /><a href="${esc(sc.footer_instagram_url || "#")}" target="_blank" rel="noopener noreferrer">Instagram</a></p></div>
     </div>
     <div class="footer-base"><span>${esc(sc.footer_copyright || "© 2026 Gambito Ltd.")}</span><span>${esc(sc.footer_tagline || "")}</span></div>
   </footer>`;
