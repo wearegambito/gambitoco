@@ -115,8 +115,25 @@ if (pageVideo) {
   if (pageVideo.readyState >= 1) readMeta();
   pageVideo.addEventListener("loadedmetadata", readMeta);
   // prime the decoder so seeked frames actually paint
-  const prime = pageVideo.play();
-  if (prime) prime.then(() => pageVideo.pause()).catch(() => {});
+  const prime = () => {
+    const p = pageVideo.play();
+    return p ? p.then(() => { pageVideo.pause(); return true; }).catch(() => false) : Promise.resolve(true);
+  };
+  prime().then((ok) => {
+    if (ok) return;
+    // autoplay was refused (iPhone Low Power Mode, data saver…): the video stays blank until a
+    // user gesture allows playback, so prime again on the first touch / key / scroll
+    const retry = () => {
+      prime().then((done) => {
+        if (!done) return;
+        ["touchstart", "pointerdown", "keydown", "wheel"].forEach((ev) => window.removeEventListener(ev, retry));
+        pageVideo.dispatchEvent(new Event("seeked"));
+      });
+    };
+    ["touchstart", "pointerdown", "keydown", "wheel"].forEach((ev) => window.addEventListener(ev, retry, { passive: true }));
+  });
+  // bfcache / tab restore can drop the decoded frame — re-prime when the page comes back
+  window.addEventListener("pageshow", (e) => { if (e.persisted) prime(); });
 
   if (prefersReduced) {
     pageVideo.currentTime = 0;
