@@ -1,16 +1,25 @@
 /* /services/design — design portfolio: scroll-driven stacked deck + progressively-loaded case-study detail.
-   Front-end only, placeholder content. No backend. */
+   Projects come from the CMS (`portfolio_projects`): baked into the page at build time by
+   scripts/prerender.mjs, or fetched live when there's no baked copy (dev). */
 "use strict";
 
-import { PROJECTS } from "./projects.js";
-
-// Media lives in the Supabase Storage `portfolio` bucket; in dev it's served from the local
-// (git-ignored) assets/portfolio copy so the page works before/without an upload.
-const MEDIA_BASE = import.meta.env.DEV ? "/assets/portfolio"
-  : "https://wtzklaumnzezgzgzllgn.supabase.co/storage/v1/object/public/portfolio";
-const mediaUrl = (src, w) => `${MEDIA_BASE}/${src}${w ? "-" + w : ""}.webp`;
+// Media files live in the public Supabase Storage `portfolio` bucket; rows store object paths.
+const STORAGE = "https://wtzklaumnzezgzgzllgn.supabase.co/storage/v1/object/public/portfolio";
+const fileUrl = (path) => (!path ? "" : /^https?:\/\//i.test(path) ? path : `${STORAGE}/${path}`);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const list = (v) => (Array.isArray(v) ? v.filter(Boolean) : []);
+
+async function loadProjects() {
+  try {
+    const baked = JSON.parse(document.getElementById("portfolio-data")?.textContent || "[]");
+    if (baked.length) return baked;
+  } catch (e) {}
+  const { supabase } = await import("../../src/supabase.js");   // only loaded when nothing was baked
+  const { data, error } = await supabase.from("portfolio_projects").select("*").eq("published", true).order("order_index");
+  if (error) console.error("portfolio:", error.message);
+  return data || [];
+}
+const PROJECTS = (await loadProjects()).map((p) => ({ ...p, id: p.slug, cats: p.categories }));
 
 const N = PROJECTS.length;
 const byId = {}; PROJECTS.forEach((p, i) => { p.index = i; byId[p.id] = p; });
@@ -23,7 +32,11 @@ const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 /* ============ WORK INDEX: the deck ============ */
 const cardsWrap = $("#cards"), cards = [];
 // the card cover is the project's first (hero) image; without one the tagline carries the card
-const coverOf = (p) => (p.media || []).find((m) => m.src && m.type !== "video");
+const coverOf = (p) => (p.media || []).find((m) => m.path && m.type !== "video");
+// responsive <img> attrs: the 1000w variant as src, plus the full file in srcset when there is one
+const imgAttrs = (m, sizes) => m.path_sm
+  ? `src="${fileUrl(m.path_sm)}" srcset="${fileUrl(m.path_sm)} 1000w, ${fileUrl(m.path)} 2000w" sizes="${sizes}"`
+  : `src="${fileUrl(m.path)}"`;
 PROJECTS.forEach((p, i) => {
   const c = elt("div", "card"); if (p.accent) c.style.setProperty("--accent", p.accent);
   const cover = coverOf(p);
@@ -31,7 +44,7 @@ PROJECTS.forEach((p, i) => {
   c.innerHTML =
     '<div class="band"></div>' +
     '<div class="face">' +
-      (cover ? `<img class="cover" src="${mediaUrl(cover.src, 1000)}" srcset="${mediaUrl(cover.src, 1000)} 1000w, ${mediaUrl(cover.src)} 2000w" sizes="(max-width:1000px) 90vw, 920px" alt="" ${i < 2 ? "" : 'loading="lazy"'} decoding="async">` : "") +
+      (cover ? `<img class="cover" ${imgAttrs(cover, "(max-width:1000px) 90vw, 920px")} alt="" ${i < 2 ? "" : 'loading="lazy"'} decoding="async">` : "") +
       (list(p.cats).length ? '<div class="cats">' + list(p.cats).map((x) => `<span class="cat">${esc(x)}</span>`).join("") + "</div>" : "") +
       '<button class="cta" type="button">See project →</button>' +
       (!cover && p.tagline ? `<div class="tagline">${esc(p.tagline)}</div>` : "") +
@@ -52,7 +65,7 @@ PROJECTS.forEach((p) => {
   const c = elt("div", "fc");
   const cover = coverOf(p);
   c.innerHTML = `<div style="height:8px;background:${p.accent || "var(--ember)"}"></div>` +
-    (cover ? `<img src="${mediaUrl(cover.src, 1000)}" alt="" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover">` : "") +
+    (cover ? `<img src="${fileUrl(cover.path_sm || cover.path)}" alt="" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover">` : "") +
     `<div style="padding:1.6rem">` +
     (list(p.cats).length ? `<div style="font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;opacity:.7">${list(p.cats).map(esc).join(" · ")}</div>` : "") +
     (p.tagline ? `<div style="font-family:var(--font-display);font-weight:700;font-size:1.5rem;line-height:1.1;margin:.6rem 0 1rem">${esc(p.tagline)}</div>` : "") +
@@ -114,12 +127,11 @@ function buildRows(media) {
 function mediaBox(m, p) {
   const ar = ratioOf(m).toFixed(4);
   let inner;
-  if (m.src && m.type === "video") {
+  if (m.path && m.type === "video") {
     // no controls; autoplay + 5s-pause loop wired by setupVideos()
-    inner = `<video class="media-el" src="${MEDIA_BASE}/${m.src}" ${m.poster ? `poster="${MEDIA_BASE}/${m.poster}"` : ""} muted playsinline preload="none"></video>`;
-  } else if (m.src) {
-    inner = `<img class="media-el" src="${mediaUrl(m.src, 1000)}" srcset="${mediaUrl(m.src, 1000)} 1000w, ${mediaUrl(m.src)} 2000w" ` +
-      `sizes="(max-width:860px) 92vw, ${m.span === 2 ? "62vw" : "36vw"}" alt="${esc(m.alt || p.name)}" loading="lazy" decoding="async">`;
+    inner = `<video class="media-el" src="${fileUrl(m.path)}" ${m.poster ? `poster="${fileUrl(m.poster)}"` : ""} muted playsinline preload="none"></video>`;
+  } else if (m.path) {
+    inner = `<img class="media-el" ${imgAttrs(m, `(max-width:860px) 92vw, ${m.span === 2 ? "62vw" : "36vw"}`)} alt="${esc(m.alt || p.name)}" loading="lazy" decoding="async">`;
   } else {
     // no file yet: dotted placeholder; video drifts, gif shimmers
     inner = '<div class="ph"></div>' + (m.type === "video" ? '<div class="videomo"></div>' : m.type === "gif" ? '<div class="gifshine"></div>' : "");

@@ -154,6 +154,28 @@ const RESOURCES = {
     ],
     newRow: (n) => ({ order_index: n, title: "New case study", category: "", image_url: "", link_url: "#contact", span: "5", published: false }),
   },
+  portfolio: {
+    table: "portfolio_projects",
+    listSel: "#portfolio-list", statusSel: "#portfolio-status", addBtnSel: "#add-portfolio",
+    order: { column: "order_index", ascending: true }, orderable: true,
+    required: ["name"], // every other field is optional and hidden on the page when empty
+    savedMsg: "Saved. Hit Publish to rebuild the live portfolio.",
+    fields: [
+      { name: "name", label: "Project name", type: "input", hint: "Required — the only field that is." },
+      { name: "slug", label: "Link name", type: "input", hint: "Deep link: /services/design/#{link name}" },
+      { name: "tagline", label: "Tagline", type: "input", full: true, hint: "Shown on the deck card." },
+      { name: "lede", label: "Description", type: "textarea", full: true, hint: "The paragraph beside the project's images." },
+      { name: "client", label: "Client", type: "input" },
+      { name: "year", label: "Year", type: "input" },
+      { name: "scope", label: "Scope", type: "input" },
+      { name: "url", label: "Live site", type: "input", hint: "e.g. usersarabia.com — adds a “Visit live site” link." },
+      { name: "categories", label: "Categories", type: "tags", hint: "Comma-separated. The pills on the deck card." },
+      { name: "services", label: "Services", type: "tags", hint: "Comma-separated. The chips beside the images." },
+      { name: "accent", label: "Accent colour", type: "color", hint: "The thin band on the deck card." },
+      { name: "media", label: "Media", type: "media", full: true },
+    ],
+    newRow: (n) => ({ order_index: n, name: "New project", slug: "project-" + Date.now().toString(36), media: [], published: false }),
+  },
   insights: {
     table: "insights",
     listSel: "#insights-list", statusSel: "#insights-status", addBtnSel: "#add-insight",
@@ -736,6 +758,13 @@ function fieldHtml(f, row) {
   else if (f.type === "json") control = `<textarea data-field="${f.name}" data-json="1" class="mono tall">${esc(JSON.stringify(v ?? [], null, 2))}</textarea>`;
   else if (f.type === "date") control = `<input type="date" data-field="${f.name}" value="${attr((v || "").slice(0, 10))}" />`;
   else if (f.type === "select") control = `<select data-field="${f.name}">${f.options.map(([val, lab]) => `<option value="${val}" ${String(v) === val ? "selected" : ""}>${lab}</option>`).join("")}</select>`;
+  else if (f.type === "tags") control = `<input data-field="${f.name}" data-tags="1" value="${attr((v || []).join(", "))}" />`;
+  else if (f.type === "color") control = `
+      <div class="color-field">
+        <input type="color" data-role="swatch" value="${/^#[0-9a-f]{6}$/i.test(v || "") ? v : "#fa4d56"}" aria-label="Pick a colour" />
+        <input data-field="${f.name}" value="${attr(v)}" placeholder="#fa4d56 — or leave empty" />
+      </div>`;
+  else if (f.type === "media") control = mediaEditorHtml(f, v);
   else if (f.type === "image") control = `
       <div class="image-field">
         <img class="image-preview" src="${attr(v)}" data-role="preview" alt="" />
@@ -756,6 +785,7 @@ const EMPTY_COPY = {
   services: { ic: "🧭", t: "No services yet", d: "Add your first service card — it shows on the homepage and gets its own detail page." },
   offerings: { ic: "📦", t: "No offerings yet", d: "Create a detailed programme page nested under a service." },
   case_studies: { ic: "🏆", t: "No case studies yet", d: "Show off a project. Case studies appear in the work grid on the homepage." },
+  portfolio: { ic: "🎨", t: "No projects yet", d: "Add a design project — it becomes a card in the deck on /services/design/." },
   insights: { ic: "✍️", t: "No articles yet", d: "Write your first insight — these become SEO-optimised blog pages." },
   faqs: { ic: "❓", t: "No questions yet", d: "Add a question and answer to power the FAQ page." },
 };
@@ -770,7 +800,7 @@ function emptyState(key) {
   </div>`;
 }
 
-const SECTION_LABEL = { services: "services", offerings: "offerings", case_studies: "case studies", insights: "insights", faqs: "questions" };
+const SECTION_LABEL = { services: "services", offerings: "offerings", case_studies: "case studies", portfolio: "projects", insights: "insights", faqs: "questions" };
 const CHEV = '<svg class="idx-chev ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
 const BACK_IC = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
 
@@ -780,6 +810,7 @@ function rowMeta(key, r) {
   if (key === "insights") m = [r.category, (r.published_at || "").slice(0, 10)].filter(Boolean).join(" · ");
   else if (key === "offerings") m = [r.service_slug, r.slug].filter(Boolean).join(" / ");
   else if (key === "services") m = r.tag || (r.slug ? "/services/" + r.slug : "");
+  else if (key === "portfolio") m = [(r.categories || []).join(", "), (r.media || []).length ? `${r.media.length} media` : "no media yet"].filter(Boolean).join(" · ");
   else m = r.category || "";
   return esc(m);
 }
@@ -865,10 +896,14 @@ function wireCard(key, card, r) {
           const raw = input.value.trim();
           try { patch[input.dataset.field] = raw ? JSON.parse(raw) : []; }
           catch { jsonError = input.dataset.field; }
+        } else if (input.dataset.tags) {
+          patch[input.dataset.field] = input.value.split(",").map((t) => t.trim()).filter(Boolean);
         } else {
           patch[input.dataset.field] = input.type === "checkbox" ? input.checked : input.value;
         }
       });
+      const missing = (cfg.required || []).find((k) => !String(patch[k] ?? "").trim());
+      if (missing) { setStatus(cfg.statusSel, `${cfg.fields.find((f) => f.name === missing)?.label || missing} is required.`, "error"); return; }
       if (jsonError) { setStatus(cfg.statusSel, `Invalid JSON in "${jsonError}" — check the brackets and quotes.`, "error"); return; }
       setStatus(cfg.statusSel, "Saving...");
       const { error } = await supabase.from(cfg.table).update(patch).eq("id", id);
@@ -904,6 +939,13 @@ function wireCard(key, card, r) {
       });
     });
 
+    card.querySelectorAll(".color-field").forEach((wrap) => {
+      const sw = wrap.querySelector('[data-role="swatch"]'), txt = wrap.querySelector("[data-field]");
+      sw.addEventListener("input", () => { txt.value = sw.value; });
+      txt.addEventListener("input", () => { if (/^#[0-9a-f]{6}$/i.test(txt.value.trim())) sw.value = txt.value.trim(); });
+    });
+    card.querySelectorAll("[data-media-editor]").forEach((ed) => wireMediaEditor(ed, card, cfg));
+
     // AI cover/social image generation (insights) — same engine as social posts
     card.querySelectorAll('[data-role="gen-image"]').forEach((genBtn) => {
       genBtn.addEventListener("click", async () => {
@@ -930,6 +972,179 @@ function wireCard(key, card, r) {
         genBtn.disabled = false;
       });
     });
+}
+
+/* ---------- portfolio media editor ----------
+   The media list is edited visually and kept as JSON in a hidden [data-field="media"]
+   textarea, so the generic Save handler stores it. The preview lays rows out like the
+   live page: full-width items alone, half-width items paired, widths split by aspect ratio. */
+const PORTFOLIO_BUCKET = "portfolio";
+const PORTFOLIO_PUBLIC = `${SUPABASE_URL}/storage/v1/object/public/${PORTFOLIO_BUCKET}`;
+const portfolioUrl = (path) => (!path ? "" : /^https?:\/\//i.test(path) ? path : `${PORTFOLIO_PUBLIC}/${path}`);
+
+function mediaEditorHtml(f, v) {
+  return `<div class="media-ed" data-media-editor>
+    <textarea data-field="${f.name}" data-json="1" hidden>${esc(JSON.stringify(v ?? []))}</textarea>
+    <div class="me-rows" data-role="rows"></div>
+    <label class="me-drop" data-role="drop">
+      <input type="file" multiple accept="image/*,video/mp4,video/webm" data-role="media-upload" hidden />
+      <span class="me-drop-t">Add images, GIFs or videos</span>
+      <span class="me-drop-d">Drop files here or click to choose. Images are resized and converted to WebP for you; videos play muted on a loop.</span>
+    </label>
+  </div>`;
+}
+
+// same pairing rule as the live page (services/design/work.js buildRows)
+function mediaRows(media) {
+  const rows = []; let i = 0;
+  while (i < media.length) {
+    const m = media[i], next = media[i + 1];
+    if (m.span !== 2 && next && next.span !== 2) { rows.push([m, next]); i += 2; }
+    else { rows.push([m]); i++; }
+  }
+  return rows;
+}
+
+function wireMediaEditor(ed, card, cfg) {
+  const store = ed.querySelector("[data-field]");
+  const rowsBox = ed.querySelector('[data-role="rows"]');
+  let media = [];
+  try { media = JSON.parse(store.value || "[]"); } catch {}
+  const save = () => { store.value = JSON.stringify(media); };
+  const sync = () => { save(); render(); };
+
+  function tile(m, i) {
+    const ar = (m.w && m.h ? m.w / m.h : 1).toFixed(4);
+    const thumb = m.type === "video"
+      ? `<video src="${attr(portfolioUrl(m.path))}" ${m.poster ? `poster="${attr(portfolioUrl(m.poster))}"` : ""} muted playsinline preload="metadata"></video>`
+      : `<img src="${attr(portfolioUrl(m.path_sm || m.path))}" alt="" loading="lazy" />`;
+    return `<div class="me-item" data-i="${i}" style="flex:${ar} 1 0">
+      <div class="me-thumb" draggable="true" style="aspect-ratio:${ar}" title="Drag to reorder">${thumb}
+        ${i === 0 ? '<span class="me-badge">Cover</span>' : m.type !== "image" ? `<span class="me-badge">${esc(m.type)}</span>` : ""}
+        <div class="me-tools">
+          <button type="button" class="icon-btn" data-act="left" ${i === 0 ? "disabled" : ""} aria-label="Move earlier">←</button>
+          <button type="button" class="icon-btn" data-act="right" ${i === media.length - 1 ? "disabled" : ""} aria-label="Move later">→</button>
+          <button type="button" class="me-span" data-act="span">${m.span === 2 ? "Full width" : "Half width"}</button>
+          <button type="button" class="icon-btn me-del" data-act="del" aria-label="Remove">×</button>
+        </div>
+      </div>
+      <input class="me-alt" data-act="alt" value="${attr(m.alt)}" placeholder="Alt text — what's in the image" />
+      <input class="me-cap" data-act="cap" value="${attr(m.cap)}" placeholder="Caption (optional, shown on the image)" />
+    </div>`;
+  }
+  function render() {
+    if (!media.length) { rowsBox.innerHTML = '<div class="me-empty">No media yet. The first item becomes the deck card cover.</div>'; return; }
+    let i = 0;
+    rowsBox.innerHTML = mediaRows(media).map((row) => `<div class="me-row">${row.map((m) => tile(m, i++)).join("")}</div>`).join("");
+  }
+  const move = (from, to) => {
+    if (to < 0 || to >= media.length || from === to) return;
+    const [m] = media.splice(from, 1); media.splice(to, 0, m); sync();
+  };
+
+  rowsBox.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-act]"); if (!btn) return;
+    const i = +btn.closest(".me-item").dataset.i, act = btn.dataset.act;
+    if (act === "left") move(i, i - 1);
+    else if (act === "right") move(i, i + 1);
+    else if (act === "span") { media[i].span = media[i].span === 2 ? 1 : 2; sync(); }
+    else if (act === "del" && confirm("Remove this from the project? (Click Save to apply.)")) { media.splice(i, 1); sync(); }
+  });
+  rowsBox.addEventListener("input", (e) => {
+    const inp = e.target.closest("input[data-act]"); if (!inp) return;
+    const m = media[+inp.closest(".me-item").dataset.i];
+    if (inp.value.trim()) m[inp.dataset.act] = inp.value; else delete m[inp.dataset.act];
+    save();
+  });
+  let dragFrom = null;
+  rowsBox.addEventListener("dragstart", (e) => { const it = e.target.closest(".me-item"); if (it) { dragFrom = +it.dataset.i; it.classList.add("is-dragging"); } });
+  rowsBox.addEventListener("dragend", () => { dragFrom = null; rowsBox.querySelectorAll(".is-dragging,.is-target").forEach((x) => x.classList.remove("is-dragging", "is-target")); });
+  rowsBox.addEventListener("dragover", (e) => {
+    const it = e.target.closest(".me-item"); if (dragFrom === null || !it) return;
+    e.preventDefault();
+    rowsBox.querySelectorAll(".is-target").forEach((x) => x.classList.remove("is-target"));
+    it.classList.add("is-target");
+  });
+  rowsBox.addEventListener("drop", (e) => {
+    const it = e.target.closest(".me-item"); if (dragFrom === null || !it) return;
+    e.preventDefault(); move(dragFrom, +it.dataset.i);
+  });
+
+  const input = ed.querySelector('[data-role="media-upload"]');
+  const drop = ed.querySelector('[data-role="drop"]');
+  input.addEventListener("change", () => { addFiles([...input.files]); input.value = ""; });
+  drop.addEventListener("dragover", (e) => { if (dragFrom !== null) return; e.preventDefault(); drop.classList.add("is-over"); });
+  drop.addEventListener("dragleave", () => drop.classList.remove("is-over"));
+  drop.addEventListener("drop", (e) => { if (dragFrom !== null) return; e.preventDefault(); drop.classList.remove("is-over"); addFiles([...e.dataTransfer.files]); });
+
+  async function addFiles(files) {
+    files = files.filter((f) => /^(image|video)\//.test(f.type));
+    if (!files.length) return;
+    const slug = (card.querySelector('[data-field="slug"]')?.value || "").toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "") || "project";
+    const name = card.querySelector('[data-field="name"]')?.value.trim() || "";
+    let failed = 0;
+    for (const [n, file] of files.entries()) {
+      setStatus(cfg.statusSel, `Uploading ${n + 1} of ${files.length}: ${file.name}…`);
+      try { media.push(await uploadPortfolioFile(file, slug, name)); sync(); }
+      catch (err) { failed++; toast(`${file.name}: ${err.message}`, "error"); }
+    }
+    if (failed < files.length) setStatus(cfg.statusSel, `Uploaded ${files.length - failed} file${files.length - failed === 1 ? "" : "s"} — click Save to apply.`, "success");
+    else setStatus(cfg.statusSel, "Upload failed — see the messages above.", "error");
+  }
+  render();
+}
+
+// Upload one file to the portfolio bucket and return its media entry.
+// Images → WebP at 2000px + 1000px wide (never upscaled); GIFs and videos go up as-is,
+// videos with a poster frame grabbed from half a second in.
+async function uploadPortfolioFile(file, slug, name) {
+  const base = `${slug}/${Date.now().toString(36)}-${file.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}`;
+  const put = async (path, blob, type) => {
+    const { error } = await supabase.storage.from(PORTFOLIO_BUCKET).upload(path, blob, { contentType: type, cacheControl: "31536000", upsert: true });
+    if (error) throw error;
+    return path;
+  };
+  const spanFor = (w, h) => (w >= h ? 2 : 1); // landscape full width, portrait half (pairs up)
+
+  if (file.type.startsWith("video/")) {
+    const { w, h, poster } = await videoInfo(file);
+    const path = await put(`${base}.${file.type === "video/webm" ? "webm" : "mp4"}`, file, file.type);
+    const posterPath = poster ? await put(`${base}-poster.${poster.ext}`, poster.blob, poster.blob.type) : undefined;
+    return { type: "video", path, poster: posterPath, w, h, span: spanFor(w, h), alt: name };
+  }
+  const bmp = await createImageBitmap(file);
+  if (file.type === "image/gif") { // keep the animation: upload untouched
+    return { type: "gif", path: await put(`${base}.gif`, file, "image/gif"), w: bmp.width, h: bmp.height, span: spanFor(bmp.width, bmp.height), alt: name };
+  }
+  const big = await encodeImage(bmp, 2000, 0.82), sm = await encodeImage(bmp, 1000, 0.78);
+  const path = await put(`${base}.${big.ext}`, big.blob, big.blob.type);
+  const path_sm = await put(`${base}-1000.${sm.ext}`, sm.blob, sm.blob.type);
+  return { type: "image", path, path_sm, w: big.w, h: big.h, span: spanFor(big.w, big.h), alt: name };
+}
+// draw a bitmap/video frame at ≤maxW wide; WebP where the browser can encode it, else JPEG
+async function encodeImage(src, maxW, quality) {
+  const sw = src.width || src.videoWidth, sh = src.height || src.videoHeight;
+  const scale = Math.min(1, maxW / sw), w = Math.round(sw * scale), h = Math.round(sh * scale);
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  c.getContext("2d").drawImage(src, 0, 0, w, h);
+  let blob = await new Promise((r) => c.toBlob(r, "image/webp", quality));
+  if (!blob || blob.type !== "image/webp") blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.86));
+  return { blob, w, h, ext: blob.type === "image/webp" ? "webp" : "jpg" };
+}
+function videoInfo(file) {
+  return new Promise((resolve, reject) => {
+    const v = document.createElement("video"), url = URL.createObjectURL(file);
+    v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+    v.onerror = () => { URL.revokeObjectURL(url); reject(new Error("couldn't read this video")); };
+    v.onloadedmetadata = () => { v.currentTime = Math.min(0.5, (v.duration || 1) / 2); };
+    v.onseeked = async () => {
+      const w = v.videoWidth, h = v.videoHeight;
+      let poster = null;
+      try { poster = await encodeImage(v, 1600, 0.8); } catch {}
+      URL.revokeObjectURL(url);
+      resolve({ w, h, poster });
+    };
+  });
 }
 
 async function swapOrder(key, rows, i, j) {
@@ -1421,6 +1636,7 @@ function cmdkItems() {
     { group: "Quick action", emoji: "✨", label: "Suggest post ideas", run: after("ideas", "#suggest-ideas") },
     { group: "Quick action", emoji: "💡", label: "Capture an idea", run: after("ideas", "#idea-brief", true) },
     { group: "Quick action", emoji: "🏆", label: "Add a case study", run: after("work", "#add-case-study") },
+    { group: "Quick action", emoji: "🎨", label: "Add a portfolio project", run: after("portfolio", "#add-portfolio") },
     { group: "Quick action", emoji: "🚀", label: "Publish the site", run: () => el("#publish-btn")?.click() },
     { group: "Quick action", emoji: "↗", label: "View live site", run: () => window.open("/", "_blank") },
   ];

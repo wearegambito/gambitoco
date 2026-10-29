@@ -459,6 +459,23 @@ async function bakeHomepage(sc, services, caseStudies) {
   console.log("  baked homepage index.html with live CMS content");
 }
 
+/* ---------- design portfolio: bake CMS projects into /services/design/ ----------
+   The page (Vite entry services/design/index.html) reads #portfolio-data, so the live
+   page needs no runtime Supabase call. A <noscript> list gives crawlers the projects. */
+async function bakePortfolio(projects) {
+  const file = join(DIST, "services", "design", "index.html");
+  let html;
+  try { html = await readFile(file, "utf8"); }
+  catch { console.warn("[prerender] dist/services/design/index.html not found — skipping portfolio bake."); return; }
+  const json = JSON.stringify(projects).replace(/</g, "\\u003c");
+  const noscript = `<noscript><ul class="wk-noscript">${projects.map((p) =>
+    `<li><h2>${esc(p.name)}</h2>${p.lede ? `<p>${esc(p.lede)}</p>` : ""}</li>`).join("")}</ul></noscript>`;
+  html = html.replace(/<script id="portfolio-data" type="application\/json">[\s\S]*?<\/script>/,
+    () => `<script id="portfolio-data" type="application/json">${json}</script>${noscript}`);
+  await writeFile(file, html, "utf8");
+  console.log(`  baked services/design/index.html with ${projects.length} portfolio projects`);
+}
+
 /* ---------- run ---------- */
 async function run() {
   const [{ data: content }, { data: services }, { data: insights }, { data: faqs }, { data: offerings }, { data: caseStudies }] = await Promise.all([
@@ -469,6 +486,7 @@ async function run() {
     supabase.from("offerings").select("*").eq("published", true).order("order_index"),
     supabase.from("case_studies").select("*").eq("published", true).order("order_index"),
   ]);
+  const { data: portfolio } = await supabase.from("portfolio_projects").select("*").eq("published", true).order("order_index");
 
   const sc = Object.fromEntries((content || []).map((r) => [r.key, r.value]));
   const site = sc.site_url || FALLBACK_SITE_URL;
@@ -514,6 +532,7 @@ async function run() {
   await write("robots.txt", robotsTxt(site));
 
   await bakeHomepage(sc, services || [], caseStudies || []);
+  await bakePortfolio(portfolio || []);
 
   console.log(`\nPrerender complete: ${(services || []).length} services, ${allOfferings.length} offerings, ${(insights || []).length} insights, ${(faqs || []).length} faqs.`);
 }
