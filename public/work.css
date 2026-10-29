@@ -117,7 +117,8 @@ body.view-detail #detail{display:block}
 .wk-about{padding-top:clamp(3rem,7vw,6rem);padding-bottom:clamp(2rem,5vw,3.5rem)}
 .wk-about-grid{display:grid;grid-template-columns:240px 1fr;gap:clamp(1.5rem,4vw,3rem);align-items:start;margin-top:1.8rem}
 @media(max-width:680px){.wk-about-grid{grid-template-columns:1fr}}
-.wk-portrait{aspect-ratio:1;border-radius:18px;background:radial-gradient(120% 120% at 30% 20%,#0d6b55,#042a24);border:1px solid var(--wk-line);display:flex;align-items:flex-end;justify-content:center;color:var(--ink-faint);font-size:.82rem;padding:1rem;max-width:240px}
+.wk-portrait{position:relative;overflow:hidden;aspect-ratio:1;border-radius:18px;background:radial-gradient(120% 120% at 30% 20%,#0d6b55,#042a24);border:1px solid var(--wk-line);display:flex;align-items:flex-end;justify-content:center;color:var(--ink-faint);font-size:.82rem;padding:1rem;max-width:240px}
+.wk-portrait-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .wk-about-copy p{color:var(--ink-dim);font-size:1.05rem;line-height:1.65;margin:0 0 1rem}
 .wk-about-copy p:last-child{margin-bottom:0}
 

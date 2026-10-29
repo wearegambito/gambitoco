@@ -459,21 +459,44 @@ async function bakeHomepage(sc, services, caseStudies) {
   console.log("  baked homepage index.html with live CMS content");
 }
 
-/* ---------- design portfolio: bake CMS projects into /services/design/ ----------
+/* ---------- design portfolio: bake CMS projects + page copy into /services/design/ ----------
    The page (Vite entry services/design/index.html) reads #portfolio-data, so the live
-   page needs no runtime Supabase call. A <noscript> list gives crawlers the projects. */
-async function bakePortfolio(projects) {
+   page needs no runtime Supabase call. A <noscript> list gives crawlers the projects.
+   [data-cms] spots take site_content values ("Design page" group on the admin Content tab);
+   empty values keep the copy written in the HTML. */
+const paras = (text) => String(text).split(/\n\s*\n/).map((t) => t.trim()).filter(Boolean)
+  .map((t) => `<p>${esc(t).replace(/\n/g, "<br />")}</p>`).join("");
+async function bakePortfolio(projects, sc) {
   const file = join(DIST, "services", "design", "index.html");
   let html;
   try { html = await readFile(file, "utf8"); }
   catch { console.warn("[prerender] dist/services/design/index.html not found — skipping portfolio bake."); return; }
+  const root = parse(html, { comment: true });
+
+  root.querySelectorAll("[data-cms]").forEach((el) => {
+    const value = sc[el.getAttribute("data-cms")];
+    if (value == null || String(value).trim() === "") return;
+    const attrName = el.getAttribute("data-cms-attr");
+    if (attrName) {
+      el.setAttribute(attrName, value);
+      el.removeAttribute("hidden");             // e.g. the portrait, hidden until one is set
+    } else if (el.getAttribute("data-cms-format") === "paras") {
+      el.set_content(paras(value));             // plain text; blank lines start new paragraphs
+    } else {
+      el.set_content(esc(value));
+    }
+    const linkKey = el.getAttribute("data-cms-link");
+    if (linkKey && sc[linkKey]) el.setAttribute("href", sc[linkKey]);
+  });
+
   const json = JSON.stringify(projects).replace(/</g, "\\u003c");
   const noscript = `<noscript><ul class="wk-noscript">${projects.map((p) =>
     `<li><h2>${esc(p.name)}</h2>${p.lede ? `<p>${esc(p.lede)}</p>` : ""}</li>`).join("")}</ul></noscript>`;
-  html = html.replace(/<script id="portfolio-data" type="application\/json">[\s\S]*?<\/script>/,
-    () => `<script id="portfolio-data" type="application/json">${json}</script>${noscript}`);
-  await writeFile(file, html, "utf8");
-  console.log(`  baked services/design/index.html with ${projects.length} portfolio projects`);
+  const dataEl = root.querySelector("#portfolio-data");
+  if (dataEl) { dataEl.set_content(json); dataEl.insertAdjacentHTML("afterend", noscript); }
+
+  await writeFile(file, root.toString(), "utf8");
+  console.log(`  baked services/design/index.html with ${projects.length} portfolio projects + page copy`);
 }
 
 /* ---------- run ---------- */
@@ -532,7 +555,7 @@ async function run() {
   await write("robots.txt", robotsTxt(site));
 
   await bakeHomepage(sc, services || [], caseStudies || []);
-  await bakePortfolio(portfolio || []);
+  await bakePortfolio(portfolio || [], sc);
 
   console.log(`\nPrerender complete: ${(services || []).length} services, ${allOfferings.length} offerings, ${(insights || []).length} insights, ${(faqs || []).length} faqs.`);
 }

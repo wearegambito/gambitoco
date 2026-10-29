@@ -20,6 +20,7 @@ const GROUP_INFO = {
   "Insights page": "The /insights listing page — title, intro and how it looks in Google. Updates on Publish.",
   "FAQ page": "The /faq page — title, intro and how it looks in Google. Updates on Publish.",
   "Booking page": "The /book page copy and settings. Updates instantly.",
+  "Design page": "The /services/design portfolio page around the project deck — intro, About, how you work and the closing call to action. Empty fields keep the current copy. Updates on Publish.",
   "SEO & social": "How the homepage looks in Google and when shared. (Each Service / Insight has its own SEO fields on its card.)",
   "Deployment": "Connects the Publish button to your Netlify build.",
 };
@@ -80,6 +81,25 @@ const CONTENT_FIELDS = [
   { group: "Booking page", key: "booking_duration", label: "Session length (minutes)", type: "input" },
   { group: "Booking page", key: "booking_timezone", label: "Your timezone", type: "input", hint: "IANA name, e.g. Pacific/Auckland — used in emails & labels." },
   { group: "Booking page", key: "booking_from_email", label: "Sender email for booking emails", type: "input", hint: "Must be a verified sender in MailerSend, e.g. no-reply@gambito.co." },
+
+  { group: "Design page", key: "design_eyebrow", label: "Intro — eyebrow", type: "input" },
+  { group: "Design page", key: "design_title", label: "Intro — headline", type: "input" },
+  { group: "Design page", key: "design_lede", label: "Intro — line under the headline", type: "textarea" },
+  { group: "Design page", key: "design_portrait", label: "Portrait", type: "image", hint: "Square works best. Resized and converted to WebP when you upload." },
+  { group: "Design page", key: "design_about_eyebrow", label: "About — eyebrow", type: "input" },
+  { group: "Design page", key: "design_about_title", label: "About — heading", type: "input", hint: "e.g. “Fifteen years of craft, behind every project.”" },
+  { group: "Design page", key: "design_about_body", label: "About — bio", type: "textarea", hint: "Plain text. Leave a blank line between paragraphs." },
+  { group: "Design page", key: "design_ai_eyebrow", label: "How you work — eyebrow", type: "input" },
+  { group: "Design page", key: "design_ai_title", label: "How you work — heading", type: "input" },
+  { group: "Design page", key: "design_ai_lede", label: "How you work — intro", type: "textarea" },
+  ...[1, 2, 3, 4].flatMap((n) => [
+    { group: "Design page", key: `design_ai_p${n}_title`, label: `Point ${n} — title`, type: "input" },
+    { group: "Design page", key: `design_ai_p${n}_text`, label: `Point ${n} — text`, type: "input" },
+  ]),
+  { group: "Design page", key: "design_cta_title", label: "Call to action — heading", type: "input" },
+  { group: "Design page", key: "design_cta_text", label: "Call to action — text", type: "textarea" },
+  { group: "Design page", key: "design_cta_button", label: "Call to action — button", type: "input" },
+  { group: "Design page", key: "design_cta_link", label: "Call to action — button link", type: "input", hint: "e.g. /book/ or mailto:hello@gambito.co" },
 
   { group: "SEO & social", key: "meta_title", label: "Homepage title tag", type: "input", hint: "The browser tab & Google result title for the homepage." },
   { group: "SEO & social", key: "meta_description", label: "Homepage meta description", type: "textarea", hint: "~155 characters. Shows in Google results." },
@@ -650,7 +670,9 @@ function renderContentIndex() {
 }
 
 // DETAIL view — edit one content group's fields
+let currentContentGroup = null;
 function renderContentGroup(name) {
+  currentContentGroup = name;
   const fields = contentGroups()[name] || [];
   el("#save-content").hidden = false;
   el("#content-groups").innerHTML = `
@@ -661,7 +683,7 @@ function renderContentGroup(name) {
     ${GROUP_INFO[name] ? `<p class="group-desc">${esc(GROUP_INFO[name])}</p>` : ""}
     <div class="content-group content-group--edit">
       ${fields.map((f) => `
-        <div class="field${f.type === "media" ? " field-full" : ""}">
+        <div class="field${f.type === "media" || f.type === "image" ? " field-full" : ""}">
           <label for="cf-${f.key}">${f.label}</label>
           ${contentControl(f, contentValues[f.key] ?? "")}
           ${f.hint ? `<div class="field-hint">${f.hint}</div>` : ""}
@@ -680,6 +702,14 @@ function contentControl(f, v) {
       <div class="image-field-controls">
         <input id="cf-${f.key}" data-key="${f.key}" value="${attr(v)}" placeholder="Paste a video URL" />
         <input type="file" accept="video/*" data-role="content-upload" />
+      </div>
+    </div>`;
+  if (f.type === "image") return `
+    <div class="image-field">
+      <img class="image-preview" data-role="preview" src="${attr(v)}" alt="" />
+      <div class="image-field-controls">
+        <input type="file" accept="image/*" data-role="content-upload" />
+        <input id="cf-${f.key}" data-key="${f.key}" value="${attr(v)}" placeholder="or paste an image URL" />
       </div>
     </div>`;
   return `<input id="cf-${f.key}" data-key="${f.key}" value="${attr(v)}" />`;
@@ -708,6 +738,15 @@ function wireContentUploads() {
         } catch (err) {
           setStatus("#content-status", "Couldn't optimise the video — uploading the original, which may stutter. " + err.message, "error");
         }
+      } else if (/^image\/(jpeg|png|webp)$/.test(file.type)) {
+        // still images: resize to ≤1200px and convert to WebP before uploading
+        setStatus("#content-status", `Optimising ${file.name}…`);
+        try {
+          const out = await encodeImage(await createImageBitmap(file), 1200, 0.85);
+          blob = out.blob;
+          name = file.name.replace(/\.[^.]+$/, "") + "." + out.ext;
+        } catch {}
+        setStatus("#content-status", `Uploading ${file.name}…`);
       } else {
         setStatus("#content-status", `Uploading ${file.name}…`);
       }
@@ -734,7 +773,7 @@ el("#save-content").addEventListener("click", async () => {
   if (error) setStatus("#content-status", error.message, "error");
   else {
     rows.forEach((r) => { contentValues[r.key] = r.value; }); // keep cache fresh for re-render
-    setStatus("#content-status", "Saved — live on the homepage now.", "success");
+    setStatus("#content-status", currentContentGroup === "Design page" ? "Saved. Hit Publish to update the design page." : "Saved — live on the homepage now.", "success");
   }
 });
 
