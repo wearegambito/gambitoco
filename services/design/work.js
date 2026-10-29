@@ -2,46 +2,16 @@
    Front-end only, placeholder content. No backend. */
 "use strict";
 
-// ---------- placeholder data (sample projects, not real clients) ----------
-const M = (type, span, cap, ar) => ({ type, span: span || 1, cap: cap || "", ar });
-const PROJECTS = [
-  { id: "marlowe", name: "Marlowe", url: "marlowe.studio", accent: "#3fae7a",
-    tagline: "Where small-business data grows up.", cats: ["Brand Identity", "Web Design"],
-    client: "Marlowe", year: "2026", services: ["Brand", "Website", "Design System"], scope: "Identity + marketing site",
-    lede: "A full rebrand and website for a data platform that wanted to feel human, not corporate.",
-    media: [M("image", 2, "Homepage hero"), M("gif", 1, "Logo build"), M("image", 1, "Colour system"),
-            M("video", 2, "Product walkthrough"), M("image", 1, "Type specimen"), M("image", 1, "Business cards")] },
-  { id: "northwind", name: "Northwind", url: "northwind.app", accent: "#fa4d56",
-    tagline: "Turning a waitlist into a wave.", cats: ["SaaS", "Web Design"],
-    client: "Northwind", year: "2026", services: ["Website", "CMS", "Motion"], scope: "Launch site",
-    lede: "A launch site that turned a quiet waitlist into booked demos in week one.",
-    media: [M("video", 2, "Launch film"), M("image", 1, "Pricing page"), M("image", 1, "Feature grid"),
-            M("gif", 2, "Scroll interactions"), M("image", 1, "Dashboard UI"), M("image", 1, "Mobile views")] },
-  { id: "souqlane", name: "Souq Lane", url: "souqlane.com", accent: "#e8b24c",
-    tagline: "A marketplace with a pulse.", cats: ["Marketplace", "Brand"],
-    client: "Souq Lane", year: "2026", services: ["Brand", "Product", "Web"], scope: "Brand + MVP",
-    lede: "Brand and product for a two-sided marketplace, from first flows to launch.",
-    media: [M("image", 2, "Marketplace home"), M("image", 1, "Seller onboarding"), M("gif", 1, "Listing flow"),
-            M("image", 1, "Mobile app"), M("video", 2, "Seller story")] },
-  { id: "meridian", name: "Meridian", url: "meridian.health", accent: "#35b7c6",
-    tagline: "Care that starts before the waiting room.", cats: ["Healthcare", "Web Design"],
-    client: "Meridian Health", year: "2025", services: ["Website", "Booking", "Brand"], scope: "Booking-first site",
-    lede: "A calm, booking-first site that made online the clinic's main front door.",
-    media: [M("image", 2, "Booking hero"), M("image", 1, "Appointment flow"), M("image", 1, "Services"),
-            M("gif", 2, "Booking animation"), M("image", 1, "Clinician profiles"), M("image", 1, "Help centre")] },
-  { id: "fieldfold", name: "Field & Fold", url: "fieldandfold.co", accent: "#9bad57",
-    tagline: "Objects worth keeping, sold well.", cats: ["E-commerce", "Brand"],
-    client: "Field & Fold", year: "2025", services: ["Brand", "Storefront", "Art direction"], scope: "Brand + store",
-    lede: "An unhurried commerce brand and storefront for a small-batch goods maker.",
-    media: [M("image", 2, "Storefront"), M("image", 1, "Product page"), M("image", 1, "Packaging"),
-            M("video", 2, "Campaign film"), M("image", 1, "Lookbook")] },
-  { id: "ledgerline", name: "Ledgerline", url: "ledgerline.io", accent: "#6a78f0",
-    tagline: "Numbers that finally make sense.", cats: ["Fintech", "Product"],
-    client: "Ledgerline", year: "2024", services: ["Product", "Design System", "Web"], scope: "Product + site",
-    lede: "A product and site for a finance tool that makes cashflow legible at a glance.",
-    media: [M("video", 2, "Product tour"), M("image", 1, "Reports"), M("image", 1, "Charts"),
-            M("gif", 1, "Number ticker"), M("image", 1, "Settings"), M("image", 2, "Marketing site")] }
-];
+import { PROJECTS } from "./projects.js";
+
+// Media lives in the Supabase Storage `portfolio` bucket; in dev it's served from the local
+// (git-ignored) assets/portfolio copy so the page works before/without an upload.
+const MEDIA_BASE = import.meta.env.DEV ? "/assets/portfolio"
+  : "https://wtzklaumnzezgzgzllgn.supabase.co/storage/v1/object/public/portfolio";
+const mediaUrl = (src, w) => `${MEDIA_BASE}/${src}${w ? "-" + w : ""}.webp`;
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const list = (v) => (Array.isArray(v) ? v.filter(Boolean) : []);
+
 const N = PROJECTS.length;
 const byId = {}; PROJECTS.forEach((p, i) => { p.index = i; byId[p.id] = p; });
 
@@ -50,26 +20,24 @@ const elt = (t, c) => { const e = document.createElement(t); if (c) e.className 
 const pad2 = (n) => String(n).padStart(2, "0");
 const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// tint a hex toward white (amt>0) / black (amt<0) — for placeholder media gradients
-function shade(hex, amt) {
-  const n = parseInt(hex.slice(1), 16); let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  const t = amt < 0 ? 0 : 255, a = Math.abs(amt);
-  r = Math.round(r + (t - r) * a); g = Math.round(g + (t - g) * a); b = Math.round(b + (t - b) * a);
-  return `rgb(${r},${g},${b})`;
-}
-
 /* ============ WORK INDEX: the deck ============ */
 const cardsWrap = $("#cards"), cards = [];
-PROJECTS.forEach((p) => {
-  const c = elt("div", "card"); c.style.setProperty("--accent", p.accent);
+// the card cover is the project's first (hero) image; without one the tagline carries the card
+const coverOf = (p) => (p.media || []).find((m) => m.src && m.type !== "video");
+PROJECTS.forEach((p, i) => {
+  const c = elt("div", "card"); if (p.accent) c.style.setProperty("--accent", p.accent);
+  const cover = coverOf(p);
+  if (cover) c.classList.add("has-cover");
   c.innerHTML =
     '<div class="band"></div>' +
     '<div class="face">' +
-      '<div class="cats">' + p.cats.map((x) => `<span class="cat">${x}</span>`).join("") + "</div>" +
+      (cover ? `<img class="cover" src="${mediaUrl(cover.src, 1000)}" srcset="${mediaUrl(cover.src, 1000)} 1000w, ${mediaUrl(cover.src)} 2000w" sizes="(max-width:1000px) 90vw, 920px" alt="" ${i < 2 ? "" : 'loading="lazy"'} decoding="async">` : "") +
+      (list(p.cats).length ? '<div class="cats">' + list(p.cats).map((x) => `<span class="cat">${esc(x)}</span>`).join("") + "</div>" : "") +
       '<button class="cta" type="button">See project →</button>' +
-      `<div class="tagline">${p.tagline}</div>` +
-      `<div class="foot"><span class="pname"><span class="pmark"></span>${p.name}</span><span class="purl">${p.url}</span></div>` +
-    "</div>";
+      (!cover && p.tagline ? `<div class="tagline">${esc(p.tagline)}</div>` : "") +
+    "</div>" +
+    `<div class="foot"><span class="pname"><span class="pmark"></span>${esc(p.name)}</span>` +
+      (p.tagline && cover ? `<span class="ptag">${esc(p.tagline)}</span>` : p.url ? `<span class="purl">${esc(p.url)}</span>` : "") + "</div>";
   c.addEventListener("click", () => { if (c.classList.contains("is-front")) openProject(p.index); });
   cardsWrap.appendChild(c); cards.push(c);
 });
@@ -82,10 +50,13 @@ const dots = Array.from(dotsWrap.children);
 const fb = $("#deckFallback");
 PROJECTS.forEach((p) => {
   const c = elt("div", "fc");
-  c.innerHTML = `<div style="height:8px;background:${p.accent}"></div>` +
-    `<div style="padding:1.6rem"><div style="font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;opacity:.7">${p.cats.join(" · ")}</div>` +
-    `<div style="font-family:var(--font-display);font-weight:700;font-size:1.5rem;line-height:1.1;margin:.6rem 0 1rem">${p.tagline}</div>` +
-    `<div style="font-family:var(--mono);font-size:.78rem">${p.name} — see project →</div></div>`;
+  const cover = coverOf(p);
+  c.innerHTML = `<div style="height:8px;background:${p.accent || "var(--ember)"}"></div>` +
+    (cover ? `<img src="${mediaUrl(cover.src, 1000)}" alt="" loading="lazy" decoding="async" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover">` : "") +
+    `<div style="padding:1.6rem">` +
+    (list(p.cats).length ? `<div style="font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;opacity:.7">${list(p.cats).map(esc).join(" · ")}</div>` : "") +
+    (p.tagline ? `<div style="font-family:var(--font-display);font-weight:700;font-size:1.5rem;line-height:1.1;margin:.6rem 0 1rem">${esc(p.tagline)}</div>` : "") +
+    `<div style="font-family:var(--mono);font-size:.78rem">${esc(p.name)} — see project →</div></div>`;
   c.addEventListener("click", () => openProject(p.index));
   fb.appendChild(c);
 });
@@ -128,32 +99,34 @@ function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(layo
 const projsWrap = $("#projs");
 let sequence = [], seqPos = 0, io = null;
 
-// group media into rows so a 2-up row shares one aspect ratio (equal heights, no distortion)
+// Group media into rows: span 2 = full width, span-1 items pair up. A paired row splits its width
+// by each item's aspect ratio, so both share one height with nothing cropped or distorted.
+const ratioOf = (m) => (m.w && m.h ? m.w / m.h : m.span === 2 ? 16 / 9 : 4 / 5);
 function buildRows(media) {
   const rows = []; let i = 0;
   while (i < media.length) {
-    const m = media[i];
-    if (m.span === 2) { rows.push({ cls: "one", ar: m.ar || "16 / 8", items: [m] }); i++; }
-    else {
-      const next = media[i + 1];
-      if (next && next.span !== 2) { rows.push({ cls: "two", ar: m.ar || "4 / 5", items: [m, next] }); i += 2; }
-      else { rows.push({ cls: "one", ar: m.ar || "16 / 9", items: [m] }); i++; }
-    }
+    const m = media[i], next = media[i + 1];
+    if (m.span !== 2 && next && next.span !== 2) { rows.push([m, next]); i += 2; }
+    else { rows.push([m]); i++; }
   }
   return rows;
 }
-function mediaBox(m, p, ar) {
-  const grad = `linear-gradient(145deg,${shade(p.accent, .22)},${shade(p.accent, -.4)})`;
-  // Placeholder motion so you can tell what plays: video drifts, gif shimmers.
-  let motion = "";
-  if (m.type === "video") motion = '<div class="videomo"></div>';
-  else if (m.type === "gif") motion = '<div class="gifshine"></div>';
-  // Real media drops in here as <img class="media-el" loading="lazy"> or
-  // <video class="media-el" muted playsinline preload="none"> — no controls, autoplay +
-  // 5s-pause loop wired by setupVideos(). object-fit:cover keeps it undistorted at the row height.
-  return `<figure class="box" style="aspect-ratio:${ar};background:${grad}">` +
-    '<div class="ph"></div>' + motion +
-    (m.cap ? `<figcaption class="cap">${m.cap}</figcaption>` : "") + "</figure>";
+function mediaBox(m, p) {
+  const ar = ratioOf(m).toFixed(4);
+  let inner;
+  if (m.src && m.type === "video") {
+    // no controls; autoplay + 5s-pause loop wired by setupVideos()
+    inner = `<video class="media-el" src="${MEDIA_BASE}/${m.src}" ${m.poster ? `poster="${MEDIA_BASE}/${m.poster}"` : ""} muted playsinline preload="none"></video>`;
+  } else if (m.src) {
+    inner = `<img class="media-el" src="${mediaUrl(m.src, 1000)}" srcset="${mediaUrl(m.src, 1000)} 1000w, ${mediaUrl(m.src)} 2000w" ` +
+      `sizes="(max-width:860px) 92vw, ${m.span === 2 ? "62vw" : "36vw"}" alt="${esc(m.alt || p.name)}" loading="lazy" decoding="async">`;
+  } else {
+    // no file yet: dotted placeholder; video drifts, gif shimmers
+    inner = '<div class="ph"></div>' + (m.type === "video" ? '<div class="videomo"></div>' : m.type === "gif" ? '<div class="gifshine"></div>' : "");
+  }
+  // very tall media (full-page scrolls) gets a top-anchored crop on phones, where it would stack huge
+  return `<figure class="box${ratioOf(m) < 0.5 ? " tall" : ""}" style="aspect-ratio:${ar};flex:${ar} 1 0">${inner}` +
+    (m.cap ? `<figcaption class="cap">${esc(m.cap)}</figcaption>` : "") + "</figure>";
 }
 
 // Real <video> media: autoplay muted, no controls, loop with a 5-second pause,
@@ -170,22 +143,22 @@ function setupVideos(root) {
 }
 function projectSection(p) {
   const sec = elt("section", "proj"); sec.id = "proj-" + p.id; sec.dataset.index = p.index;
-  const rowsHtml = buildRows(p.media).map((row) =>
-    `<div class="mrow ${row.cls}">${row.items.map((m) => mediaBox(m, p, row.ar)).join("")}</div>`
+  const rowsHtml = buildRows(p.media || []).map((row) =>
+    `<div class="mrow">${row.map((m) => mediaBox(m, p)).join("")}</div>`
   ).join("");
+  // only the name is required; every other field is left out when empty
+  const meta = [["Client", p.client], ["Year", p.year], ["Scope", p.scope]]
+    .filter(([, v]) => v).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("") +
+    (list(p.services).length ? `<dt>Services</dt><dd><div class="chips">${list(p.services).map((s) => `<span class="chip">${esc(s)}</span>`).join("")}</div></dd>` : "");
+  const href = p.url ? (/^https?:\/\//i.test(p.url) ? p.url : "https://" + p.url) : "";
   sec.innerHTML =
     '<div class="proj-grid">' +
       '<aside class="pinfo">' +
         `<div class="pnum">${pad2(p.index + 1)} / ${pad2(N)}</div>` +
-        `<h2>${p.name}</h2>` +
-        `<p class="lede">${p.lede}</p>` +
-        '<dl class="meta">' +
-          `<dt>Client</dt><dd>${p.client}</dd>` +
-          `<dt>Year</dt><dd>${p.year}</dd>` +
-          `<dt>Scope</dt><dd>${p.scope}</dd>` +
-          `<dt>Services</dt><dd><div class="chips">${p.services.map((s) => `<span class="chip">${s}</span>`).join("")}</div></dd>` +
-        "</dl>" +
-        `<a class="visit" href="https://${p.url}" target="_blank" rel="noopener">Visit live site ↗</a>` +
+        `<h2>${esc(p.name)}</h2>` +
+        (p.lede ? `<p class="lede">${esc(p.lede)}</p>` : "") +
+        (meta ? `<dl class="meta">${meta}</dl>` : "") +
+        (href ? `<a class="visit" href="${esc(href)}" target="_blank" rel="noopener">Visit live site ↗</a>` : "") +
       "</aside>" +
       `<div class="media">${rowsHtml}</div>` +
     "</div>";
@@ -199,7 +172,7 @@ function cueOrEnd(nextSeqPos) {
     cue.innerHTML =
       '<div class="nextcue-in">' +
         '<span class="lbl">Keep scrolling · next project</span>' +
-        `<span class="nm">${nextP.name}</span>` +
+        `<span class="nm">${esc(nextP.name)}</span>` +
         '<span class="chev"></span>' +
         `<div class="prog"><span class="prog-lbl">${pad2(seen)} / ${pad2(N)}</span><div class="prog-bar"><i style="width:${pct}%"></i></div></div>` +
       "</div>";

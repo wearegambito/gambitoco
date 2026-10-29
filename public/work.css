@@ -34,7 +34,7 @@ body.view-detail .nav{display:none}
 .card .band{height:8px;flex:0 0 auto;background:var(--accent)}
 .card .face{flex:1;position:relative;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:clamp(1.4rem,4vw,3rem);text-align:center}
 .card .tagline{font-family:var(--font-display);font-weight:700;font-size:clamp(1.5rem,4.2vw,3rem);line-height:1.08;letter-spacing:-.02em;max-width:16ch;transition:opacity .2s ease}
-.card .foot{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:flex-end;justify-content:space-between;padding:clamp(1rem,3vw,1.6rem) clamp(1.2rem,3.5vw,2rem);gap:1rem}
+.card .foot{position:relative;flex:0 0 auto;background:var(--cream);display:flex;align-items:center;justify-content:space-between;padding:clamp(1rem,3vw,1.6rem) clamp(1.2rem,3.5vw,2rem);gap:1rem}
 .card .pname{font-family:var(--font-display);font-weight:700;font-size:1.05rem;display:flex;align-items:center;gap:.5rem}
 .card .pmark{width:16px;height:16px;border-radius:4px;background:var(--accent)}
 .card .purl{font-family:var(--mono);font-size:.74rem;color:#5c6b5f}
@@ -48,6 +48,14 @@ body.view-detail .nav{display:none}
 .card.is-front:hover .cta{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .card.is-front:hover .tagline{opacity:.16}
 .card:not(.is-front){pointer-events:none}
+/* cover cards: the hero image fills the face; name + tagline sit in a cream foot bar */
+.card.has-cover .face{padding:0;background:var(--bg-2)}
+.card .cover{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:filter .25s ease,transform .5s ease}
+.card.has-cover .cats{z-index:2}
+.card.has-cover .cat{background:rgba(242,235,217,.86);backdrop-filter:blur(6px)}
+.card.is-front.has-cover:hover .cover{filter:brightness(.55);transform:scale(1.015)}
+.card.has-cover .cta{background:var(--cream);color:var(--ondark)}
+.card .ptag{font-size:.86rem;color:#5c6b5f;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 
 .deck-ui{position:absolute;left:0;right:0;bottom:1.2rem;display:flex;align-items:center;justify-content:center;gap:1rem;pointer-events:none}
 .deck-count{font-family:var(--mono);font-size:.8rem;color:var(--ink-dim);font-variant-numeric:tabular-nums}
@@ -92,12 +100,13 @@ body.view-detail #detail{display:block}
 .visit{align-self:start;display:inline-flex;align-items:center;gap:.5rem;border:1px solid var(--wk-line2);border-radius:100px;padding:.6rem 1.1rem;font-weight:600;font-size:.9rem;text-decoration:none;color:var(--ink)}
 .visit:hover{background:var(--bg-2)}
 
-/* media column — rows keep equal heights via a shared aspect-ratio per row */
+/* media column */
 .media{display:flex;flex-direction:column;gap:clamp(.8rem,2vw,1.2rem);min-width:0}
-.mrow{display:grid;gap:clamp(.8rem,2vw,1.2rem)}
-.mrow.one{grid-template-columns:1fr}
-.mrow.two{grid-template-columns:1fr 1fr}
-@media(max-width:540px){.mrow.two{grid-template-columns:1fr}}
+/* a row's boxes grow in proportion to their aspect ratio (inline flex-grow), so paired items
+   share one height with no cropping; on phones each box stacks at its own ratio */
+.mrow{display:flex;gap:clamp(.8rem,2vw,1.2rem)}
+.mrow .box{min-width:0}
+@media(max-width:540px){.mrow{flex-direction:column}.mrow .box{flex:none!important;width:100%}.mrow .box.tall{aspect-ratio:3/4!important}.box.tall .media-el{object-position:top}}
 .box{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--wk-line);background:var(--bg-2);min-width:0}
 .box .media-el{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}  /* real img/video: fill, no distortion */
 .box .ph{position:absolute;inset:0}

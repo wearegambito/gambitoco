@@ -484,8 +484,10 @@ async function run() {
 
   for (const svc of services || []) {
     // /services/design/ is the design portfolio (Vite entry services/design/index.html), not a CMS service page.
-    // Unlisted (noindex) for now, so it's left out of the sitemap too.
-    if (svc.slug === "design") continue;
+    if (svc.slug === "design") {
+      urls.push({ loc: "/services/design/", changefreq: "monthly", priority: "0.8" });
+      continue;
+    }
     const svcOfferings = allOfferings.filter((o) => o.service_slug === svc.slug);
     await write(`services/${svc.slug}/index.html`, servicePage(svc, svcOfferings, sc, site));
     urls.push({ loc: `/services/${svc.slug}/`, changefreq: "monthly", priority: "0.8", lastmod: (svc.updated_at || "").slice(0, 10) });
