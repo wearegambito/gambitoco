@@ -429,8 +429,7 @@ input[type="file"]::file-selector-button:hover { background: rgba(240, 231, 212,
 .booking-row .who a { color: var(--ink-dim); }
 .booking-row .who .name { color: var(--ink); font-weight: 600; }
 .booking-row .notes { grid-column: 2; color: var(--ink-dim); font-size: 0.92rem; margin-top: 0.3rem; }
-.booking-row .booking-actions { grid-column: 2; }
-@media (max-width: 640px) { .booking-row { grid-template-columns: 1fr; } .booking-row .notes, .booking-row .booking-actions { grid-column: 1; } }
+@media (max-width: 640px) { .booking-row { grid-template-columns: 1fr; } .booking-row .notes { grid-column: 1; } }
 .bookings-empty, .slots-empty { color: var(--ink-faint); font-size: 0.92rem; }
 
 /* ---------- content engine: ideas ---------- */

@@ -4,6 +4,10 @@
 // If Google isn't configured or errors, it falls back to attaching a METHOD:REQUEST .ics invite instead.
 // Called (fire-and-forget) by /book right after book_slot succeeds.
 //
+// { remind: true } = the 1-hour-before reminder: a pg_cron job (every 5 min, see migration 0007) posts
+// each due booking here. The function re-checks that the booking really is due and claims it
+// (bookings.reminded_at), so the public endpoint can't be used to send early or repeated reminders.
+//
 // Secrets (Supabase → Edge Functions → Secrets): MAILERSEND_API_KEY, and for Google Calendar:
 //   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN (authorised as the organizer account)
 //
@@ -16,9 +20,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const DEFAULT_MEET_URL = "https://meet.google.com/ssj-qryg-qqe";
-const ADMIN_EMAIL = "armic@gambito.co.nz"; // the admin login; only this user may use { resend: true }
-// bookings made before the meeting-link invites went live used this UID scheme (see legacyUid)
-const NEW_INVITES_FROM = Date.parse("2026-11-09T20:58:00Z");
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -123,53 +124,76 @@ async function sendEmail(key: string, body: unknown) {
   }
 }
 
+// booking-page settings from site_content, with safe defaults
+async function loadSettings(admin: ReturnType<typeof createClient>) {
+  const { data: rows } = await admin.from("site_content").select("key,value")
+    .in("key", ["footer_email", "booking_from_email", "booking_timezone", "booking_duration", "booking_meeting_url"]);
+  const sc: Record<string, string> = Object.fromEntries((rows || []).map((r: { key: string; value: string }) => [r.key, r.value]));
+  return {
+    fromEmail: (sc.booking_from_email || "armic@gambito.co").trim(),
+    studioEmail: (sc.footer_email || "hello@gambito.co").trim(),
+    tz: sc.booking_timezone || "Pacific/Auckland",
+    duration: Number(sc.booking_duration || 30),
+    meetUrl: /^https:\/\/\S+$/.test((sc.booking_meeting_url || "").trim()) ? sc.booking_meeting_url.trim() : DEFAULT_MEET_URL,
+  };
+}
+const joinButton = (meetUrl: string) =>
+  `<a href="${esc(meetUrl)}" style="display:inline-block;background:#fa4d56;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:999px">Join on Google Meet</a>`;
+const whenText = (start: Date, tz: string) =>
+  start.toLocaleString("en-NZ", { timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   let release: (() => Promise<unknown>) | null = null; // un-claims the booking if sending fails, so a retry can work
   try {
-    const { booking_id, resend } = await req.json();
+    const { booking_id, remind } = await req.json();
     if (!booking_id) return json({ ok: false, error: "missing booking_id" });
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: booking } = await admin.from("bookings").select("*").eq("id", booking_id).single();
     if (!booking) return json({ ok: false, error: "not found" });
 
-    // { resend: true } = "send the guest an updated invite" — admin only (verified from the caller's session)
-    const isResend = resend === true;
-    if (isResend) {
-      const jwt = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
-      const { data: u } = await admin.auth.getUser(jwt);
-      if ((u?.user?.email || "").toLowerCase() !== ADMIN_EMAIL) return json({ ok: false, error: "not allowed" }, 403);
-      if (new Date(booking.start_time).getTime() < Date.now()) return json({ ok: false, error: "that session has already passed" });
-    } else if (Date.now() - new Date(booking.created_at).getTime() > 10 * 60 * 1000) {
-      // anti-abuse: the public endpoint only emails for fresh bookings
-      return json({ ok: true, skipped: "stale" });
-    }
-
     const key = Deno.env.get("MAILERSEND_API_KEY");
     if (!key) return json({ ok: false, error: "MAILERSEND_API_KEY not set" });
 
-    if (!isResend) {
-      // once-only: claim this booking so repeat calls (the endpoint is public) can't send duplicates
-      const { data: claimed } = await admin.from("bookings").update({ notified_at: new Date().toISOString() })
-        .eq("id", booking.id).is("notified_at", null).select("id");
-      if (!claimed?.length) return json({ ok: true, skipped: "already notified" });
-      release = () => admin.from("bookings").update({ notified_at: null }).eq("id", booking.id);
-    } else if (booking.google_event_id) {
-      return json({ ok: true, skipped: "this booking's invite lives in Google Calendar — edit it there and Google notifies the guest" });
+    // ---- 1-hour reminder (called by the pg_cron job) ----
+    if (remind === true) {
+      const msToStart = new Date(booking.start_time).getTime() - Date.now();
+      // due = starts within the next hour; a booking made inside that last hour just got its confirmation, so skip it
+      const madeInsideLastHour = new Date(booking.start_time).getTime() - new Date(booking.created_at).getTime() <= 60 * 60 * 1000;
+      if (msToStart <= 0 || msToStart > 60 * 60 * 1000 || madeInsideLastHour) return json({ ok: true, skipped: "not due" });
+      const { data: claimedR } = await admin.from("bookings").update({ reminded_at: new Date().toISOString() })
+        .eq("id", booking.id).is("reminded_at", null).select("id");
+      if (!claimedR?.length) return json({ ok: true, skipped: "already reminded" });
+      release = () => admin.from("bookings").update({ reminded_at: null }).eq("id", booking.id);
+
+      const { fromEmail, tz, duration, meetUrl } = await loadSettings(admin);
+      const start = new Date(booking.start_time);
+      const when = whenText(start, tz);
+      const html = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">Your session starts in about an hour.</h2><p>Hi ${esc(booking.name)}, a quick reminder about your Gameplan Session with Gambito.</p><table style="font-size:15px;margin:14px 0;border-collapse:collapse"><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">What</td><td>Gameplan Session with Gambito</td></tr><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">When</td><td><strong>${esc(when)}</strong><br><span style="color:#5c6b60">${duration} minutes · time shown in ${esc(tz)}</span></td></tr><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">Where</td><td>Google Meet<br><a href="${esc(meetUrl)}" style="color:#0a6b57">${esc(meetUrl)}</a></td></tr></table><p style="margin:20px 0">${joinButton(meetUrl)}</p><p>A focused session with the Gambito studio. Need to change the time? Reply to this email.</p><p style="margin-top:24px">— Armic, Gambito</p></div>`;
+      await sendEmail(key, {
+        from: { email: fromEmail, name: "Armic · Gambito" },
+        to: [{ email: booking.email, name: booking.name }],
+        reply_to: { email: fromEmail, name: "Armic · Gambito" },
+        subject: `Reminder: your Gameplan Session with Gambito starts in 1 hour (${when})`,
+        html,
+      });
+      return json({ ok: true, reminded: true });
     }
 
-    const { data: rows } = await admin.from("site_content").select("key,value")
-      .in("key", ["footer_email", "booking_from_email", "booking_timezone", "booking_duration", "booking_meeting_url"]);
-    const sc: Record<string, string> = Object.fromEntries((rows || []).map((r: { key: string; value: string }) => [r.key, r.value]));
-    const fromEmail = (sc.booking_from_email || "armic@gambito.co").trim();
-    const studioEmail = (sc.footer_email || "hello@gambito.co").trim();
-    const tz = sc.booking_timezone || "Pacific/Auckland";
-    const duration = Number(sc.booking_duration || 30);
-    const meetUrl = /^https:\/\/\S+$/.test((sc.booking_meeting_url || "").trim()) ? sc.booking_meeting_url.trim() : DEFAULT_MEET_URL;
+    // ---- new booking: confirmation + invite ----
+    // anti-abuse: the public endpoint only emails for fresh bookings
+    if (Date.now() - new Date(booking.created_at).getTime() > 10 * 60 * 1000) return json({ ok: true, skipped: "stale" });
 
+    // once-only: claim this booking so repeat calls (the endpoint is public) can't send duplicates
+    const { data: claimed } = await admin.from("bookings").update({ notified_at: new Date().toISOString() })
+      .eq("id", booking.id).is("notified_at", null).select("id");
+    if (!claimed?.length) return json({ ok: true, skipped: "already notified" });
+    release = () => admin.from("bookings").update({ notified_at: null }).eq("id", booking.id);
+
+    const { fromEmail, studioEmail, tz, duration, meetUrl } = await loadSettings(admin);
     const start = new Date(booking.start_time);
-    const when = start.toLocaleString("en-NZ", { timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
+    const when = whenText(start, tz);
     // 1) preferred: a real Google Calendar event (Google sends the invite; edits from that calendar reach the guest)
     let calendarOk = false, calendarError: string | undefined;
     try {
@@ -189,21 +213,17 @@ Deno.serve(async (req) => {
     // 2) fallback: attach a METHOD:REQUEST invite to the emails
     const attachments = calendarOk ? undefined : [{
       content: b64(buildInvite({
-        // an update must reuse the UID of the invite the guest already has (older bookings used the legacy scheme)
-        uid: isResend && Date.parse(booking.created_at) < NEW_INVITES_FROM ? `gambito-${start.getTime()}@gambito.co` : `booking-${booking.id}@gambito.co`,
-        // a resend needs a higher SEQUENCE than anything sent before; seconds since a fixed epoch always grows
-        sequence: isResend ? Math.floor((Date.now() - 1.7e12) / 1000) : 0,
-        start, durationMin: duration, meetUrl,
+        uid: `booking-${booking.id}@gambito.co`, start, durationMin: duration, meetUrl,
         organizerEmail: fromEmail, attendeeEmail: booking.email, attendeeName: booking.name,
       })),
       filename: "invite.ics", disposition: "attachment",
     }];
 
-    const btn = `<a href="${esc(meetUrl)}" style="display:inline-block;background:#fa4d56;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:999px">Join on Google Meet</a>`;
+    const btn = joinButton(meetUrl);
     const inviteNote = calendarOk
       ? `You'll also get a Google Calendar invite from ${esc(fromEmail)} — accept it to add the session to your calendar.`
       : `A calendar invite is attached — accept it to add the session to your calendar.`;
-    const visitorHtml = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">${isResend ? "Your session details have been updated." : "You're booked in."}</h2><p>Hi ${esc(booking.name)}, ${isResend ? "here are the updated details for your Gameplan Session with Gambito — it now includes the call link." : "your Gameplan Session with Gambito is confirmed."}</p><p style="font-size:16px"><strong>${esc(when)}</strong><br>${duration} minutes · time shown in ${esc(tz)}</p><p style="margin:18px 0"><strong>Where:</strong> Google Meet<br><a href="${esc(meetUrl)}" style="color:#0a6b57">${esc(meetUrl)}</a></p><p style="margin:20px 0">${btn}</p><p>${inviteNote} Reply to this email if anything changes.</p><p style="margin-top:24px">— Armic, Gambito</p></div>`;
+    const visitorHtml = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">You're booked in.</h2><p>Hi ${esc(booking.name)}, your Gameplan Session with Gambito is confirmed.</p><p style="font-size:16px"><strong>${esc(when)}</strong><br>${duration} minutes · time shown in ${esc(tz)}</p><p style="margin:18px 0"><strong>Where:</strong> Google Meet<br><a href="${esc(meetUrl)}" style="color:#0a6b57">${esc(meetUrl)}</a></p><p style="margin:20px 0">${btn}</p><p>${inviteNote} Reply to this email if anything changes.</p><p style="margin-top:24px">— Armic, Gambito</p></div>`;
     const adminNote = calendarOk
       ? `The event is on ${esc(fromEmail)}'s Google Calendar — edit or reschedule it there and Google notifies the guest.`
       : `Google Calendar wasn't used${calendarError ? ` (${esc(calendarError.slice(0, 160))})` : " (not configured yet)"}, so the invite is attached instead. Open it in ${esc(fromEmail)}'s calendar to edit it.`;
@@ -213,11 +233,10 @@ Deno.serve(async (req) => {
       from: { email: fromEmail, name: "Armic · Gambito" },
       to: [{ email: booking.email, name: booking.name }],
       reply_to: { email: fromEmail, name: "Armic · Gambito" },
-      subject: isResend ? `Updated: your Gameplan Session with Gambito — ${when}` : "Your Gameplan Session with Gambito is booked",
+      subject: "Your Gameplan Session with Gambito is booked",
       html: visitorHtml,
       ...(attachments ? { attachments } : {}),
     });
-    if (isResend) return json({ ok: true, resent: true, calendar: calendarOk, ...(calendarError ? { calendarError } : {}) });
     // studio copy → the organizer's mailbox + the shared studio address
     const adminTo = [...new Set([fromEmail, studioEmail].map((e) => e.toLowerCase()))].map((email) => ({ email, name: "Gambito" }));
     await sendEmail(key, {

@@ -1362,33 +1362,10 @@ async function loadBookingsAdmin() {
       <div class="when">${fmtDayLocal(d)}<br />${fmtTimeLocal(d)}</div>
       <div class="who"><span class="name">${esc(b.name)}</span>${b.company ? " · " + esc(b.company) : ""}<br /><a href="mailto:${esc(b.email)}">${esc(b.email)}</a></div>
       ${b.notes ? `<div class="notes">${esc(b.notes)}</div>` : ""}
-      <div class="booking-actions"><button class="btn btn-ghost btn-small" data-resend="${esc(b.id)}" data-email="${esc(b.email)}"><span>Send updated invite</span></button></div>
     </div>`;
   }).join("");
-  box.querySelectorAll("[data-resend]").forEach((btn) => btn.addEventListener("click", () => resendInvite(btn)));
 }
 
-// emails the guest an updated invite (current call link + details); the function checks it's really you
-async function resendInvite(btn) {
-  if (!confirm(`Email an updated invite to ${btn.dataset.email}?`)) return;
-  const label = btn.querySelector("span"), original = label.textContent;
-  btn.disabled = true; label.textContent = "Sending…";
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/notify-booking`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.access_token || ""}` },
-      body: JSON.stringify({ booking_id: btn.dataset.resend, resend: true }),
-    });
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok || out.ok === false) throw new Error(out.error || `HTTP ${res.status}`);
-    if (out.skipped) toast(out.skipped, "");
-    else setStatus(bStatus, `Updated invite sent to ${btn.dataset.email}.`, "success");
-  } catch (err) {
-    setStatus(bStatus, "Couldn't send the invite: " + err.message, "error");
-  }
-  btn.disabled = false; label.textContent = original;
-}
 
 /* ---------- content engine: idea intake ---------- */
 let ideasWired = false;
