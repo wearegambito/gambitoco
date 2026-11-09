@@ -244,6 +244,9 @@ async function submitBooking(e) {
   renderDone(payload, data);
 }
 
+const DEFAULT_MEET_URL = "https://meet.google.com/ssj-qryg-qqe";
+const meetUrl = () => (/^https:\/\/\S+$/.test((config.booking_meeting_url || "").trim()) ? config.booking_meeting_url.trim() : DEFAULT_MEET_URL);
+
 function icsHref(start, durationMin, name) {
   const two = (n) => String(n).padStart(2, "0");
   const fmt = (d) => `${d.getUTCFullYear()}${two(d.getUTCMonth() + 1)}${two(d.getUTCDate())}T${two(d.getUTCHours())}${two(d.getUTCMinutes())}00Z`;
@@ -252,7 +255,8 @@ function icsHref(start, durationMin, name) {
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Gambito//Booking//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
     "BEGIN:VEVENT", `UID:gambito-${start.getTime()}@gambito.co`, `DTSTAMP:${fmt(new Date())}`,
     `DTSTART:${fmt(start)}`, `DTEND:${fmt(end)}`, "SUMMARY:Gameplan Session with Gambito",
-    "DESCRIPTION:A focused hour with the Gambito studio. We'll be in touch with a call link before the session.",
+    `DESCRIPTION:A focused session with the Gambito studio.\\n\\nJoin on Google Meet: ${meetUrl()}`,
+    `LOCATION:${meetUrl()}`, `URL:${meetUrl()}`, `X-GOOGLE-CONFERENCE:${meetUrl()}`,
     "END:VEVENT", "END:VCALENDAR",
   ];
   return "data:text/calendar;charset=utf-8," + encodeURIComponent(lines.join("\r\n"));
@@ -270,6 +274,7 @@ function renderDone(payload, data) {
         <span>${esc(fmtTime(start))} ${esc(tzAbbr)} · ${esc(dur)} min</span>
       </div>
       <p class="book-done-msg">${esc(config.booking_confirm || "You're booked. We'll be in touch by email. Talk soon.")}</p>
+      <p class="book-done-msg">Where: <a href="${esc(meetUrl())}" target="_blank" rel="noopener noreferrer">Google Meet</a> — the link is also in your confirmation email.</p>
       <div class="book-done-actions">
         <a class="btn-solid" href="${icsHref(start, dur, payload.p_name)}" download="gameplan-session.ics">Add to calendar</a>
         <a class="book-back" href="/">Back to gambito.co</a>

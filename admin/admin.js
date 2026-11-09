@@ -80,7 +80,8 @@ const CONTENT_FIELDS = [
   { group: "Booking page", key: "booking_confirm", label: "Confirmation message", type: "textarea" },
   { group: "Booking page", key: "booking_duration", label: "Session length (minutes)", type: "input" },
   { group: "Booking page", key: "booking_timezone", label: "Your timezone", type: "input", hint: "IANA name, e.g. Pacific/Auckland — used in emails & labels." },
-  { group: "Booking page", key: "booking_from_email", label: "Sender email for booking emails", type: "input", hint: "Must be a verified sender in MailerSend, e.g. no-reply@gambito.co." },
+  { group: "Booking page", key: "booking_from_email", label: "Sender & invite organizer email", type: "input", hint: "Booking emails are sent from this address, and it owns the calendar invite — so you can edit the event from its calendar. Must be a verified sender in MailerSend." },
+  { group: "Booking page", key: "booking_meeting_url", label: "Call link (Google Meet)", type: "input", hint: "Shown in the confirmation email and written into the calendar invite. Applies to new bookings." },
 
   { group: "Design page", key: "design_eyebrow", label: "Intro — eyebrow", type: "input" },
   { group: "Design page", key: "design_title", label: "Intro — headline", type: "input" },
