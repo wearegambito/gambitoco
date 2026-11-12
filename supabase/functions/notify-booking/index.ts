@@ -141,6 +141,21 @@ const joinButton = (meetUrl: string) =>
   `<a href="${esc(meetUrl)}" style="display:inline-block;background:#fa4d56;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:999px">Join on Google Meet</a>`;
 const whenText = (start: Date, tz: string) =>
   start.toLocaleString("en-NZ", { timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit" });
+const validTz = (tz: unknown): tz is string => {
+  if (typeof tz !== "string" || !tz) return false;
+  try { new Intl.DateTimeFormat("en", { timeZone: tz }); return true; } catch { return false; }
+};
+// "London time (GMT+0)" — city from the IANA name + the offset in effect on that date
+const tzLabel = (start: Date, tz: string) => {
+  const city = (tz.split("/").pop() || tz).replace(/_/g, " ");
+  let off = "";
+  try { off = new Intl.DateTimeFormat("en", { timeZone: tz, timeZoneName: "shortOffset" }).formatToParts(start).find((p) => p.type === "timeZoneName")?.value || ""; } catch { /* ignore */ }
+  return off ? `${city} time (${off})` : `${city} time`;
+};
+// email text uses the visitor's own timezone (captured by /book); older bookings fall back to the studio's.
+// Only the wording changes — the calendar invite/event is written as an absolute instant (UTC), so it's the
+// same moment in everyone's calendar.
+const guestTz = (booking: { timezone?: string | null }, studioTz: string) => validTz(booking.timezone) ? booking.timezone : studioTz;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -169,8 +184,9 @@ Deno.serve(async (req) => {
 
       const { fromEmail, tz, duration, meetUrl } = await loadSettings(admin);
       const start = new Date(booking.start_time);
-      const when = whenText(start, tz);
-      const html = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">Your session starts in about an hour.</h2><p>Hi ${esc(booking.name)}, a quick reminder about your Gameplan Session with Gambito.</p><table style="font-size:15px;margin:14px 0;border-collapse:collapse"><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">What</td><td>Gameplan Session with Gambito</td></tr><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">When</td><td><strong>${esc(when)}</strong><br><span style="color:#5c6b60">${duration} minutes · time shown in ${esc(tz)}</span></td></tr><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">Where</td><td>Google Meet<br><a href="${esc(meetUrl)}" style="color:#0a6b57">${esc(meetUrl)}</a></td></tr></table><p style="margin:20px 0">${joinButton(meetUrl)}</p><p>A focused session with the Gambito studio. Need to change the time? Reply to this email.</p><p style="margin-top:24px">— Armic, Gambito</p></div>`;
+      const gTz = guestTz(booking, tz);
+      const when = whenText(start, gTz);
+      const html = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">Your session starts in about an hour.</h2><p>Hi ${esc(booking.name)}, a quick reminder about your Gameplan Session with Gambito.</p><table style="font-size:15px;margin:14px 0;border-collapse:collapse"><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">What</td><td>Gameplan Session with Gambito</td></tr><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">When</td><td><strong>${esc(when)}</strong><br><span style="color:#5c6b60">${duration} minutes · ${esc(tzLabel(start, gTz))}</span></td></tr><tr><td style="padding:3px 16px 3px 0;color:#5c6b60">Where</td><td>Google Meet<br><a href="${esc(meetUrl)}" style="color:#0a6b57">${esc(meetUrl)}</a></td></tr></table><p style="margin:20px 0">${joinButton(meetUrl)}</p><p>A focused session with the Gambito studio. Need to change the time? Reply to this email.</p><p style="margin-top:24px">— Armic, Gambito</p></div>`;
       await sendEmail(key, {
         from: { email: fromEmail, name: "Armic · Gambito" },
         to: [{ email: booking.email, name: booking.name }],
@@ -193,7 +209,9 @@ Deno.serve(async (req) => {
 
     const { fromEmail, studioEmail, tz, duration, meetUrl } = await loadSettings(admin);
     const start = new Date(booking.start_time);
-    const when = whenText(start, tz);
+    const when = whenText(start, tz); // studio time (studio copy)
+    const gTz = guestTz(booking, tz);
+    const guestWhen = whenText(start, gTz);
     // 1) preferred: a real Google Calendar event (Google sends the invite; edits from that calendar reach the guest)
     let calendarOk = false, calendarError: string | undefined;
     try {
@@ -223,11 +241,11 @@ Deno.serve(async (req) => {
     const inviteNote = calendarOk
       ? `You'll also get a Google Calendar invite from ${esc(fromEmail)} — accept it to add the session to your calendar.`
       : `A calendar invite is attached — accept it to add the session to your calendar.`;
-    const visitorHtml = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">You're booked in.</h2><p>Hi ${esc(booking.name)}, your Gameplan Session with Gambito is confirmed.</p><p style="font-size:16px"><strong>${esc(when)}</strong><br>${duration} minutes · time shown in ${esc(tz)}</p><p style="margin:18px 0"><strong>Where:</strong> Google Meet<br><a href="${esc(meetUrl)}" style="color:#0a6b57">${esc(meetUrl)}</a></p><p style="margin:20px 0">${btn}</p><p>${inviteNote} Reply to this email if anything changes.</p><p style="margin-top:24px">— Armic, Gambito</p></div>`;
+    const visitorHtml = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">You're booked in.</h2><p>Hi ${esc(booking.name)}, your Gameplan Session with Gambito is confirmed.</p><p style="font-size:16px"><strong>${esc(guestWhen)}</strong><br>${duration} minutes · ${esc(tzLabel(start, gTz))}</p><p style="margin:18px 0"><strong>Where:</strong> Google Meet<br><a href="${esc(meetUrl)}" style="color:#0a6b57">${esc(meetUrl)}</a></p><p style="margin:20px 0">${btn}</p><p>${inviteNote} Reply to this email if anything changes.</p><p style="margin-top:24px">— Armic, Gambito</p></div>`;
     const adminNote = calendarOk
       ? `The event is on ${esc(fromEmail)}'s Google Calendar — edit or reschedule it there and Google notifies the guest.`
       : `Google Calendar wasn't used${calendarError ? ` (${esc(calendarError.slice(0, 160))})` : " (not configured yet)"}, so the invite is attached instead. Open it in ${esc(fromEmail)}'s calendar to edit it.`;
-    const adminHtml = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">New Gameplan Session booked</h2><p style="font-size:16px"><strong>${esc(when)}</strong> (${esc(tz)})</p><table style="font-size:14px"><tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Name</td><td>${esc(booking.name)}</td></tr><tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Email</td><td>${esc(booking.email)}</td></tr>${booking.company ? `<tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Company</td><td>${esc(booking.company)}</td></tr>` : ""}${booking.notes ? `<tr><td style="padding:2px 12px 2px 0;color:#5c6b60;vertical-align:top">Notes</td><td>${esc(booking.notes)}</td></tr>` : ""}<tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Call</td><td><a href="${esc(meetUrl)}">${esc(meetUrl)}</a></td></tr></table><p style="color:#5c6b60;font-size:13px">${adminNote}</p></div>`;
+    const adminHtml = `<div style="font-family:Arial,sans-serif;color:#0a1f1a;max-width:520px"><h2 style="color:#032721">New Gameplan Session booked</h2><p style="font-size:16px"><strong>${esc(when)}</strong> (${esc(tz)})${gTz !== tz ? `<br><span style="font-size:14px;color:#5c6b60">Guest's time: ${esc(guestWhen)} · ${esc(tzLabel(start, gTz))}</span>` : ""}</p><table style="font-size:14px"><tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Name</td><td>${esc(booking.name)}</td></tr><tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Email</td><td>${esc(booking.email)}</td></tr>${booking.timezone ? `<tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Timezone</td><td>${esc(booking.timezone)}</td></tr>` : ""}${booking.company ? `<tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Company</td><td>${esc(booking.company)}</td></tr>` : ""}${booking.notes ? `<tr><td style="padding:2px 12px 2px 0;color:#5c6b60;vertical-align:top">Notes</td><td>${esc(booking.notes)}</td></tr>` : ""}<tr><td style="padding:2px 12px 2px 0;color:#5c6b60">Call</td><td><a href="${esc(meetUrl)}">${esc(meetUrl)}</a></td></tr></table><p style="color:#5c6b60;font-size:13px">${adminNote}</p></div>`;
 
     await sendEmail(key, {
       from: { email: fromEmail, name: "Armic · Gambito" },

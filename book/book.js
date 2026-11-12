@@ -216,6 +216,7 @@ async function submitBooking(e) {
     p_company: form.company.value.trim(),
     p_notes: form.notes.value.trim(),
     p_hp: form.website.value,
+    p_timezone: localTz, // the visitor's IANA zone — emails show the time in it
   };
 
   const { data, error } = await supabase.rpc("book_slot", payload);

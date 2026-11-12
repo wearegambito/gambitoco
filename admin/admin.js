@@ -1360,7 +1360,7 @@ async function loadBookingsAdmin() {
     const d = new Date(b.start_time);
     return `<div class="booking-row">
       <div class="when">${fmtDayLocal(d)}<br />${fmtTimeLocal(d)}</div>
-      <div class="who"><span class="name">${esc(b.name)}</span>${b.company ? " · " + esc(b.company) : ""}<br /><a href="mailto:${esc(b.email)}">${esc(b.email)}</a></div>
+      <div class="who"><span class="name">${esc(b.name)}</span>${b.company ? " · " + esc(b.company) : ""}<br /><a href="mailto:${esc(b.email)}">${esc(b.email)}</a>${b.timezone ? `<br /><span class="tz" title="Guest's timezone">${esc(b.timezone.replace(/_/g, " "))} · ${esc(d.toLocaleString(undefined, { timeZone: b.timezone, weekday: "short", hour: "numeric", minute: "2-digit" }))} their time</span>` : ""}</div>
       ${b.notes ? `<div class="notes">${esc(b.notes)}</div>` : ""}
     </div>`;
   }).join("");
